@@ -98,11 +98,33 @@ interface Config {
 | Domain | Package | Scope |
 |--------|---------|-------|
 | Core | auth, tenant, audit, config, common | @kgc/auth |
-| Shared | ui, utils, types, i18n, testing | @kgc/ui |
-| Bérlés | rental-core, rental-checkout, rental-contract, rental-inventory | @kgc/rental-core |
+| Shared | ui, utils, types, i18n, testing, **inventory** | @kgc/ui, **@kgc/inventory** |
+| Bérlés | rental-core, rental-checkout, rental-contract | @kgc/rental-core |
 | Szerviz | service-core, service-worksheet, service-warranty, service-parts | @kgc/service-worksheet |
 | Értékesítés | sales-core, sales-pos, sales-invoice, sales-quote | @kgc/sales-invoice |
 | Integráció | nav-online, mypos, szamlazz-hu, twenty-crm, chatwoot, horilla-hr | @kgc/nav-online |
+
+### 5.1 Közös Inventory Architektúra (ADR-014)
+
+```
+⚠️ KRITIKUS: Minden domain UGYANAZT a készletet kezeli!
+
+@kgc/inventory (packages/shared/inventory/)
+    ↑               ↑               ↑
+    │               │               │
+@kgc/rental-*   @kgc/service-*  @kgc/sales-*
+  (bérlés)        (szerviz)      (áruház)
+```
+
+**Megosztott entitások (public séma):**
+- `cikk` - Központi terméktörzs
+- `cikkcsoport` - Kategóriák
+- `beszallito` - Beszállítók
+- `arszabaly` - Központi árazási szabályok
+
+**Tenant-specifikus (tenant_X séma):**
+- `keszlet` - Bolt készletszint
+- `keszlet_mozgas` - Mozgás audit log
 
 ### 6. API Konvenciók
 
