@@ -20,7 +20,9 @@
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
     "test:coverage": "turbo run test:coverage",
-    "test:e2e": "turbo run test:e2e",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "typecheck": "turbo run typecheck",
@@ -30,13 +32,19 @@
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
     "db:push": "turbo run db:push",
-    "db:studio": "turbo run db:studio"
+    "db:seed:e2e": "turbo run db:seed:e2e",
+    "db:studio": "turbo run db:studio",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.0",
+    "@playwright/test": "^1.48.0",
     "@types/node": "^20.11.0",
     "eslint": "^8.57.0",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.0",
     "prettier": "^3.2.0",
+    "prettier-plugin-organize-imports": "^4.1.0",
     "turbo": "^2.3.0",
     "typescript": "^5.3.0",
     "vitest": "^2.1.0"

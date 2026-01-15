@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# KGC ERP v3.0 - Pre-commit Hook
+# Gyors ellenőrzések commit előtt
+
+echo "🔍 Running pre-commit checks..."
+
+# Lint-staged futtatása
+pnpm exec lint-staged
+
+# TypeScript ellenőrzés (csak staged fájlokra)
+echo "📝 Type checking staged files..."
+pnpm exec tsc --noEmit --skipLibCheck 2>/dev/null || {
+  echo "❌ TypeScript errors found. Please fix before committing."
+  exit 1
+}
+
+echo "✅ Pre-commit checks passed!"

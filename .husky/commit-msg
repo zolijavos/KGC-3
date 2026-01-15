@@ -1,0 +1,42 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# KGC ERP v3.0 - Commit Message Hook
+# Conventional Commits formátum ellenőrzése
+
+# Commit message pattern: type(scope): description
+# Példák:
+#   feat(rental): add checkout wizard
+#   fix(auth): resolve session timeout issue
+#   docs(readme): update installation guide
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Regex pattern for conventional commits
+PATTERN="^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\([a-z0-9-]+\))?: .{1,100}$"
+
+# Allow merge commits
+if echo "$COMMIT_MSG" | grep -qE "^Merge "; then
+  exit 0
+fi
+
+# Check commit message format
+if ! echo "$COMMIT_MSG" | grep -qE "$PATTERN"; then
+  echo "❌ Invalid commit message format!"
+  echo ""
+  echo "Expected: type(scope): description"
+  echo ""
+  echo "Types: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert"
+  echo "Scope: optional, lowercase, e.g., (rental), (auth), (nav)"
+  echo ""
+  echo "Examples:"
+  echo "  feat(rental): add checkout wizard"
+  echo "  fix(auth): resolve session timeout"
+  echo "  docs: update README"
+  echo ""
+  echo "Your message: $COMMIT_MSG"
+  exit 1
+fi
+
+echo "✅ Commit message format OK"
