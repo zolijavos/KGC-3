@@ -1,0 +1,69 @@
+# BMAD Workflow: Sync to Plane
+# Szinkronizálja a BMAD epic/story/task artifactokat a Plane PM eszközbe
+
+name: sync-to-plane
+description: BMAD fejlesztési artifactok (epic, story, task) szinkronizálása Plane projektmenedzsment eszközbe
+phase: 4-implementation
+agent: sm  # Scrum Master agent végrehajtja
+
+# Trigger események
+triggers:
+  - manual        # /bmad:bmm:workflows:sync-to-plane paranccsal
+  - post-story    # story-done workflow után (opcionális)
+
+# Bemenet
+inputs:
+  required:
+    - sprint-status.yaml    # Sprint státusz fájl
+  optional:
+    - "epic-*.md"           # Epic fájlok
+    - "story-*.md"          # Story fájlok
+    - "epics/index.md"      # Sharded epics
+
+# Kimenet
+outputs:
+  - plane-sync-log.md         # Sync napló
+  - .plane-sync-state.json    # Idempotency tracking
+
+# Konfiguráció
+config:
+  # Plane API beállítások (environment variables-ből)
+  plane_api_url: "${PLANE_API_URL:-http://localhost:8000}"
+  plane_api_key: "${PLANE_API_KEY}"
+  plane_workspace: "${PLANE_WORKSPACE:-kgc-erp}"
+  plane_project: "${PLANE_PROJECT:-kgc-erp-dev}"
+
+  # Sync beállítások
+  sync_direction: "bmad-to-plane"   # Egyirányú: BMAD → Plane
+  create_missing_states: true        # Hiányzó státuszok létrehozása
+  create_missing_labels: true        # Hiányzó címkék létrehozása
+  skip_unchanged: true               # Változatlan elemek kihagyása (checksum)
+
+  # Rate limiting
+  requests_per_minute: 50            # Plane limit: 60, tartalék: 10
+  batch_size: 10                     # Párhuzamos kérések száma
+
+# Státusz mapping
+state_mapping:
+  backlog: "Backlog"
+  drafted: "Backlog"
+  ready-for-dev: "Todo"
+  in-progress: "In Progress"
+  review: "In Review"
+  done: "Done"
+  cancelled: "Cancelled"
+
+# Priority mapping
+priority_mapping:
+  urgent: "urgent"
+  high: "high"
+  medium: "medium"
+  low: "low"
+  none: "none"
+
+# Végrehajtási fájl
+execution:
+  instructions: "./instructions.md"
+  checklist: "./checklist.md"
+  data_files:
+    - "./data/state-mapping.yaml"
