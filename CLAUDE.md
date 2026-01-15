@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+---
+
 Ez a fájl útmutatást ad a Claude Code (claude.ai/code) számára a repository kódjával való munkához.
 
 ## KRITIKUS SZABÁLY - MINDIG BMAD MÓDSZERREL DOLGOZZ
@@ -126,11 +130,14 @@ KGC-3/
 
 # Implementáció (Fázis 4)
 /bmad:bmm:workflows:sprint-planning   # Sprint tervezés
-/bmad:bmm:workflows:create-story      # Következő story készítése
-/bmad:bmm:workflows:story-ready       # Story ready-for-dev
+/bmad:bmm:workflows:create-story      # Story készítés és ready-for-dev jelölés
 /bmad:bmm:workflows:dev-story         # Story implementálás
 /bmad:bmm:workflows:code-review       # Adversarial review (3-10 hiba!)
-/bmad:bmm:workflows:story-done        # Story lezárás
+/bmad:bmm:workflows:retrospective     # Epic lezárás után
+
+# Tesztelés
+/bmad:bmm:workflows:testarch-atdd     # ATDD teszt generálás
+/bmad:bmm:workflows:testarch-framework # Test framework setup
 ```
 
 ### Story Életciklus
@@ -144,30 +151,78 @@ KGC-3/
 pnpm install                  # Függőségek telepítése
 pnpm dev                      # Fejlesztői szerver
 pnpm build                    # Build
-pnpm test                     # Tesztek futtatása
-pnpm test:coverage            # Coverage report
 pnpm lint                     # Linting
+pnpm lint:fix                 # Lint javítás
 pnpm typecheck                # TypeScript ellenőrzés
+pnpm format                   # Prettier formázás
+pnpm format:check             # Formázás ellenőrzés
+
+# Tesztelés
+pnpm test                     # Összes teszt (Vitest)
+pnpm test:watch               # Watch mode
+pnpm test:coverage            # Coverage report
+pnpm test:e2e                 # E2E tesztek (Playwright)
+
+# Egyedi package futtatás (turbo --filter)
+pnpm --filter @kgc/auth test              # Egy package tesztjei
+pnpm --filter @kgc/berles build           # Egy package build
+pnpm --filter "./packages/core/*" test    # Core layer tesztek
 
 # Adatbázis
 pnpm db:generate              # Prisma generate
 pnpm db:migrate               # Migrációk futtatása
+pnpm db:push                  # Schema push (dev)
 pnpm db:studio                # Prisma Studio
 ```
 
+## TypeScript Konfiguráció
+
+A projekt **strict TypeScript** beállításokat használ (`tsconfig.base.json`):
+
+```typescript
+// Fontos strict opciók
+"strict": true,
+"noUncheckedIndexedAccess": true,      // Array/object index ellenőrzés
+"exactOptionalPropertyTypes": true,     // Pontos optional kezelés
+"noUnusedLocals": true,
+"noUnusedParameters": true
+```
+
+**Package aliasok** - minden package `@kgc/*` scope alatt:
+- Core: `@kgc/auth`, `@kgc/tenant`, `@kgc/audit`, `@kgc/config`, `@kgc/common`
+- Shared: `@kgc/ui`, `@kgc/utils`, `@kgc/types`, `@kgc/i18n`, `@kgc/testing`
+- Domain: `@kgc/rental-*`, `@kgc/service-*`, `@kgc/sales-*`
+- Integration: `@kgc/nav-online`, `@kgc/mypos`, `@kgc/szamlazz-hu`
+
+## Monorepo Függőségi Szabályok
+
+```
+apps/ → packages/*            ✅ Alkalmazások használhatják a package-eket
+packages/shared/ → packages/core/   ✅ Shared réteg core-ra épül
+packages/[domain]/ → packages/shared/ + core/  ✅ Domain függ shared+core-tól
+packages/integration/ → packages/*  ✅ Integration minden package-et használhat
+packages/core/ → packages/core/ (belül)  ✅ Core package-ek egymást használhatják
+packages/[domain]/ → packages/[domain]/ ❌ Domain package-ek NEM függhetnek egymástól
+```
+
+**Körkörös függőség tilos!** Ha domain package-ek közötti kommunikáció kell → event/köztes interface.
+
 ## Fontos ADR-ek
 
-Architektúra döntéseket érintő változtatás előtt olvasd el a releváns ADR-t!
+Architektúra döntéseket érintő változtatás előtt olvasd el a releváns ADR-t! Összesen **43 ADR** van.
 
-| ADR | Téma |
-|-----|------|
-| ADR-001 | Franchise multi-tenancy |
-| ADR-002 | Deployment és offline stratégia (PWA, papír backup) |
-| ADR-003 | White label értékesítési stratégia |
-| ADR-010 | **Micro-modules architektúra (Struktúra B)** |
-| ADR-014 | Moduláris architektúra végleges döntés |
-| ADR-015 | CRM/Support integráció (Twenty + Chatwoot) |
-| ADR-024 | Hybrid test stratégia |
+| ADR | Téma | Státusz |
+|-----|------|---------|
+| ADR-001 | Franchise multi-tenancy + RLS | Elfogadva |
+| ADR-002 | Offline-first PWA stratégia | Elfogadva |
+| ADR-010 | **Micro-modules (25 package)** | Elfogadva |
+| ADR-014 | Moduláris architektúra végleges | Elfogadva |
+| ADR-015 | Twenty CRM + Chatwoot integráció | Elfogadva |
+| ADR-023 | Composable frontend (shadcn/ui) | Elfogadva |
+| ADR-024 | Hybrid TDD/ATDD test stratégia | Elfogadva |
+| ADR-030 | NAV Online számlázás API | Elfogadva |
+| ADR-032 | RBAC teljes architektúra | Elfogadva |
+| ADR-037 | Bérlési díj kalkuláció | Elfogadva |
 
 Teljes lista: [planning-artifacts/adr/](planning-artifacts/adr/)
 
