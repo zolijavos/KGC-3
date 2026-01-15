@@ -38,7 +38,7 @@
       "@kgc/rental-core": ["packages/berles/rental-core/src"],
       "@kgc/rental-checkout": ["packages/berles/rental-checkout/src"],
       "@kgc/rental-contract": ["packages/berles/rental-contract/src"],
-      "@kgc/rental-inventory": ["packages/berles/rental-inventory/src"],
+      "@kgc/inventory": ["packages/shared/inventory/src"],
       "@kgc/service-core": ["packages/szerviz/service-core/src"],
       "@kgc/service-worksheet": ["packages/szerviz/service-worksheet/src"],
       "@kgc/service-warranty": ["packages/szerviz/service-warranty/src"],

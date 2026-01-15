@@ -40,11 +40,11 @@
 | Típusok | types | @kgc/types |
 | Lokalizáció | i18n | @kgc/i18n |
 | Teszt segédek | testing | @kgc/testing |
+| **Készlet (KÖZÖS)** | inventory | @kgc/inventory |
 | **BÉRLÉS** | | |
 | Bérlés üzleti logika | rental-core | @kgc/rental-core |
 | Bérlés checkout/kaució | rental-checkout | @kgc/rental-checkout |
 | Bérlési szerződés | rental-contract | @kgc/rental-contract |
-| Bérgép készlet | rental-inventory | @kgc/rental-inventory |
 | **SZERVIZ** | | |
 | Szerviz üzleti logika | service-core | @kgc/service-core |
 | Munkalap | service-worksheet | @kgc/service-worksheet |
@@ -926,9 +926,10 @@ describe('MunkalapStateMachine', () => {
 | Package | TDD % | TDD Fókusz |
 |---------|-------|------------|
 | `@kgc/rental-core` | **85%** | Késedelmi díj, időszámítás |
-| `@kgc/rental-inventory` | 50% | Státusz, elérhetőség |
 | `@kgc/rental-contract` | 45% | PDF generálás validation |
 | `@kgc/rental-checkout` | **90%** | MyPos, kaució visszatartás logika |
+
+> **Megjegyzés:** `@kgc/inventory` a SHARED rétegben található (50% TDD - Státusz, elérhetőség)
 
 #### Bérlés Díjszámítás - TDD Részletek
 
