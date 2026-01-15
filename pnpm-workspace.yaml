@@ -1,27 +1,6 @@
 # KGC ERP v3.0 - pnpm Monorepo Workspace
-# ADR-010: Micro-modules architektúra (Struktúra B)
+# ADR-010: Micro-modules architektúra (Struktúra B - Flat Naming)
 
 packages:
-  # Alkalmazások
-  - "apps/*"
-
-  # Core réteg - Alapvető infrastruktúra
-  - "packages/core/*"
-
-  # Shared réteg - Megosztott komponensek
-  - "packages/shared/*"
-
-  # Bérlés domain
-  - "packages/berles/*"
-
-  # Szerviz domain
-  - "packages/szerviz/*"
-
-  # Áruház domain
-  - "packages/aruhaz/*"
-
-  # Integráció réteg - Külső rendszerek
-  - "packages/integration/*"
-
-  # Eszközök
-  - "tools/*"
+  - 'apps/*'
+  - 'packages/*'
