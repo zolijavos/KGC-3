@@ -39,200 +39,305 @@ tracking_system: file-system
 story_location: implementation-artifacts/stories
 
 # MVP Sprint Plan (8 sprints):
-# Sprint 1: E-CORE-01, E-CORE-02, E-CORE-05 (Auth + Users + UI)
-# Sprint 2: E-CORE-03, E-CORE-04, E-CORE-06 (Tenant + Config + Audit)
-# Sprint 3: E-SHARED-01, E-SHARED-02, E-SHARED-03 (Partner + Cikk + Készlet)
-# Sprint 4: E-SHARED-05, E-SHARED-06, E-PLUGIN-05 (NAV + Feladatlista + Chat)
-# Sprint 5: E-BERLES-01, E-BERLES-04 (Bérgép + Kaució)
-# Sprint 6: E-BERLES-02, E-SHARED-04 (Bérlés + Számla)
-# Sprint 7: E-BERLES-03, E-SZERVIZ-01 (Szerződés + Munkalap)
-# Sprint 8: E-SZERVIZ-02, E-SZERVIZ-03 (Árajánlat + Garancia)
+# Sprint 1: Epic 1-2-5 (Auth + Users + UI)
+# Sprint 2: Epic 3-4-6 (Tenant + Config + Audit)
+# Sprint 3: Epic 7-8-9 (Partner + Cikk + Készlet)
+# Sprint 4: Epic 11-12-32 (NAV + Feladatlista + Chat)
+# Sprint 5: Epic 13-16 (Bérgép + Kaució)
+# Sprint 6: Epic 14-10 (Bérlés + Számla)
+# Sprint 7: Epic 15-17 (Szerződés + Munkalap)
+# Sprint 8: Epic 18-19 (Árajánlat + Garancia)
 
 development_status:
   # ============================================
   # CORE LAYER (6 epics) - MVP Sprint 1-2
   # ============================================
 
-  # Epic 1.1: Authentication (@kgc/auth)
-  E-CORE-01: backlog
-  # Stories: ~5-8 (JWT, Login/Logout, Password reset, PIN kód, Session)
-  E-CORE-01-retrospective: optional
+  # Epic 1: Authentication (@kgc/auth) - 5 stories
+  epic-1: in-progress
+  1-1-jwt-login-endpoint: done
+  1-2-token-refresh: backlog
+  1-3-logout-es-session-invalidation: backlog
+  1-4-pin-kod-belepes-kiosk-mod: backlog
+  1-5-password-reset-flow: backlog
+  epic-1-retrospective: optional
 
-  # Epic 1.2: User Management (@kgc/users)
-  E-CORE-02: backlog
-  # Stories: ~6-10 (User CRUD, Role assignment, Permission check, User-Tenant, Profile)
-  E-CORE-02-retrospective: optional
+  # Epic 2: User Management (@kgc/users) - 6 stories
+  epic-2: backlog
+  2-1-user-crud-operations: backlog
+  2-2-role-assignment-es-rbac: backlog
+  2-3-permission-check-middleware: backlog
+  2-4-elevated-access-requirement: backlog
+  2-5-tenant-es-location-scoped-permissions: backlog
+  2-6-user-profile-management: backlog
+  epic-2-retrospective: optional
 
-  # Epic 1.3: Tenant Management (@kgc/tenant)
-  E-CORE-03: backlog
-  # Stories: ~4-6 (Tenant CRUD, Middleware, RLS, Schema, Feature flags)
-  E-CORE-03-retrospective: optional
+  # Epic 3: Tenant Management (@kgc/tenant) - 6 stories
+  epic-3: backlog
+  3-1-tenant-crud-es-alapstruktura: backlog
+  3-2-rls-policy-infrastructure: backlog
+  3-3-tenant-context-middleware: backlog
+  3-4-tenant-onboarding-wizard: backlog
+  3-5-feature-flag-per-tenant: backlog
+  3-6-holding-struktura-tamogatas: backlog
+  epic-3-retrospective: optional
 
-  # Epic 1.4: Configuration (@kgc/config)
-  E-CORE-04: backlog
-  # Stories: ~3-5 (Feature flags, License, System settings, Tenant config)
-  E-CORE-04-retrospective: optional
+  # Epic 4: Configuration (@kgc/config) - 4 stories
+  epic-4: backlog
+  4-1-system-configuration-service: backlog
+  4-2-tenant-configuration: backlog
+  4-3-license-management: backlog
+  4-4-configuration-cache-es-reload: backlog
+  epic-4-retrospective: optional
 
-  # Epic 1.5: UI Component Library (@kgc/ui)
-  E-CORE-05: backlog
-  # Stories: ~8-12 (shadcn/ui, Button, Input, Table, Modal, Layout, Theme, Hooks)
-  E-CORE-05-retrospective: optional
+  # Epic 5: UI Component Library (@kgc/ui) - 8 stories
+  epic-5: backlog
+  5-1-shadcn-ui-setup-es-core-components: backlog
+  5-2-layout-es-navigation-components: backlog
+  5-3-pwa-service-worker-es-manifest: backlog
+  5-4-offline-data-caching-indexeddb: backlog
+  5-5-background-sync-es-conflict-resolution: backlog
+  5-6-form-components-es-validation: backlog
+  5-7-barcode-scanner-integration: backlog
+  5-8-push-notifications: backlog
+  epic-5-retrospective: optional
 
-  # Epic 1.6: Audit Trail & Compliance (@kgc/audit) - FR65-FR72
-  E-CORE-06: backlog
-  # Stories: ~6-10 (Audit log, GDPR, PII titkosítás, RLS, NAV audit)
-  E-CORE-06-retrospective: optional
-
-  # ============================================
-  # SHARED LAYER (6 epics) - MVP Sprint 2-3
-  # ============================================
-
-  # Epic 2.1: Partner Management (@kgc/partner)
-  E-SHARED-01: backlog
-  # Stories: ~8-12 (Partner CRUD, Meghatalmazott, Keresés, Duplikáció, Hitelkeret)
-  E-SHARED-01-retrospective: optional
-
-  # Epic 2.2: Product Catalog (@kgc/cikk)
-  E-SHARED-02: backlog
-  # Stories: ~6-10 (Cikk CRUD, Cikkcsoport, Beszállító, Vonalkód, Robbantott ábra)
-  E-SHARED-02-retrospective: optional
-
-  # Epic 2.3: Inventory Core (@kgc/keszlet)
-  E-SHARED-03: backlog
-  # Stories: ~8-12 (Készlet tracking, Mozgás napló, Reservation, K-P-D, Multi-warehouse)
-  E-SHARED-03-retrospective: optional
-
-  # Epic 2.4: Invoice Core (@kgc/szamla)
-  E-SHARED-04: backlog
-  # Stories: ~6-10 (Számla CRUD, Tétel kezelés, PDF, Státuszok, Sztornó)
-  E-SHARED-04-retrospective: optional
-
-  # Epic 2.5: NAV Integration (@kgc/nav)
-  E-SHARED-05: backlog
-  # Stories: ~5-8 (Számlázz.hu API, NAV Online v3.0, XML, Response parser, Retry)
-  E-SHARED-05-retrospective: optional
-
-  # Epic 2.6: Task List Widget (@kgc/feladatlista) - FR73-FR83, FR96-FR97
-  E-SHARED-06: backlog
-  # Stories: ~10-15 (Bevásárlólista, To-Do, Jegyzet, Kipipálás, Státusz, Izoláció)
-  E-SHARED-06-retrospective: optional
+  # Epic 6: Audit Trail (@kgc/audit) - 5 stories
+  epic-6: backlog
+  6-1-audit-log-service: backlog
+  6-2-pii-encryption: backlog
+  6-3-gdpr-cascade-delete: backlog
+  6-4-audit-log-query-es-export: backlog
+  6-5-retention-policy-es-archival: backlog
+  epic-6-retrospective: optional
 
   # ============================================
-  # BÉRLÉS LAYER (4 epics) - MVP Sprint 3-5
+  # SHARED LAYER (6 epics) - MVP Sprint 3-4
   # ============================================
 
-  # Epic 3.1: Rental Equipment (@kgc/bergep)
-  E-BERLES-01: backlog
-  # Stories: ~6-10 (Bérgép CRUD, Státusz lifecycle, Serial number, QR keresés, Tartozék)
-  E-BERLES-01-retrospective: optional
+  # Epic 7: Partner Management (@kgc/partner) - 6 stories
+  epic-7: backlog
+  7-1-partner-crud-maganszemely-es-ceg: backlog
+  7-2-meghatalmazott-kezeles: backlog
+  7-3-torzsvendeg-kartya-rendszer: backlog
+  7-4-partner-hitelkeret-kezeles: backlog
+  7-5-partner-blacklist-es-figyelmeztetesek: backlog
+  7-6-partner-kereses-es-azonositas: backlog
+  epic-7-retrospective: optional
 
-  # Epic 3.2: Rental Operations (@kgc/berles) - FR11-FR21, FR101-FR106
-  E-BERLES-02: backlog
-  # Stories: ~12-18 (Kiadás, Visszavétel, Hosszabbítás, Késedelem, Self-service)
-  E-BERLES-02-retrospective: optional
+  # Epic 8: Product Catalog (@kgc/cikk) - 5 stories
+  epic-8: backlog
+  8-1-cikk-crud: backlog
+  8-2-cikkcsoport-hierarchia: backlog
+  8-3-beszallito-kapcsolat-es-import: backlog
+  8-4-vonalkod-es-qr-kod-kezeles: backlog
+  8-5-arszabaly-kezeles: backlog
+  epic-8-retrospective: optional
 
-  # Epic 3.3: Rental Contracts (@kgc/szerzodes)
-  E-BERLES-03: backlog
-  # Stories: ~4-6 (Szerződés PDF, Template, Digitális aláírás, Archiválás)
-  E-BERLES-03-retrospective: optional
+  # Epic 9: Inventory Core (@kgc/keszlet) - 6 stories
+  epic-9: backlog
+  9-1-keszlet-nyilvantartas-alap: backlog
+  9-2-k-p-d-helykod-rendszer: backlog
+  9-3-multi-warehouse-tamogatas: backlog
+  9-4-keszlet-mozgas-audit-trail: backlog
+  9-5-serial-number-es-batch-tracking: backlog
+  9-6-minimum-stock-alert: backlog
+  epic-9-retrospective: optional
 
-  # Epic 3.4: Deposit Management (@kgc/kaucio)
-  E-BERLES-04: backlog
-  # Stories: ~6-10 (Kaució felvétel, MyPos, Visszaadás, Visszatartás, Könyvelés)
-  E-BERLES-04-retrospective: optional
+  # Epic 10: Invoice Core (@kgc/szamla) - 6 stories
+  epic-10: backlog
+  10-1-szamla-crud: backlog
+  10-2-szamla-tetel-kezeles: backlog
+  10-3-szamla-pdf-generalas: backlog
+  10-4-szamla-statusz-workflow: backlog
+  10-5-sztorno-szamla: backlog
+  10-6-szamla-lathatosag-rbac: backlog
+  epic-10-retrospective: optional
+
+  # Epic 11: NAV Integration (@kgc/nav) - 5 stories
+  epic-11: backlog
+  11-1-szamlazz-hu-api-integracio: backlog
+  11-2-nav-xml-builder: backlog
+  11-3-retry-logic-es-error-handling: backlog
+  11-4-nav-szamla-statusz-kovetes: backlog
+  11-5-offline-fallback-es-queue: backlog
+  epic-11-retrospective: optional
+
+  # Epic 12: Task List Widget (@kgc/feladatlista) - 5 stories
+  epic-12: backlog
+  12-1-bevasarlolista-tetel: backlog
+  12-2-to-do-feladat-felelossel: backlog
+  12-3-feladat-statusz-es-kipipalas: backlog
+  12-4-szemelyes-jegyzet: backlog
+  12-5-boltvezeto-lista-hozzaferes: backlog
+  epic-12-retrospective: optional
 
   # ============================================
-  # SZERVIZ LAYER (4 epics) - MVP Sprint 5-7
+  # BÉRLÉS LAYER (4 epics) - MVP Sprint 5-6
   # ============================================
 
-  # Epic 4.1: Work Orders (@kgc/munkalap) - FR22-FR29, FR91-FR93, FR107-FR112
-  E-SZERVIZ-01: backlog
-  # Stories: ~15-20 (Munkalap CRUD, Státusz, Tétel, Prioritás, Limit, Foglalás)
-  E-SZERVIZ-01-retrospective: optional
+  # Epic 13: Rental Equipment (@kgc/bergep) - 5 stories
+  epic-13: backlog
+  13-1-bergep-crud: backlog
+  13-2-bergep-statusz-lifecycle: backlog
+  13-3-serial-number-es-qr-kod: backlog
+  13-4-tartozek-kezeles: backlog
+  13-5-bergep-elozmenyek-es-karbantartas: backlog
+  epic-13-retrospective: optional
 
-  # Epic 4.2: Quotations (@kgc/arajanlat)
-  E-SZERVIZ-02: backlog
-  # Stories: ~4-6 (Árajánlat generálás, Konverzió, PDF, Email)
-  E-SZERVIZ-02-retrospective: optional
+  # Epic 14: Rental Operations (@kgc/berles) - 7 stories
+  epic-14: backlog
+  14-1-berles-kiadas-wizard: backlog
+  14-2-berlesi-dij-kalkulacio: backlog
+  14-3-kedvezmeny-kezeles-role-based: backlog
+  14-4-berles-visszavetel-workflow: backlog
+  14-5-berles-hosszabbitas: backlog
+  14-6-kesedelmi-dij-szamitas: backlog
+  14-7-berles-statuszok-es-audit: backlog
+  epic-14-retrospective: optional
 
-  # Epic 4.3: Warranty Claims (@kgc/garancia)
-  E-SZERVIZ-03: backlog
-  # Stories: ~5-8 (Garanciális claim, Makita norma, Státusz, Elszámolás)
-  E-SZERVIZ-03-retrospective: optional
+  # Epic 15: Rental Contracts (@kgc/szerzodes) - 4 stories
+  epic-15: backlog
+  15-1-szerzodes-template-kezeles: backlog
+  15-2-szerzodes-pdf-generalas: backlog
+  15-3-digitalis-alairas: backlog
+  15-4-szerzodes-archivalas: backlog
+  epic-15-retrospective: optional
 
-  # Epic 4.4: Service Standards (@kgc/norma) - Post-MVP
-  E-SZERVIZ-04: backlog
-  # Stories: ~3-5 (Norma import, Árazás, Frissítés)
-  E-SZERVIZ-04-retrospective: optional
+  # Epic 16: Deposit Management (@kgc/kaucio) - 5 stories
+  epic-16: backlog
+  16-1-kaucio-felvetel-keszpenz-kartya: backlog
+  16-2-mypos-pre-authorization: backlog
+  16-3-kaucio-visszaadas: backlog
+  16-4-kaucio-visszatartas-serules: backlog
+  16-5-kaucio-konyveles-es-riport: backlog
+  epic-16-retrospective: optional
+
+  # ============================================
+  # SZERVIZ LAYER (4 epics) - MVP Sprint 7-8
+  # ============================================
+
+  # Epic 17: Work Orders (@kgc/munkalap) - 8 stories
+  epic-17: backlog
+  17-1-munkalap-crud: backlog
+  17-2-munkalap-statusz-workflow: backlog
+  17-3-diagnosztika-es-hibaok: backlog
+  17-4-alkatresz-felhasznlas: backlog
+  17-5-munkadij-kalkulacio: backlog
+  17-6-munkalap-berles-kapcsolat: backlog
+  17-7-prioritas-es-varakozasi-lista: backlog
+  17-8-tarolasi-dij-kezeles: backlog
+  epic-17-retrospective: optional
+
+  # Epic 18: Quotations (@kgc/arajanlat) - 4 stories
+  epic-18: backlog
+  18-1-arajanlat-generalas: backlog
+  18-2-robbantott-abra-alapu-alkatresz-kivalasztas: backlog
+  18-3-arajanlat-pdf-es-email: backlog
+  18-4-arajanlat-elfogadas-munkalap: backlog
+  epic-18-retrospective: optional
+
+  # Epic 19: Warranty Claims (@kgc/garancia) - 4 stories
+  epic-19: backlog
+  19-1-garancialis-vs-fizetos-megkulonboztetes: backlog
+  19-2-warranty-claim-letrehozas: backlog
+  19-3-claim-statusz-tracking: backlog
+  19-4-claim-elszamolas: backlog
+  epic-19-retrospective: optional
+
+  # Epic 20: Service Standards (@kgc/norma) - 3 stories - Post-MVP
+  epic-20: backlog
+  20-1-norma-tetel-import: backlog
+  20-2-norma-alapu-munkadij: backlog
+  20-3-norma-lista-frissites: backlog
+  epic-20-retrospective: optional
 
   # ============================================
   # ÁRUHÁZ LAYER (4 epics) - Post-MVP
   # ============================================
 
-  # Epic 5.1: Goods Receipt (@kgc/bevetelezes)
-  E-ARUHAZ-01: backlog
-  # Stories: ~5-8
-  E-ARUHAZ-01-retrospective: optional
+  # Epic 21: Goods Receipt (@kgc/bevetelezes) - 3 stories
+  epic-21: backlog
+  21-1-avizo-kezeles: backlog
+  21-2-bevetelezes-workflow: backlog
+  21-3-bevetelezes-elteres-kezeles: backlog
+  epic-21-retrospective: optional
 
-  # Epic 5.2: Point of Sale (@kgc/eladas)
-  E-ARUHAZ-02: backlog
-  # Stories: ~8-12
-  E-ARUHAZ-02-retrospective: optional
+  # Epic 22: Point of Sale (@kgc/eladas) - 3 stories
+  epic-22: backlog
+  22-1-ertekesites-kasszabol: backlog
+  22-2-fizetesi-modok: backlog
+  22-3-napi-penztarzaras: backlog
+  epic-22-retrospective: optional
 
-  # Epic 5.3: Pricing & Margin (@kgc/arres)
-  E-ARUHAZ-03: backlog
-  # Stories: ~4-6
-  E-ARUHAZ-03-retrospective: optional
+  # Epic 23: Pricing & Margin (@kgc/arres) - 2 stories
+  epic-23: backlog
+  23-1-beszerzesi-ar-tracking: backlog
+  23-2-arres-kalkulacio-es-riport: backlog
+  epic-23-retrospective: optional
 
-  # Epic 5.4: Stock Count (@kgc/leltar)
-  E-ARUHAZ-04: backlog
-  # Stories: ~4-6
-  E-ARUHAZ-04-retrospective: optional
+  # Epic 24: Stock Count (@kgc/leltar) - 3 stories
+  epic-24: backlog
+  24-1-leltar-inditas: backlog
+  24-2-leltar-rogzites: backlog
+  24-3-leltar-elteres-es-korrekcio: backlog
+  epic-24-retrospective: optional
 
   # ============================================
   # INTEGRATION LAYER (3 epics) - Post-MVP
   # ============================================
 
-  # Epic 6.1: Equipment-Service Integration
-  E-INTEG-01: backlog
-  # Stories: ~3-5
-  E-INTEG-01-retrospective: optional
+  # Epic 25: Equipment-Service Integration - 2 stories
+  epic-25: backlog
+  25-1-bergep-szervizbe-kuldes-automatizalas: backlog
+  25-2-szerviz-kesz-bergep-visszaall: backlog
+  epic-25-retrospective: optional
 
-  # Epic 6.2: Online Booking
-  E-INTEG-02: backlog
-  # Stories: ~5-8
-  E-INTEG-02-retrospective: optional
+  # Epic 26: Online Booking - 2 stories
+  epic-26: backlog
+  26-1-online-foglalas-felulet: backlog
+  26-2-foglalas-megerosites: backlog
+  epic-26-retrospective: optional
 
-  # Epic 6.3: Reporting Engine
-  E-INTEG-03: backlog
-  # Stories: ~6-10
-  E-INTEG-03-retrospective: optional
+  # Epic 27: Reporting Engine - 3 stories
+  epic-27: backlog
+  27-1-dashboard-widgetek: backlog
+  27-2-reszletes-riportok: backlog
+  27-3-cross-tenant-riportok: backlog
+  epic-27-retrospective: optional
 
   # ============================================
-  # PLUGIN LAYER (5 epics) - Post-MVP (except E-PLUGIN-05)
+  # PLUGIN LAYER (5 epics) - Post-MVP
   # ============================================
 
-  # Epic 7.1: Twenty CRM Integration
-  E-PLUGIN-01: backlog
-  # Stories: ~5-8
-  E-PLUGIN-01-retrospective: optional
+  # Epic 28: Twenty CRM Integration - 2 stories
+  epic-28: backlog
+  28-1-partner-szinkronizalas: backlog
+  28-2-crm-dashboard-embed: backlog
+  epic-28-retrospective: optional
 
-  # Epic 7.2: Chatwoot Integration
-  E-PLUGIN-02: backlog
-  # Stories: ~5-8
-  E-PLUGIN-02-retrospective: optional
+  # Epic 29: Chatwoot Integration - 2 stories
+  epic-29: backlog
+  29-1-support-ticket-integracio: backlog
+  29-2-ai-escalation-chatwoot-ba: backlog
+  epic-29-retrospective: optional
 
-  # Epic 7.3: Horilla HR Integration
-  E-PLUGIN-03: backlog
-  # Stories: ~4-6
-  E-PLUGIN-03-retrospective: optional
+  # Epic 30: Horilla HR Integration - 1 story
+  epic-30: backlog
+  30-1-dolgozo-adatok-szinkronizalas: backlog
+  epic-30-retrospective: optional
 
-  # Epic 7.4: Koko AI Chatbot
-  E-PLUGIN-04: backlog
-  # Stories: ~8-12
-  E-PLUGIN-04-retrospective: optional
+  # Epic 31: Koko AI Chatbot - 3 stories
+  epic-31: backlog
+  31-1-koko-chatbot-widget: backlog
+  31-2-intent-classification-es-routing: backlog
+  31-3-ai-quota-es-rate-limiting: backlog
+  epic-31-retrospective: optional
 
-  # Epic 7.5: Internal Chat (@kgc/chat) - FR115-FR118 - MVP!
-  E-PLUGIN-05: backlog
-  # Stories: ~6-10 (WebSocket chat, Online státusz, Értesítések, Előzmények)
-  E-PLUGIN-05-retrospective: optional
+  # Epic 32: Internal Chat (@kgc/chat) - 4 stories - MVP!
+  epic-32: backlog
+  32-1-real-time-1-to-1-chat: backlog
+  32-2-online-offline-statusz: backlog
+  32-3-chat-ertesitesek: backlog
+  32-4-chat-elozmenyek: backlog
+  epic-32-retrospective: optional

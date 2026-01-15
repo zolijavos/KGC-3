@@ -1,0 +1,110 @@
+// KGC ERP v3.0 - Auth Module Prisma Schema
+// Story 1.1: JWT Login Endpoint
+// ADR-001: Multi-tenancy with RLS
+// ADR-032: RBAC Architecture (8 roles)
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+/// User roles per ADR-032 RBAC Architecture
+enum Role {
+  OPERATOR      // Pultos / Értékesítő (Level 1)
+  TECHNIKUS     // Szerviz technikus (Level 2)
+  BOLTVEZETO    // Boltvezető (Level 3)
+  ACCOUNTANT    // Könyvelő (Level 3)
+  PARTNER_OWNER // Franchise Partner Tulajdonos (Level 4)
+  CENTRAL_ADMIN // Központi Admin (Level 5)
+  DEVOPS_ADMIN  // DevOps / IT Admin (Level 6)
+  SUPER_ADMIN   // Rendszergazda (Level 8)
+}
+
+/// User account status
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  LOCKED
+  PENDING_VERIFICATION
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+/// User entity for authentication
+/// AC1: User with email/password for JWT login
+/// AC2: Password stored as bcrypt hash
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique @db.VarChar(255)
+  passwordHash String     @map("password_hash") @db.VarChar(255)
+  name         String     @db.VarChar(255)
+  role         Role       @default(OPERATOR)
+  tenantId     String     @map("tenant_id") @db.Uuid
+  status       UserStatus @default(ACTIVE)
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  refreshTokens RefreshToken[]
+
+  // Indexes for performance
+  @@index([email])
+  @@index([tenantId])
+  @@index([role])
+  @@map("users")
+}
+
+/// RefreshToken entity for token management
+/// AC1: Refresh token with 7d TTL
+model RefreshToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  token      String   @unique @db.VarChar(500)
+  userId     String   @map("user_id") @db.Uuid
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz
+  deviceInfo String?  @map("device_info") @db.VarChar(500)
+
+  // Security: Track token usage
+  isRevoked Boolean @default(false) @map("is_revoked")
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes for performance
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+/// Login attempt tracking for rate limiting and security
+/// AC3, AC4: Track failed attempts for rate limiting
+model LoginAttempt {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @db.VarChar(255)
+  ipAddress String   @map("ip_address") @db.VarChar(45)
+  success   Boolean  @default(false)
+  userAgent String?  @map("user_agent") @db.VarChar(500)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([email, ipAddress, createdAt])
+  @@index([ipAddress, createdAt])
+  @@map("login_attempts")
+}
