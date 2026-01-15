@@ -21,7 +21,7 @@ Ez a fájl útmutatást ad a Claude Code (claude.ai/code) számára a repository
 
 ## Projekt Áttekintés
 
-**KGC ERP v3.0** - Kisgépcentrum ERP/Értékesítés-kezelő rendszer franchise hálózat támogatással és white label értékesítési modellel.
+**KGC ERP v7.0** - Kisgépcentrum ERP/Értékesítés-kezelő rendszer franchise hálózat támogatással és white label értékesítési modellel.
 
 | Jellemző | Érték |
 |----------|-------|
@@ -51,7 +51,7 @@ Hibrid architektúra: iframe + API + forráskód módosítás
 6. **MyPOS** - Kártyás fizetés, kaució kezelés
 7. **Plane.so** - Projektmenedzsment (opcionális)
 
-## Projekt Struktúra (ADR-010 Struktúra B)
+## Projekt Struktúra (ADR-010 + ADR-014)
 
 ```
 KGC-3/
@@ -64,8 +64,6 @@ KGC-3/
 ├── planning-artifacts/       # BMAD Fázis 1-3 OUTPUT
 │   ├── prd.md               # Product Requirements Document
 │   ├── architecture.md       # Architektúra összefoglaló
-│   ├── ux-design-specification.md
-│   ├── ui-style-guide-v1.md
 │   ├── epics/               # Epic definíciók
 │   └── adr/                 # 43 Architecture Decision Record
 │
@@ -74,50 +72,83 @@ KGC-3/
 │   └── stories/             # Implementált story-k
 │
 ├── docs/                    # Projekt tudásbázis
-│   ├── kgc3-development-principles.md  # TDD/ATDD hibrid módszertan
-│   ├── features/            # Feature dokumentációk
-│   └── diagrams/            # Technikai diagramok
+│   ├── project-context.md   # AI agent context (kritikus szabályok)
+│   └── kgc3-development-principles.md  # TDD/ATDD módszertan
 │
 ├── apps/                    # Alkalmazások
-│   ├── kgc-web/            # Next.js PWA frontend
+│   ├── kgc-web/            # Next.js PWA frontend (Vite)
 │   ├── kgc-admin/          # Admin dashboard
 │   └── kgc-api/            # NestJS API
 │
-├── packages/
-│   ├── core/               # 5 package: auth, tenant, audit, config, common
-│   ├── shared/             # 5 package: ui, utils, types, i18n, testing
-│   ├── berles/             # 4 package: rental-core/checkout/contract/inventory
-│   ├── szerviz/            # 4 package: service-core/worksheet/warranty/parts
-│   ├── aruhaz/             # 4 package: sales-core/pos/invoice/quote
-│   └── integration/        # 7 package: nav-online, mypos, szamlazz-hu, etc.
+├── packages/                # Monorepo packages (ANGOL NEVEK!)
+│   ├── core/               # Core layer
+│   │   ├── auth/           # @kgc/auth
+│   │   ├── tenant/         # @kgc/tenant
+│   │   ├── audit/          # @kgc/audit
+│   │   ├── config/         # @kgc/config
+│   │   └── common/         # @kgc/common
+│   │
+│   ├── shared/             # Shared layer
+│   │   ├── ui/             # @kgc/ui (shadcn/ui)
+│   │   ├── utils/          # @kgc/utils
+│   │   ├── types/          # @kgc/types
+│   │   ├── i18n/           # @kgc/i18n
+│   │   ├── testing/        # @kgc/testing
+│   │   └── inventory/      # @kgc/inventory ← KÖZÖS KÉSZLET
+│   │
+│   ├── berles/             # Bérlés domain
+│   │   ├── rental-core/    # @kgc/rental-core
+│   │   ├── rental-checkout/# @kgc/rental-checkout
+│   │   └── rental-contract/# @kgc/rental-contract
+│   │
+│   ├── szerviz/            # Szerviz domain
+│   │   ├── service-core/   # @kgc/service-core
+│   │   ├── service-worksheet/ # @kgc/service-worksheet
+│   │   ├── service-warranty/  # @kgc/service-warranty
+│   │   └── service-parts/  # @kgc/service-parts
+│   │
+│   ├── aruhaz/             # Értékesítés domain
+│   │   ├── sales-core/     # @kgc/sales-core
+│   │   ├── sales-pos/      # @kgc/sales-pos
+│   │   ├── sales-invoice/  # @kgc/sales-invoice
+│   │   └── sales-quote/    # @kgc/sales-quote
+│   │
+│   └── integration/        # Külső integrációk
+│       ├── nav-online/     # @kgc/nav-online
+│       ├── mypos/          # @kgc/mypos
+│       ├── szamlazz-hu/    # @kgc/szamlazz-hu
+│       ├── twenty-crm/     # @kgc/twenty-crm
+│       ├── chatwoot/       # @kgc/chatwoot
+│       └── horilla-hr/     # @kgc/horilla-hr
 │
-├── infra/                  # Infrastruktúra konfigurációk
+├── infra/                  # Infrastruktúra
 │   ├── docker/
-│   ├── k8s/
-│   └── terraform/
+│   └── k8s/
 │
 └── tools/                  # Fejlesztői eszközök
 ```
 
 ## Fejlesztési Módszertan
 
-**Lásd**: [docs/kgc3-development-principles.md](docs/kgc3-development-principles.md)
+**Részletes dokumentáció**: [docs/kgc3-development-principles.md](docs/kgc3-development-principles.md)
 
-### TDD/ATDD Hibrid Stratégia
+### TDD/ATDD Hibrid Stratégia (Összefoglaló)
 
-| Módszer | Mikor |
-|---------|-------|
-| **TDD** | Core modulok, üzleti logika, pénzügyi számítások |
-| **ATDD** | User story-k, UI folyamatok, integrációk |
-| **Contract Testing** | Plugin API határok (Pact) |
-| **Property-Based** | Pénzügyi kalkulációk (fast-check) |
+**TDD KÖTELEZŐ (Red-Green-Refactor):**
+- Pénzügyi számítások (késedelmi díj, ÁFA, árrés)
+- Auth/RBAC logika
+- State machine átmenetek (munkalap, bérlés)
+- Validációk (adószám, IBAN)
 
-### TDD Célok Package-enként
+**ATDD KÖTELEZŐ (Gherkin + Playwright):**
+- Kritikus user journey-k: bérlés indítás, pénztár, munkalap
 
-- **@kgc/auth, @kgc/tenant**: 90%+ TDD
-- **@kgc/rental-*, @kgc/service-***: 80%+ TDD
-- **@kgc/sales-invoice**: 95%+ TDD (NAV compliance)
-- **@kgc/ui**: 70%+ (Visual Regression + Storybook)
+**Teszt fájl elnevezés:**
+```
+*.spec.ts     # Unit tesztek (Vitest)
+*.e2e.ts      # E2E tesztek (Playwright)
+*.feature     # Gherkin ATDD tesztek
+```
 
 ## BMAD Workflow-k
 
@@ -165,7 +196,7 @@ pnpm test:e2e                 # E2E tesztek (Playwright)
 
 # Egyedi package futtatás (turbo --filter)
 pnpm --filter @kgc/auth test              # Egy package tesztjei
-pnpm --filter @kgc/berles build           # Egy package build
+pnpm --filter @kgc/rental-core build      # Egy package build
 pnpm --filter "./packages/core/*" test    # Core layer tesztek
 
 # Adatbázis
@@ -180,29 +211,45 @@ pnpm db:studio                # Prisma Studio
 A projekt **strict TypeScript** beállításokat használ (`tsconfig.base.json`):
 
 ```typescript
-// Fontos strict opciók
+// Fontos strict opciók - MINDIG tartsd be!
 "strict": true,
 "noUncheckedIndexedAccess": true,      // Array/object index ellenőrzés
 "exactOptionalPropertyTypes": true,     // Pontos optional kezelés
 "noUnusedLocals": true,
 "noUnusedParameters": true
+
+// Helyes használat:
+const items: string[] = [];
+const first = items[0];  // first: string | undefined ✅
+// Használj: items[0] ?? 'default'
 ```
 
-**Package aliasok** - minden package `@kgc/*` scope alatt:
+**Package aliasok** - minden package `@kgc/*` scope alatt (ANGOL nevek):
 - Core: `@kgc/auth`, `@kgc/tenant`, `@kgc/audit`, `@kgc/config`, `@kgc/common`
-- Shared: `@kgc/ui`, `@kgc/utils`, `@kgc/types`, `@kgc/i18n`, `@kgc/testing`
-- Domain: `@kgc/rental-*`, `@kgc/service-*`, `@kgc/sales-*`
-- Integration: `@kgc/nav-online`, `@kgc/mypos`, `@kgc/szamlazz-hu`
+- Shared: `@kgc/ui`, `@kgc/utils`, `@kgc/types`, `@kgc/i18n`, `@kgc/testing`, `@kgc/inventory`
+- Bérlés: `@kgc/rental-core`, `@kgc/rental-checkout`, `@kgc/rental-contract`
+- Szerviz: `@kgc/service-core`, `@kgc/service-worksheet`, `@kgc/service-warranty`, `@kgc/service-parts`
+- Értékesítés: `@kgc/sales-core`, `@kgc/sales-pos`, `@kgc/sales-invoice`, `@kgc/sales-quote`
+- Integráció: `@kgc/nav-online`, `@kgc/mypos`, `@kgc/szamlazz-hu`, `@kgc/twenty-crm`, `@kgc/chatwoot`, `@kgc/horilla-hr`
 
 ## Monorepo Függőségi Szabályok
 
 ```
-apps/ → packages/*            ✅ Alkalmazások használhatják a package-eket
-packages/shared/ → packages/core/   ✅ Shared réteg core-ra épül
-packages/[domain]/ → packages/shared/ + core/  ✅ Domain függ shared+core-tól
-packages/integration/ → packages/*  ✅ Integration minden package-et használhat
-packages/core/ → packages/core/ (belül)  ✅ Core package-ek egymást használhatják
-packages/[domain]/ → packages/[domain]/ ❌ Domain package-ek NEM függhetnek egymástól
+apps/ → packages/*                    ✅ Alkalmazások használhatják a package-eket
+packages/shared/ → packages/core/     ✅ Shared réteg core-ra épül
+packages/[domain]/ → shared + core    ✅ Domain függ shared+core-tól
+packages/integration/ → packages/*    ✅ Integration minden package-et használhat
+packages/core/ ↔ packages/core/       ✅ Core package-ek egymást használhatják
+
+packages/berles/ → packages/szerviz/  ❌ TILTOTT! Domain → Domain függőség
+packages/core/ → packages/shared/     ❌ TILTOTT! Core nem függhet shared-től
+```
+
+**Közös készlet architektúra (ADR-014):**
+```
+@kgc/rental-*   ──┐
+@kgc/service-*  ──┼──► @kgc/inventory (packages/shared/inventory/)
+@kgc/sales-*    ──┘
 ```
 
 **Körkörös függőség tilos!** Ha domain package-ek közötti kommunikáció kell → event/köztes interface.
@@ -235,14 +282,69 @@ Teljes lista: [planning-artifacts/adr/](planning-artifacts/adr/)
 - **Implementation output**: `implementation-artifacts/`
 - **Project knowledge**: `docs/`
 
+## Kritikus Implementációs Szabályok
+
+### Multi-Tenancy (ADR-001)
+
+```typescript
+// KÖTELEZŐ: Minden query automatikusan tenant-aware!
+// A tenant_id-t NE add hozzá kézzel - Prisma middleware kezeli
+
+// HELYES:
+const partners = await prisma.partner.findMany();
+
+// HELYTELEN:
+const partners = await prisma.partner.findMany({
+  where: { tenantId: currentTenantId } // ❌ Ne csináld!
+});
+```
+
+**RLS Policy:** PostgreSQL RLS automatikusan szűri: `current_setting('app.current_tenant_id')`
+
+### API Konvenciók
+
+```typescript
+// REST endpoint naming
+GET    /api/v1/rentals           // Lista
+GET    /api/v1/rentals/:id       // Egy elem
+POST   /api/v1/rentals           // Létrehozás
+PATCH  /api/v1/rentals/:id       // Részleges frissítés
+DELETE /api/v1/rentals/:id       // Törlés
+
+// Response format
+{
+  "data": { ... },               // Siker esetén
+  "error": { "code": "...", "message": "..." }  // Hiba esetén
+}
+```
+
+### Git Commit Konvenciók
+
+```
+<type>(<scope>): <subject>
+
+Types: feat, fix, docs, style, refactor, test, chore
+Scope: package neve (auth, rental-core, stb.)
+
+Példák:
+feat(rental-core): add late fee calculation
+fix(auth): resolve token refresh race condition
+test(sales-invoice): add VAT calculation property tests
+```
+
+### Pre-commit Hook
+
+Commit előtt automatikusan fut: `lint-staged` + TypeScript check
+
 ## Fejlesztési Irányelvek
 
 1. **BMAD kötelező** - Minden feladat workflow-n keresztül
-2. **TDD/ATDD hibrid** - Lásd development-principles.md
+2. **TDD/ATDD hibrid** - Lásd `docs/kgc3-development-principles.md`
 3. **Magyar nyelv** - Dokumentumok és kommunikáció magyarul
 4. **ADR változásnál** - Új ADR készítése architektúra döntésekhez
-5. **Package határok** - @kgc/* scope, egyértelmű függőségek
+5. **Package határok** - @kgc/* scope, angol nevek, egyértelmű függőségek
 6. **Code review** - Adversarial, minimum 3-10 probléma találása
+7. **Multi-tenancy** - Soha ne adj kézzel tenant_id-t a query-khez
 
 ## Licensz
 
