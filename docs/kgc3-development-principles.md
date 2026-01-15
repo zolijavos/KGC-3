@@ -1,13 +1,14 @@
 # KGC ERP - Fejlesztési Alapelvek
 
-**Verzió:** 2.0
+**Verzió:** 2.1
 **Készült:** 2026-01-15
-**Státusz:** DRAFT - Folyamatosan frissítendő
+**Státusz:** AKTÍV
 
 ---
 
 ## TARTALOMJEGYZÉK
 
+0. [Package Elnevezési Konvenció](#0-package-elnevezési-konvenció)
 1. [Fejlesztési Metodológia](#1-fejlesztési-metodológia)
 2. [TDD vs Tradicionális - Döntési Mátrix](#2-tdd-vs-tradicionális---döntési-mátrix)
 3. [ATDD - Acceptance Test-Driven Development](#3-atdd---acceptance-test-driven-development)
@@ -16,6 +17,52 @@
 6. [Teszt Piramis](#6-teszt-piramis)
 7. [Code Review Szabályok](#7-code-review-szabályok)
 8. [Automatizálási Célok](#8-automatizálási-célok)
+
+---
+
+## 0. PACKAGE ELNEVEZÉSI KONVENCIÓ
+
+> **FONTOS:** A projekt angol nyelvű package neveket használ (nemzetközi npm/TypeScript konvenció).
+
+### Package Mapping (Üzleti domain → Package név)
+
+| Üzleti Domain | Package | Teljes név |
+|---------------|---------|------------|
+| **CORE** | | |
+| Autentikáció | auth | @kgc/auth |
+| Tenant kezelés | tenant | @kgc/tenant |
+| Audit log | audit | @kgc/audit |
+| Konfiguráció | config | @kgc/config |
+| Közös | common | @kgc/common |
+| **SHARED** | | |
+| UI komponensek | ui | @kgc/ui |
+| Utility-k | utils | @kgc/utils |
+| Típusok | types | @kgc/types |
+| Lokalizáció | i18n | @kgc/i18n |
+| Teszt segédek | testing | @kgc/testing |
+| **BÉRLÉS** | | |
+| Bérlés üzleti logika | rental-core | @kgc/rental-core |
+| Bérlés checkout/kaució | rental-checkout | @kgc/rental-checkout |
+| Bérlési szerződés | rental-contract | @kgc/rental-contract |
+| Bérgép készlet | rental-inventory | @kgc/rental-inventory |
+| **SZERVIZ** | | |
+| Szerviz üzleti logika | service-core | @kgc/service-core |
+| Munkalap | service-worksheet | @kgc/service-worksheet |
+| Garancia | service-warranty | @kgc/service-warranty |
+| Alkatrész/norma | service-parts | @kgc/service-parts |
+| **ÉRTÉKESÍTÉS** | | |
+| Értékesítés logika | sales-core | @kgc/sales-core |
+| POS/pénztár | sales-pos | @kgc/sales-pos |
+| Számlázás | sales-invoice | @kgc/sales-invoice |
+| Árajánlat | sales-quote | @kgc/sales-quote |
+| **INTEGRÁCIÓ** | | |
+| NAV Online | nav-online | @kgc/nav-online |
+| MyPos fizetés | mypos | @kgc/mypos |
+| Számlázz.hu | szamlazz-hu | @kgc/szamlazz-hu |
+| Twenty CRM | twenty-crm | @kgc/twenty-crm |
+| Chatwoot | chatwoot | @kgc/chatwoot |
+| Horilla HR | horilla-hr | @kgc/horilla-hr |
+| Email gateway | email-gateway | @kgc/email-gateway |
 
 ---
 
@@ -780,10 +827,10 @@ npx stryker run --mutate "packages/berles-berles/src/**/*.ts"
 | Package | TDD % | Prioritás | Indoklás |
 |---------|-------|-----------|----------|
 | `@kgc/auth` | **90%** | KÖTELEZŐ | Biztonsági kritikus |
-| `@kgc/users` | 70% | Magas | RBAC, permission logic |
+| `@kgc/common` | 70% | Magas | RBAC, permission logic |
 | `@kgc/tenant` | **85%** | KÖTELEZŐ | Multi-tenant izoláció |
 | `@kgc/config` | 40% | Közepes | Feature flag logic TDD |
-| `@kgc/ui` | 20% | Alacsony | Storybook + vizuális teszt |
+| `@kgc/audit` | 60% | Közepes | Audit trail logika |
 
 #### Auth Modul - TDD Részletek
 
@@ -805,11 +852,11 @@ npx stryker run --mutate "packages/berles-berles/src/**/*.ts"
 
 | Package | TDD % | Fókusz területek |
 |---------|-------|------------------|
-| `@kgc/partner` | 50% | Validációk (adószám, email) |
-| `@kgc/cikk` | 40% | Árazási logika |
-| `@kgc/keszlet` | **75%** | Foglalás, készlet számítás |
-| `@kgc/szamla` | **85%** | ÁFA, összeg számítás, NAV XML |
-| `@kgc/nav` | **80%** | XML builder, response parser |
+| `@kgc/types` | 30% | Type definitions, validációk |
+| `@kgc/utils` | **70%** | Pure functions, számítások |
+| `@kgc/ui` | 20% | Storybook + vizuális teszt |
+| `@kgc/i18n` | 30% | Lokalizációs logika |
+| `@kgc/testing` | 50% | Test utilities, fixtures |
 
 #### Készlet Modul - TDD Map
 
@@ -840,10 +887,10 @@ describe('KeszletService', () => {
 
 | Package | TDD % | TDD Fókusz |
 |---------|-------|------------|
-| `@kgc/munkalap` | 60% | Státusz átmenetek, díjszámítás |
-| `@kgc/arajanlat` | 55% | Kalkuláció, konverzió |
-| `@kgc/garancia` | **70%** | Feltétel ellenőrzés, határidők |
-| `@kgc/norma` | **80%** | Makita norma lookup, idő számítás |
+| `@kgc/service-core` | 55% | Szerviz üzleti logika |
+| `@kgc/service-worksheet` | 60% | Státusz átmenetek, díjszámítás |
+| `@kgc/service-warranty` | **70%** | Feltétel ellenőrzés, határidők |
+| `@kgc/service-parts` | **80%** | Makita norma lookup, idő számítás |
 
 #### Munkalap Státusz Machine - TDD Példa
 
@@ -878,10 +925,10 @@ describe('MunkalapStateMachine', () => {
 
 | Package | TDD % | TDD Fókusz |
 |---------|-------|------------|
-| `@kgc/bergep` | 50% | Státusz, elérhetőség |
-| `@kgc/berles` | **85%** | Késedelmi díj, időszámítás |
-| `@kgc/szerzodes` | 45% | PDF generálás validation |
-| `@kgc/kaucio` | **90%** | MyPos, visszatartás logika |
+| `@kgc/rental-core` | **85%** | Késedelmi díj, időszámítás |
+| `@kgc/rental-inventory` | 50% | Státusz, elérhetőség |
+| `@kgc/rental-contract` | 45% | PDF generálás validation |
+| `@kgc/rental-checkout` | **90%** | MyPos, kaució visszatartás logika |
 
 #### Bérlés Díjszámítás - TDD Részletek
 
@@ -912,14 +959,14 @@ describe('BerlesDijService', () => {
 })
 ```
 
-### 5.5 ÁRUHÁZ Layer
+### 5.5 ÉRTÉKESÍTÉS Layer
 
 | Package | TDD % | TDD Fókusz |
 |---------|-------|------------|
-| `@kgc/bevetelezes` | 40% | Beszerzési ár validáció |
-| `@kgc/eladas` | **70%** | Kedvezmények, összeg |
-| `@kgc/arres` | **85%** | Árrés kalkuláció, auto-árazás |
-| `@kgc/leltar` | 55% | Eltérés számítás |
+| `@kgc/sales-core` | **70%** | Kedvezmények, összeg, árazás |
+| `@kgc/sales-pos` | **85%** | Pénztár logika, árrés kalkuláció |
+| `@kgc/sales-invoice` | **90%** | ÁFA, összeg számítás, NAV XML |
+| `@kgc/sales-quote` | 55% | Árajánlat kalkuláció, konverzió |
 
 #### Árrés Kalkulátor - TDD Példa
 
@@ -950,9 +997,12 @@ describe('ArresService', () => {
 
 | Package | TDD % | TDD Fókusz |
 |---------|-------|------------|
-| `@kgc/bergep-szerviz-integration` | 60% | ROI számítás |
-| `@kgc/online-foglalas-integration` | 40% | Validációk |
-| `@kgc/riportok` | 50% | Aggregáció logika |
+| `@kgc/nav-online` | **80%** | XML builder, response parser |
+| `@kgc/mypos` | **75%** | Payment token, kaució logika |
+| `@kgc/szamlazz-hu` | **70%** | Számla API integráció |
+| `@kgc/twenty-crm` | 50% | Partner sync, contact lookup |
+| `@kgc/chatwoot` | 40% | Ticket create, status update |
+| `@kgc/horilla-hr` | 40% | Employee lookup, schedule |
 
 ---
 
