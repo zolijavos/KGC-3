@@ -1,0 +1,302 @@
+// This is the Prisma schema for @kgc/cikk module
+// Product Catalog - Item entity with barcode support
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===========================================
+// ITEM (CIKK) ENTITY
+// ===========================================
+
+model Item {
+  id                    String      @id @default(uuid())
+  tenantId              String      @map("tenant_id")
+  code                  String      @db.VarChar(50)   // Cikkszám: PRD-20260116-0001
+  name                  String      @db.VarChar(255)
+  description           String?     @db.Text
+  itemType              ItemType    @map("item_type")
+  status                ItemStatus  @default(ACTIVE)
+
+  // Pricing
+  listPrice             Decimal?    @map("list_price") @db.Decimal(12, 2)  // Listaár (HUF)
+  costPrice             Decimal?    @map("cost_price") @db.Decimal(12, 2)  // Beszerzési ár
+  vatRate               Int         @default(27) @map("vat_rate")          // ÁFA kulcs (%)
+  unitOfMeasure         String      @default("db") @map("unit_of_measure") @db.VarChar(20)
+
+  // Barcode
+  barcode               String?     @db.VarChar(20)   // EAN-13 vonalkód
+  alternativeBarcodes   String[]    @default([]) @map("alternative_barcodes")
+
+  // Category (Story 8-2)
+  categoryId            String?     @map("category_id")
+  category              Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  // Supplier relations (Story 8-3)
+  supplierItems         SupplierItem[]
+
+  // Timestamps
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+
+  // Unique constraints
+  @@unique([tenantId, code], name: "item_tenant_code_unique")
+  @@unique([tenantId, barcode], name: "item_tenant_barcode_unique")
+
+  // Indexes for search performance
+  @@index([tenantId])
+  @@index([status])
+  @@index([itemType])
+  @@index([categoryId])
+  @@index([name])  // For name search
+
+  @@map("items")
+}
+
+// ===========================================
+// ITEM CODE SEQUENCE (for auto-generation)
+// ===========================================
+
+model ItemCodeSequence {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  prefix    String   @db.VarChar(10)    // PRD, PRT, SVC
+  date      String   @db.VarChar(8)     // YYYYMMDD
+  sequence  Int      @default(0)        // Current sequence number
+
+  @@unique([tenantId, prefix, date], name: "item_code_sequence_unique")
+  @@map("item_code_sequences")
+}
+
+// ===========================================
+// ENUMS
+// ===========================================
+
+enum ItemType {
+  PRODUCT  // Termék (eladásra)
+  PART     // Alkatrész (szervizhez)
+  SERVICE  // Szolgáltatás (munkadíj)
+}
+
+enum ItemStatus {
+  ACTIVE        // Aktív cikk
+  INACTIVE      // Soft deleted / inaktív
+  DISCONTINUED  // Kifutott termék
+}
+
+enum CategoryStatus {
+  ACTIVE    // Aktív kategória
+  INACTIVE  // Soft deleted / inaktív
+}
+
+// ===========================================
+// CATEGORY (CIKKCSOPORT) ENTITY - Story 8-2
+// ===========================================
+
+model Category {
+  id          String         @id @default(uuid())
+  tenantId    String         @map("tenant_id")
+  code        String         @db.VarChar(50)   // Kategória kód (unique per tenant)
+  name        String         @db.VarChar(255)
+  description String?        @db.Text
+  status      CategoryStatus @default(ACTIVE)
+
+  // Hierarchy - self-referencing FK
+  parentId    String?        @map("parent_id")
+  parent      Category?      @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[]     @relation("CategoryHierarchy")
+
+  // Materialized path for efficient tree queries
+  path        String         @default("/") @db.VarChar(500)  // e.g., /root/parent/child
+  depth       Int            @default(0)                      // 0-4 (max 5 levels)
+
+  // Items in this category
+  items       Item[]
+
+  // Timestamps
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  // Unique constraints
+  @@unique([tenantId, code], name: "category_tenant_code_unique")
+
+  // Indexes
+  @@index([tenantId])
+  @@index([parentId])
+  @@index([status])
+  @@index([path])
+
+  @@map("categories")
+}
+
+// ===========================================
+// SUPPLIER (BESZÁLLÍTÓ) ENTITY - Story 8-3
+// ===========================================
+
+model Supplier {
+  id          String         @id @default(uuid())
+  tenantId    String         @map("tenant_id")
+  code        String         @db.VarChar(50)   // MAKITA, STIHL, HIKOKI
+  name        String         @db.VarChar(255)
+  description String?        @db.Text
+  contactName String?        @map("contact_name") @db.VarChar(255)
+  email       String?        @db.VarChar(255)
+  phone       String?        @db.VarChar(50)
+  website     String?        @db.VarChar(255)
+  status      SupplierStatus @default(ACTIVE)
+
+  // Relations
+  supplierItems SupplierItem[]
+
+  // Timestamps
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  @@unique([tenantId, code], name: "supplier_tenant_code_unique")
+  @@index([tenantId])
+  @@index([status])
+  @@map("suppliers")
+}
+
+enum SupplierStatus {
+  ACTIVE    // Aktív beszállító
+  INACTIVE  // Inaktív beszállító
+}
+
+// ===========================================
+// SUPPLIER-ITEM JUNCTION - Story 8-3
+// ===========================================
+
+model SupplierItem {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  supplierId      String   @map("supplier_id")
+  itemId          String   @map("item_id")
+  supplierCode    String   @map("supplier_code") @db.VarChar(100) // Beszállító cikkszám
+  costPrice       Decimal  @map("cost_price") @db.Decimal(12, 2)
+  currency        String   @default("HUF") @db.VarChar(3)
+  leadTimeDays    Int?     @map("lead_time_days") // Szállítási idő napokban
+  minOrderQty     Int?     @map("min_order_qty")  // Minimum rendelési mennyiség
+  isPrimary       Boolean  @default(false) @map("is_primary") // Elsődleges beszállító
+
+  // Relations
+  supplier        Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  item            Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  priceHistory    SupplierItemPriceHistory[]
+
+  // Timestamps
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, supplierId, itemId], name: "supplier_item_unique")
+  @@unique([tenantId, supplierId, supplierCode], name: "supplier_code_unique")
+  @@index([tenantId])
+  @@index([itemId])
+  @@index([supplierId])
+  @@map("supplier_items")
+}
+
+// ===========================================
+// PRICE HISTORY - Story 8-3
+// ===========================================
+
+model SupplierItemPriceHistory {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  supplierItemId  String   @map("supplier_item_id")
+  costPrice       Decimal  @map("cost_price") @db.Decimal(12, 2)
+  currency        String   @default("HUF") @db.VarChar(3)
+  effectiveFrom   DateTime @default(now()) @map("effective_from")
+  source          String?  @db.VarChar(50) // MANUAL, CSV_IMPORT, API_SYNC
+
+  // Relations
+  supplierItem    SupplierItem @relation(fields: [supplierItemId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([supplierItemId])
+  @@index([effectiveFrom])
+  @@map("supplier_item_price_history")
+}
+
+// ===========================================
+// PRICE RULE (ÁRSZABÁLY) ENTITY - Story 8-5
+// ADR-012: Kombinált hierarchikus árazási rendszer
+// ===========================================
+
+model PriceRule {
+  id                String               @id @default(uuid())
+  tenantId          String               @map("tenant_id")
+  name              String               @db.VarChar(100)
+  description       String?              @db.Text
+  ruleType          PriceRuleType        @map("rule_type")
+  calculationType   PriceCalculationType @map("calculation_type")
+  value             Decimal              @db.Decimal(12, 2) // Fix ár vagy százalék
+  priority          Int                  @default(0)        // Magasabb = nagyobb prioritás
+  status            PriceRuleStatus      @default(ACTIVE)
+
+  // Validity period (for promotions)
+  validFrom         DateTime?            @map("valid_from")
+  validTo           DateTime?            @map("valid_to")
+
+  // Type-specific foreign keys
+  itemId            String?              @map("item_id")       // ITEM rule
+  categoryId        String?              @map("category_id")   // CATEGORY rule
+  supplierId        String?              @map("supplier_id")   // SUPPLIER rule
+  partnerId         String?              @map("partner_id")    // PARTNER rule
+
+  // Promotion-specific fields
+  itemIds           String[]             @default([]) @map("item_ids")       // Érintett cikkek
+  categoryIds       String[]             @default([]) @map("category_ids")   // Érintett kategóriák
+  minQuantity       Int?                 @map("min_quantity")                // Minimum mennyiség
+  maxUsageCount     Int?                 @map("max_usage_count")             // Max felhasználás
+  currentUsageCount Int                  @default(0) @map("current_usage_count")
+
+  // Timestamps
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+  createdBy         String               @map("created_by")
+
+  @@index([tenantId])
+  @@index([ruleType])
+  @@index([status])
+  @@index([itemId])
+  @@index([categoryId])
+  @@index([supplierId])
+  @@index([partnerId])
+  @@index([validFrom])
+  @@index([validTo])
+  @@map("price_rules")
+}
+
+// Price rule enums
+enum PriceRuleType {
+  PROMOTION  // Akció - time-limited
+  PARTNER    // Partner kedvezmény
+  ITEM       // Egyedi cikk ár
+  SUPPLIER   // Beszállító szintű
+  CATEGORY   // Cikkcsoport szintű
+  LIST       // Listaár (alapértelmezett)
+}
+
+enum PriceCalculationType {
+  FIXED       // Fix ár (HUF)
+  PERCENTAGE  // Százalékos árrés
+  DISCOUNT    // Kedvezmény % (listaárból)
+  LIST_PRICE  // Beszállítói listaár használata
+}
+
+enum PriceRuleStatus {
+  ACTIVE     // Aktív szabály
+  INACTIVE   // Inaktív
+  SCHEDULED  // Jövőbeli érvényesség
+  EXPIRED    // Lejárt
+}

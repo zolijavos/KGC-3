@@ -44,6 +44,9 @@ enum UserStatus {
 /// User entity for authentication
 /// AC1: User with email/password for JWT login
 /// AC2: Password stored as bcrypt hash
+/// Story 1.4: PIN hash for kiosk mode
+/// Story 1.5: Password reset tokens relation
+/// Story 2.1: Soft delete support (deletedAt, deletedEmail)
 model User {
   id           String     @id @default(uuid()) @db.Uuid
   email        String     @unique @db.VarChar(255)
@@ -51,19 +54,32 @@ model User {
   name         String     @db.VarChar(255)
   role         Role       @default(OPERATOR)
   tenantId     String     @map("tenant_id") @db.Uuid
+  locationId   String?    @map("location_id") @db.Uuid // Story 1.4: Location for PIN lookup
   status       UserStatus @default(ACTIVE)
+  pinHash      String?    @map("pin_hash") @db.VarChar(255) // Story 1.4: bcrypt PIN hash
+
+  // Story 2.1: Soft delete support
+  deletedAt    DateTime?  @map("deleted_at") @db.Timestamptz
+  deletedEmail String?    @map("deleted_email") @db.VarChar(255) // Original email before _deleted_TIMESTAMP suffix
+
+  // Story 2.6: User Profile fields
+  phone        String?    @db.VarChar(20)
+  avatarUrl    String?    @map("avatar_url") @db.VarChar(500)
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
-  refreshTokens RefreshToken[]
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[] // Story 1.5
 
   // Indexes for performance
   @@index([email])
   @@index([tenantId])
   @@index([role])
+  @@index([status]) // Story 2.1: For filtering by status
+  @@index([tenantId, locationId]) // Story 1.4: For PIN lookup
   @@map("users")
 }
 
@@ -107,4 +123,62 @@ model LoginAttempt {
   @@index([email, ipAddress, createdAt])
   @@index([ipAddress, createdAt])
   @@map("login_attempts")
+}
+
+/// Password reset token for forgot password flow
+/// Story 1.5: Password Reset Flow
+/// AC1: Reset token with 1h TTL
+/// AC3: One-time use token
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  tokenHash String    @unique @map("token_hash") @db.VarChar(128) // SHA-256 hash of token
+  userId    String    @map("user_id") @db.Uuid
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  isUsed    Boolean   @default(false) @map("is_used")
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+/// Trusted device for kiosk mode PIN login
+/// Story 1.4: PIN Kód Belépés (Kiosk Mód)
+/// AC2: Only registered devices can use PIN
+model TrustedDevice {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  locationId   String   @map("location_id") @db.Uuid
+  deviceName   String   @map("device_name") @db.VarChar(255)
+  status       String   @default("ACTIVE") @db.VarChar(20) // ACTIVE, SUSPENDED, REVOKED
+  lastUsedAt   DateTime? @map("last_used_at") @db.Timestamptz
+  registeredAt DateTime @default(now()) @map("registered_at") @db.Timestamptz
+
+  @@index([tenantId, locationId])
+  @@index([status])
+  @@map("trusted_devices")
+}
+
+/// PIN attempt tracking for kiosk lockout
+/// Story 1.4: PIN Kód Belépés (Kiosk Mód)
+/// AC3: 3 failed attempts = lockout
+model PinAttempt {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  deviceId      String    @map("device_id") @db.Uuid
+  attemptCount  Int       @default(0) @map("attempt_count")
+  lockedUntil   DateTime? @map("locked_until") @db.Timestamptz
+  lastAttemptAt DateTime  @default(now()) @map("last_attempt_at") @db.Timestamptz
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([userId, deviceId])
+  @@index([lockedUntil])
+  @@map("pin_attempts")
 }

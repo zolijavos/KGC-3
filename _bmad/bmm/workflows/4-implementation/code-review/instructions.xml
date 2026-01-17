@@ -41,6 +41,31 @@
 
     <invoke-protocol name="discover_inputs" />
     <action>Load {project_context} for coding standards (if exists)</action>
+
+    <!-- DUAL-AI: Create/load review document -->
+    <action>Extract {{epic_num}} from story_key (first number before dash, e.g., "1-2-foo" → "1")</action>
+    <action>Set {{review_file}} = {reviews_dir}/epic-{{epic_num}}/{{story_key}}-review.md</action>
+    <action>Create directory {reviews_dir}/epic-{{epic_num}} if not exists</action>
+
+    <check if="{{review_file}} does NOT exist">
+      <action>Create review file from {template} with:
+        - story: {{story_key}}
+        - story_file: story path
+        - files_to_review: from story File List
+        - created: current timestamp
+        - status: "round-1"
+        - round: 1
+        - claude_done: false
+        - gemini_done: false
+      </action>
+      <output>📝 Dual-AI review fájl létrehozva: {{review_file}}</output>
+    </check>
+
+    <check if="{{review_file}} exists">
+      <action>Read existing review file frontmatter</action>
+      <action>Extract current round, claude_done, gemini_done status</action>
+      <output>📄 Meglévő review fájl betöltve: {{review_file}} (Round {{round}})</output>
+    </check>
   </step>
 
   <step n="2" goal="Build review attack plan">
@@ -106,6 +131,11 @@
       </action>
       <action>Find at least 3 more specific, actionable issues</action>
     </check>
+
+    <!-- DUAL-AI: Write findings to review document -->
+    <action>Write Claude findings to CLAUDE:ROUND:{{round}} section in {{review_file}}</action>
+    <action>Update frontmatter: claude_done: true</action>
+    <action>Save {{review_file}}</action>
   </step>
 
   <step n="4" goal="Present findings and fix them">
@@ -116,6 +146,7 @@
     <output>**🔥 CODE REVIEW FINDINGS, {user_name}!**
 
       **Story:** {{story_file}}
+      **Review Document:** {{review_file}}
       **Git vs Story Discrepancies:** {{git_discrepancy_count}} found
       **Issues Found:** {{high_count}} High, {{medium_count}} Medium, {{low_count}} Low
 
@@ -138,13 +169,34 @@
       - Git commit message quality
     </output>
 
+    <!-- DUAL-AI: Gemini instructions -->
+    <check if="gemini_done == false">
+      <output>
+---
+
+**🤖 DUAL-AI REVIEW - Gemini Következő Lépés:**
+
+Claude Round {{round}} KÉSZ. Indítsd el Gemini-t külön terminálban:
+
+```bash
+gemini "Read and follow _bmad/bmm/prompts/code-review-gemini.md to review {{review_file}}"
+```
+
+Miután Gemini is végzett, folytasd itt:
+```
+/bmad:bmm:workflows:code-review {{story_path}}
+```
+      </output>
+    </check>
+
     <ask>What should I do with these issues?
 
       1. **Fix them automatically** - I'll update the code and tests
       2. **Create action items** - Add to story Tasks/Subtasks for later
       3. **Show me details** - Deep dive into specific issues
+      4. **Wait for Gemini** - Continue after Gemini completes review
 
-      Choose [1], [2], or specify which issue to examine:</ask>
+      Choose [1], [2], [3], or [4]:</ask>
 
     <check if="user chooses 1">
       <action>Fix all HIGH and MEDIUM issues in the code</action>
@@ -165,6 +217,17 @@
     <check if="user chooses 3">
       <action>Show detailed explanation with code examples</action>
       <action>Return to fix decision</action>
+    </check>
+
+    <check if="user chooses 4">
+      <output>⏳ Várakozás Gemini review-ra...
+
+Indítsd el Gemini-t, majd térj vissza és futtasd újra:
+```
+/bmad:bmm:workflows:code-review {{story_path}}
+```
+      </output>
+      <action>Exit workflow - resume after Gemini completes</action>
     </check>
   </step>
 
@@ -219,6 +282,7 @@
       **Story Status:** {{new_status}}
       **Issues Fixed:** {{fixed_count}}
       **Action Items Created:** {{action_count}}
+      **Review Document:** {{review_file}}
 
       {{#if new_status == "done"}}Code review complete!{{else}}Address the action items and continue development.{{/if}}
     </output>

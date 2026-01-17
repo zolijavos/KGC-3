@@ -18,8 +18,8 @@ export interface JwtPayload {
   role?: Role | string;
   /** Tenant ID for multi-tenancy - ADR-001 (only in access tokens) */
   tenantId?: string;
-  /** Token type: 'access' or 'refresh' for type-safe validation */
-  type?: 'access' | 'refresh';
+  /** Token type: 'access', 'refresh', or 'kiosk' for type-safe validation */
+  type?: 'access' | 'refresh' | 'kiosk';
   /** Issued at timestamp (seconds since epoch) */
   iat: number;
   /** Expiration timestamp (seconds since epoch) */
@@ -45,6 +45,8 @@ export interface TokenServiceOptions {
   accessTokenTtl?: string;
   /** Refresh token TTL (default: '7d') */
   refreshTokenTtl?: string;
+  /** Kiosk token TTL (default: '4h') - Story 1.4 */
+  kioskTokenTtl?: string;
 }
 
 /**

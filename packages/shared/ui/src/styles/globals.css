@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+
+    /* KGC Brand - Franchise theming (AC#6) */
+    --brand-primary: 222.2 47.4% 11.2%;
+    --brand-secondary: 210 40% 96.1%;
+    --brand-accent: 210 100% 50%;
+
+    /* Sidebar (Story 5.2) */
+    --sidebar: 0 0% 98%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+
+    /* Sidebar dark mode */
+    --sidebar: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+  }
+
+  /*
+   * Franchise Theming (AC#6 - Multi-tenant white-label support)
+   *
+   * Usage: Add data-tenant attribute to <html> or <body> element
+   * Example: <html data-tenant="franchise-a">
+   *
+   * The tenant value comes from the authenticated user's tenant configuration.
+   * Backend provides tenant_id which maps to these CSS selectors.
+   */
+
+  /* Example: Franchise A - Blue theme */
+  [data-tenant="franchise-a"] {
+    --brand-primary: 210 100% 50%;
+    --brand-secondary: 210 90% 95%;
+    --brand-accent: 45 100% 50%;
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 100%;
+  }
+
+  /* Example: Franchise B - Green theme */
+  [data-tenant="franchise-b"] {
+    --brand-primary: 142 76% 36%;
+    --brand-secondary: 142 70% 95%;
+    --brand-accent: 38 92% 50%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+  }
+
+  /* Example: Franchise C - Orange/Red theme */
+  [data-tenant="franchise-c"] {
+    --brand-primary: 24 95% 53%;
+    --brand-secondary: 24 90% 95%;
+    --brand-accent: 0 84% 60%;
+    --primary: 24 95% 53%;
+    --primary-foreground: 0 0% 100%;
+  }
+
+  /*
+   * Dark mode + Tenant combination
+   * When both .dark class and data-tenant are present,
+   * tenant colors are preserved but backgrounds use dark theme.
+   */
+  .dark[data-tenant="franchise-a"],
+  [data-tenant="franchise-a"] .dark {
+    --brand-primary: 210 100% 60%;
+    --primary: 210 100% 60%;
+  }
+
+  .dark[data-tenant="franchise-b"],
+  [data-tenant="franchise-b"] .dark {
+    --brand-primary: 142 76% 46%;
+    --primary: 142 76% 46%;
+  }
+
+  .dark[data-tenant="franchise-c"],
+  [data-tenant="franchise-c"] .dark {
+    --brand-primary: 24 95% 63%;
+    --primary: 24 95% 63%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

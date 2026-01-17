@@ -1,7 +1,7 @@
 # KGC ERP - Fejlesztési Alapelvek
 
-**Verzió:** 2.1
-**Készült:** 2026-01-15
+**Verzió:** 2.2
+**Készült:** 2026-01-16
 **Státusz:** AKTÍV
 
 ---
@@ -16,6 +16,9 @@
 5. [Modul-specifikus Stratégia](#5-modul-specifikus-stratégia)
 6. [Teszt Piramis](#6-teszt-piramis)
 7. [Code Review Szabályok](#7-code-review-szabályok)
+   - 7.1 Dual-AI Adversarial Code Review
+   - 7.2 TDD Ellenőrzés
+   - 7.3 Automatikus Ellenőrzések (CI)
 8. [Automatizálási Célok](#8-automatizálási-célok)
 
 ---
@@ -1067,7 +1070,49 @@ describe('ArresService', () => {
 
 ## 7. CODE REVIEW SZABÁLYOK
 
-### 7.1 TDD Ellenőrzés
+### 7.1 Dual-AI Adversarial Code Review
+
+**Claude Code + Gemini CLI** együttműködése code review-kra. Részletes dokumentáció: `implementation-artifacts/reviews/README.md`
+
+```
+Round 1: FÜGGETLEN review (Claude + Gemini párhuzamosan)
+         - Egyik AI NEM olvassa a másik szekcióját
+         - Minimum 3 issue per reviewer (BMAD adversarial követelmény)
+
+Round 2: Kereszt-analízis
+         - Elemzik egymás Round 1 findings-ait
+         - AGREE / DISAGREE / EXPAND válaszok
+         - Consensus javaslat
+
+Round 3: Végső Consensus vagy Eszkaláció
+         - Max 3 round, utána user dönt
+```
+
+**Használat:**
+```bash
+# Review fájl létrehozás
+cd implementation-artifacts/reviews
+./create-review.sh 1-2-token-refresh packages/core/auth/src/services/*.ts
+
+# Claude review indítás
+Read and follow _bmad/bmm/prompts/code-review-claude.md
+to review implementation-artifacts/reviews/epic-1/1-2-token-refresh-review.md
+
+# Gemini review indítás (külön terminál)
+gemini "Read and follow _bmad/bmm/prompts/code-review-gemini.md to review implementation-artifacts/reviews/epic-1/1-2-token-refresh-review.md"
+```
+
+**Fájl struktúra:**
+```
+implementation-artifacts/reviews/
+├── README.md
+├── _TEMPLATE.md
+├── create-review.sh
+└── epic-{N}/
+    └── {story-id}-review.md
+```
+
+### 7.2 TDD Ellenőrzés
 
 Code review során ellenőrizni:
 
@@ -1076,7 +1121,7 @@ Code review során ellenőrizni:
 - [ ] **Edge cases**: Boundary conditions tesztelve?
 - [ ] **Naming**: Test nevek leírják az expected behavior-t?
 
-### 7.2 Automatikus Ellenőrzések (CI)
+### 7.3 Automatikus Ellenőrzések (CI)
 
 ```yaml
 # .github/workflows/test.yml
@@ -1201,6 +1246,7 @@ describe('MyService', () => {
 
 | Verzió | Dátum | Változás |
 |--------|-------|----------|
+| 2.2 | 2026-01-16 | Dual-AI Adversarial Code Review (Claude + Gemini) hozzáadva |
 | 2.0 | 2026-01-15 | ATDD, Contract Testing, Property-Based, Visual Regression, Load Testing, Mutation Testing hozzáadva |
 | 1.0 | 2026-01-15 | Kezdeti verzió - TDD alapok |
 

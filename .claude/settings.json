@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit",
+        "command": "/root/LABS/KGCERP/KGC-3/.claude/hooks/discord-notification.sh"
+      }
+    ]
+  }
+}

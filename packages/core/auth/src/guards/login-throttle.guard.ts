@@ -15,14 +15,13 @@ import type { Response } from 'express';
 export class LoginThrottlerGuard extends ThrottlerGuard {
   /**
    * Get tracker for rate limiting (uses IP address)
+   * SECURITY: Prioritize req.ip over x-forwarded-for to prevent IP spoofing attacks.
+   * Only use x-forwarded-for when the application is explicitly configured behind a trusted proxy.
    */
   protected async getTracker(req: Record<string, unknown>): Promise<string> {
-    // Get IP from request (supports proxies via x-forwarded-for)
-    const forwardedFor = req['headers'] as Record<string, string> | undefined;
-    const ip =
-      forwardedFor?.['x-forwarded-for']?.split(',')[0]?.trim() ??
-      (req['ip'] as string) ??
-      'unknown';
+    // SECURITY FIX: Use req.ip as primary source to prevent x-forwarded-for spoofing
+    // req.ip is set by Express based on trust proxy settings
+    const ip = (req['ip'] as string | undefined) ?? 'unknown';
     return ip;
   }
 

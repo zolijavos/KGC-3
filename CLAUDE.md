@@ -69,7 +69,8 @@ KGC-3/
 │
 ├── implementation-artifacts/ # BMAD Fázis 4 OUTPUT
 │   ├── sprint-status.yaml   # Sprint állapot
-│   └── stories/             # Implementált story-k
+│   ├── stories/             # Implementált story-k
+│   └── reviews/             # Dual-AI code review-k (epic mappákban)
 │
 ├── docs/                    # Projekt tudásbázis
 │   ├── project-context.md   # AI agent context (kritikus szabályok)
@@ -174,6 +175,40 @@ KGC-3/
 ### Story Életciklus
 
 `backlog → drafted → ready-for-dev → in-progress → review → done`
+
+## Dual-AI Adversarial Code Review
+
+**Claude Code + Gemini CLI** együttműködése code review-kra. Lásd: `implementation-artifacts/reviews/README.md`
+
+### Folyamat
+
+```
+Round 1: FÜGGETLEN review (Claude + Gemini párhuzamosan, nem olvassák egymást)
+Round 2: Kereszt-analízis (elemzik egymás findings-ait + új review)
+Round 3: Consensus vagy eszkaláció
+```
+
+### Használat
+
+```bash
+# 1. Review fájl létrehozás
+cd implementation-artifacts/reviews
+./create-review.sh 1-2-token-refresh packages/core/auth/src/services/*.ts
+
+# 2. Claude review indítás
+Read and follow _bmad/bmm/prompts/code-review-claude.md
+to review implementation-artifacts/reviews/epic-1/1-2-token-refresh-review.md
+
+# 3. Gemini review indítás (külön terminál)
+gemini "Read and follow _bmad/bmm/prompts/code-review-gemini.md to review implementation-artifacts/reviews/epic-1/1-2-token-refresh-review.md"
+```
+
+### Szabályok
+
+- **Round 1 FÜGGETLEN** - egyik AI sem olvassa a másik szekcióját
+- **Minimum 3 issue** - per reviewer (BMAD adversarial követelmény)
+- **Max 3 round** - utána eszkaláció user-nek
+- **Development principles** - mindkét AI hivatkozik a projekt szabályaira
 
 ## Gyakori Parancsok
 

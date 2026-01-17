@@ -60,6 +60,8 @@ export class PasswordService {
 
     // Validate hash format - bcrypt hashes start with $2a$, $2b$, or $2y$ (PHP origin)
     if (!hashedPassword || !hashedPassword.match(/^\$2[aby]\$/)) {
+      // Log malformed hash for data integrity monitoring (G-M1 fix)
+      console.error('[PasswordService] Malformed bcrypt hash detected - possible data corruption');
       return false;
     }
 
@@ -67,8 +69,9 @@ export class PasswordService {
       // bcrypt.compare is constant-time (timing attack protection)
       const isMatch = await bcrypt.compare(plainPassword, hashedPassword);
       return isMatch;
-    } catch {
-      // Handle any bcrypt errors gracefully
+    } catch (error) {
+      // Log bcrypt errors for debugging while returning false for security
+      console.error('[PasswordService] bcrypt.compare failed:', error);
       return false;
     }
   }

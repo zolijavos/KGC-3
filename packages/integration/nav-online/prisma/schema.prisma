@@ -1,0 +1,198 @@
+// NAV Online Integration Schema
+// Package: @kgc/nav-online
+// ADR-030: NAV Online Számlázás API v3.0 Integráció
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// INVOICE STATUS ENUM
+// ============================================
+enum InvoiceStatus {
+  PENDING            // Várakozik küldésre
+  SENT               // Elküldve, válaszra vár
+  SUCCESS            // Sikeres, NAV-hoz beküldve
+  FAILED_RETRYABLE   // Újrapróbálható hiba
+  FAILED_PERMANENT   // Végleges hiba
+  MANUAL_REQUIRED    // Kézi beavatkozás kell
+  CANCELLED          // Sztornózva
+}
+
+// ============================================
+// INVOICE TYPE ENUM
+// ============================================
+enum InvoiceType {
+  CUSTOMER           // Ügyfél számla
+  PROFORMA           // Proforma számla
+  CORRECTION         // Helyesbítő számla
+  STORNO             // Sztornó számla
+}
+
+// ============================================
+// PAYMENT METHOD ENUM
+// ============================================
+enum PaymentMethod {
+  CASH               // Készpénz
+  CARD               // Bankkártya
+  TRANSFER           // Átutalás
+  COD                // Utánvét
+}
+
+// ============================================
+// NAV INVOICE RECORD
+// ============================================
+model NavInvoice {
+  id                String        @id @default(uuid()) @db.Uuid
+  tenantId          String        @map("tenant_id") @db.Uuid
+
+  // Számla azonosítók
+  internalNumber    String        @map("internal_number") @db.VarChar(50)
+  externalNumber    String?       @map("external_number") @db.VarChar(50)
+  navReference      String?       @map("nav_reference") @db.VarChar(100)
+
+  // Kapcsolat más entitásokhoz
+  partnerId         String        @map("partner_id") @db.Uuid
+  rentalId          String?       @map("rental_id") @db.Uuid
+  serviceOrderId    String?       @map("service_order_id") @db.Uuid
+
+  // Számla típus és státusz
+  invoiceType       InvoiceType   @default(CUSTOMER) @map("invoice_type")
+  status            InvoiceStatus @default(PENDING)
+
+  // Retry tracking
+  retryCount        Int           @default(0) @map("retry_count")
+  lastRetryAt       DateTime?     @map("last_retry_at")
+  nextRetryAt       DateTime?     @map("next_retry_at")
+  errorCode         String?       @map("error_code") @db.VarChar(50)
+  errorMessage      String?       @map("error_message")
+
+  // Számla dátumok
+  invoiceDate       DateTime      @map("invoice_date") @db.Date
+  fulfillmentDate   DateTime      @map("fulfillment_date") @db.Date
+  dueDate           DateTime      @map("due_date") @db.Date
+
+  // Fizetési adatok
+  paymentMethod     PaymentMethod @map("payment_method")
+  netAmount         Decimal       @map("net_amount") @db.Decimal(12, 2)
+  vatAmount         Decimal       @map("vat_amount") @db.Decimal(12, 2)
+  grossAmount       Decimal       @map("gross_amount") @db.Decimal(12, 2)
+  currency          String        @default("HUF") @db.Char(3)
+
+  // PDF tárolás
+  pdfUrl            String?       @map("pdf_url")
+  pdfGeneratedAt    DateTime?     @map("pdf_generated_at")
+
+  // Audit
+  createdAt         DateTime      @default(now()) @map("created_at")
+  createdBy         String        @map("created_by") @db.Uuid
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  // Tételek
+  items             NavInvoiceItem[]
+
+  // Audit log kapcsolat
+  auditLogs         NavAuditLog[]
+
+  @@unique([tenantId, internalNumber])
+  @@index([tenantId, status])
+  @@index([status, nextRetryAt])
+  @@map("nav_invoice")
+}
+
+// ============================================
+// NAV INVOICE ITEM
+// ============================================
+model NavInvoiceItem {
+  id                String      @id @default(uuid()) @db.Uuid
+  invoiceId         String      @map("invoice_id") @db.Uuid
+
+  // Tétel adatok
+  name              String      @db.VarChar(255)
+  quantity          Decimal     @db.Decimal(12, 4)
+  unit              String      @db.VarChar(20)
+  unitPriceNet      Decimal     @map("unit_price_net") @db.Decimal(12, 2)
+
+  // ÁFA adatok
+  vatRate           String      @map("vat_rate") @db.VarChar(10)  // '27', '18', '5', 'AAM', 'TAM', etc.
+  netAmount         Decimal     @map("net_amount") @db.Decimal(12, 2)
+  vatAmount         Decimal     @map("vat_amount") @db.Decimal(12, 2)
+  grossAmount       Decimal     @map("gross_amount") @db.Decimal(12, 2)
+
+  // Kapcsolódó cikk
+  productId         String?     @map("product_id") @db.Uuid
+
+  invoice           NavInvoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("nav_invoice_item")
+}
+
+// ============================================
+// NAV AUDIT LOG
+// ============================================
+model NavAuditLog {
+  id                String      @id @default(uuid()) @db.Uuid
+  tenantId          String      @map("tenant_id") @db.Uuid
+  invoiceId         String?     @map("invoice_id") @db.Uuid
+
+  // Művelet
+  action            String      @db.VarChar(50)  // INVOICE_CREATED, INVOICE_SENT, INVOICE_RETRY, etc.
+
+  // Részletek
+  details           Json?
+
+  // API válasz
+  apiRequest        Json?       @map("api_request")
+  apiResponse       Json?       @map("api_response")
+
+  // Hiba info
+  errorCode         String?     @map("error_code") @db.VarChar(50)
+  errorMessage      String?     @map("error_message")
+
+  // Timestamp
+  createdAt         DateTime    @default(now()) @map("created_at")
+  createdBy         String?     @map("created_by") @db.Uuid
+
+  invoice           NavInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([invoiceId])
+  @@index([action])
+  @@map("nav_audit_log")
+}
+
+// ============================================
+// NAV RETRY QUEUE
+// ============================================
+model NavRetryQueue {
+  id                String      @id @default(uuid()) @db.Uuid
+  tenantId          String      @map("tenant_id") @db.Uuid
+  invoiceId         String      @map("invoice_id") @db.Uuid
+
+  // Queue adatok
+  priority          Int         @default(0)
+  scheduledAt       DateTime    @map("scheduled_at")
+  attempts          Int         @default(0)
+  maxAttempts       Int         @default(5) @map("max_attempts")
+
+  // Státusz
+  isProcessing      Boolean     @default(false) @map("is_processing")
+  processedAt       DateTime?   @map("processed_at")
+
+  // Hiba tracking
+  lastError         String?     @map("last_error")
+
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  @@index([tenantId, scheduledAt])
+  @@index([isProcessing, scheduledAt])
+  @@map("nav_retry_queue")
+}

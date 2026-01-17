@@ -26,6 +26,7 @@
     "baseUrl": ".",
     "paths": {
       "@kgc/auth": ["packages/core/auth/src"],
+      "@kgc/users": ["packages/core/users/src"],
       "@kgc/tenant": ["packages/core/tenant/src"],
       "@kgc/audit": ["packages/core/audit/src"],
       "@kgc/config": ["packages/core/config/src"],

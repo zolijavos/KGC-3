@@ -1,0 +1,41 @@
+{
+  "name": "@kgc/rental-checkout",
+  "version": "0.0.1",
+  "description": "KGC Rental Checkout & Deposit module - kaució kezelés, MyPOS integráció, visszatartás",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@kgc/rental-core": "workspace:*",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "eslint": "^8.57.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^2.1.0"
+  },
+  "peerDependencies": {
+    "@nestjs/core": "^10.0.0",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.0"
+  }
+}

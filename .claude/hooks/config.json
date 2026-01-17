@@ -1,0 +1,6 @@
+{
+  "allowedProjects": ["KGC-3"],
+  "channelId": "1455912082112516323",
+  "timeoutSeconds": 300,
+  "defaultAction": "approve"
+}

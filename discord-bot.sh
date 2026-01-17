@@ -1,0 +1,1 @@
+.claude/hooks/start-bot.sh

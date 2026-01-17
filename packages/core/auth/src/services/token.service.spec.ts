@@ -74,6 +74,28 @@ describe('TokenService', () => {
           'User ID is required'
         );
       });
+
+      // Code Review Fix: Tests for extended validateUser validation
+      it('should throw when user.email is missing', async () => {
+        const invalidUser = { ...mockUser, email: undefined } as unknown as UserForToken;
+        await expect(tokenService.generateAccessToken(invalidUser)).rejects.toThrow(
+          'User email is required'
+        );
+      });
+
+      it('should throw when user.role is missing', async () => {
+        const invalidUser = { ...mockUser, role: undefined } as unknown as UserForToken;
+        await expect(tokenService.generateAccessToken(invalidUser)).rejects.toThrow(
+          'User role is required'
+        );
+      });
+
+      it('should throw when user.tenantId is missing', async () => {
+        const invalidUser = { ...mockUser, tenantId: undefined } as unknown as UserForToken;
+        await expect(tokenService.generateAccessToken(invalidUser)).rejects.toThrow(
+          'User tenantId is required'
+        );
+      });
     });
   });
 
@@ -258,6 +280,94 @@ describe('TokenService', () => {
       const isValid = await tokenService.validateRefreshToken('invalid.token.here');
 
       expect(isValid).toBe(false);
+    });
+  });
+
+  // ============================================
+  // Story 1.4: Kiosk Token Support
+  // ============================================
+
+  describe('generateKioskToken() - Story 1.4', () => {
+    describe('happy path', () => {
+      it('should generate a valid JWT kiosk token', async () => {
+        const token = await tokenService.generateKioskToken(mockUser);
+
+        // JWT format: header.payload.signature
+        expect(token).toMatch(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/);
+      });
+
+      it('should include correct payload data in token', async () => {
+        const token = await tokenService.generateKioskToken(mockUser);
+        const payload = tokenService.decodeToken(token);
+
+        expect(payload).toMatchObject({
+          sub: mockUser.id,
+          email: mockUser.email,
+          role: mockUser.role,
+          tenantId: mockUser.tenantId,
+          type: 'kiosk', // AC1: Kiosk token type
+        });
+      });
+
+      it('should set expiration to 4 hours from now (AC1)', async () => {
+        const beforeTime = Math.floor(Date.now() / 1000);
+        const token = await tokenService.generateKioskToken(mockUser);
+        const afterTime = Math.floor(Date.now() / 1000);
+
+        const payload = tokenService.decodeToken(token);
+        const expectedExp = 4 * 60 * 60; // 4 hours in seconds
+
+        expect(payload?.exp).toBeGreaterThanOrEqual(beforeTime + expectedExp - 1);
+        expect(payload?.exp).toBeLessThanOrEqual(afterTime + expectedExp + 1);
+      });
+    });
+
+    describe('error handling', () => {
+      it('should throw when user is null', async () => {
+        await expect(
+          tokenService.generateKioskToken(null as unknown as UserForToken)
+        ).rejects.toThrow('User data is required');
+      });
+    });
+  });
+
+  describe('validateKioskToken() - Story 1.4', () => {
+    it('should return true for valid kiosk token', async () => {
+      const token = await tokenService.generateKioskToken(mockUser);
+
+      const isValid = await tokenService.validateKioskToken(token);
+
+      expect(isValid).toBe(true);
+    });
+
+    it('should return false for access token passed as kiosk token', async () => {
+      const token = await tokenService.generateAccessToken(mockUser);
+
+      const isValid = await tokenService.validateKioskToken(token);
+
+      expect(isValid).toBe(false);
+    });
+
+    it('should return false for refresh token passed as kiosk token', async () => {
+      const token = await tokenService.generateRefreshToken(mockUser);
+
+      const isValid = await tokenService.validateKioskToken(token);
+
+      expect(isValid).toBe(false);
+    });
+
+    it('should return false for invalid token', async () => {
+      const isValid = await tokenService.validateKioskToken('invalid.token.here');
+
+      expect(isValid).toBe(false);
+    });
+  });
+
+  describe('getExpiresIn() with kiosk type - Story 1.4', () => {
+    it('should return 4 hours in seconds for kiosk token', () => {
+      const expiresIn = tokenService.getExpiresIn('kiosk');
+
+      expect(expiresIn).toBe(4 * 60 * 60); // 4 hours in seconds (14400)
     });
   });
 });

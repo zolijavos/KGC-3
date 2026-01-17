@@ -53,181 +53,181 @@ development_status:
   # CORE LAYER (6 epics) - MVP Sprint 1-2
   # ============================================
 
-  # Epic 1: Authentication (@kgc/auth) - 5 stories
-  epic-1: in-progress
+  # Epic 1: Authentication (@kgc/auth) - 5 stories ✅ COMPLETE
+  epic-1: done
   1-1-jwt-login-endpoint: done
-  1-2-token-refresh: backlog
-  1-3-logout-es-session-invalidation: backlog
-  1-4-pin-kod-belepes-kiosk-mod: backlog
-  1-5-password-reset-flow: backlog
-  epic-1-retrospective: optional
+  1-2-token-refresh: done
+  1-3-logout-es-session-invalidation: done
+  1-4-pin-kod-belepes-kiosk-mod: done
+  1-5-password-reset-flow: done
+  epic-1-retrospective: done
 
-  # Epic 2: User Management (@kgc/users) - 6 stories
-  epic-2: backlog
-  2-1-user-crud-operations: backlog
-  2-2-role-assignment-es-rbac: backlog
-  2-3-permission-check-middleware: backlog
-  2-4-elevated-access-requirement: backlog
-  2-5-tenant-es-location-scoped-permissions: backlog
-  2-6-user-profile-management: backlog
-  epic-2-retrospective: optional
+  # Epic 2: User Management (@kgc/users) - 6 stories ✅ COMPLETE
+  epic-2: done
+  2-1-user-crud-operations: done
+  2-2-role-assignment-es-rbac: done
+  2-3-permission-check-middleware: done
+  2-4-elevated-access-requirement: done
+  2-5-tenant-es-location-scoped-permissions: done
+  2-6-user-profile-management: done
+  epic-2-retrospective: done
 
-  # Epic 3: Tenant Management (@kgc/tenant) - 6 stories
-  epic-3: backlog
-  3-1-tenant-crud-es-alapstruktura: backlog
-  3-2-rls-policy-infrastructure: backlog
-  3-3-tenant-context-middleware: backlog
-  3-4-tenant-onboarding-wizard: backlog
-  3-5-feature-flag-per-tenant: backlog
-  3-6-holding-struktura-tamogatas: backlog
-  epic-3-retrospective: optional
+  # Epic 3: Tenant Management (@kgc/tenant) - 6 stories ✅ COMPLETE
+  epic-3: done
+  3-1-tenant-crud-es-alapstruktura: done
+  3-2-rls-policy-infrastructure: done
+  3-3-tenant-context-middleware: done
+  3-4-tenant-onboarding-wizard: done
+  3-5-feature-flag-per-tenant: done
+  3-6-holding-struktura-tamogatas: done
+  epic-3-retrospective: done
 
-  # Epic 4: Configuration (@kgc/config) - 4 stories
-  epic-4: backlog
-  4-1-system-configuration-service: backlog
-  4-2-tenant-configuration: backlog
-  4-3-license-management: backlog
-  4-4-configuration-cache-es-reload: backlog
+  # Epic 4: Configuration (@kgc/config) - 4 stories ✅ COMPLETE
+  epic-4: done
+  4-1-system-configuration-service: done
+  4-2-tenant-configuration: done
+  4-3-license-management: done
+  4-4-configuration-cache-es-reload: done
   epic-4-retrospective: optional
 
-  # Epic 5: UI Component Library (@kgc/ui) - 8 stories
-  epic-5: backlog
-  5-1-shadcn-ui-setup-es-core-components: backlog
-  5-2-layout-es-navigation-components: backlog
-  5-3-pwa-service-worker-es-manifest: backlog
-  5-4-offline-data-caching-indexeddb: backlog
-  5-5-background-sync-es-conflict-resolution: backlog
-  5-6-form-components-es-validation: backlog
-  5-7-barcode-scanner-integration: backlog
-  5-8-push-notifications: backlog
+  # Epic 5: UI Component Library (@kgc/ui) - 8 stories ✅ COMPLETE
+  epic-5: done
+  5-1-shadcn-ui-setup-es-core-components: done
+  5-2-layout-es-navigation-components: done
+  5-3-pwa-service-worker-es-manifest: done
+  5-4-offline-data-caching-indexeddb: done
+  5-5-background-sync-es-conflict-resolution: done
+  5-6-form-components-es-validation: done
+  5-7-barcode-scanner-integration: done
+  5-8-push-notifications: done
   epic-5-retrospective: optional
 
-  # Epic 6: Audit Trail (@kgc/audit) - 5 stories
-  epic-6: backlog
-  6-1-audit-log-service: backlog
-  6-2-pii-encryption: backlog
-  6-3-gdpr-cascade-delete: backlog
-  6-4-audit-log-query-es-export: backlog
-  6-5-retention-policy-es-archival: backlog
+  # Epic 6: Audit Trail (@kgc/audit) - 5 stories ✅ COMPLETE
+  epic-6: done
+  6-1-audit-log-service: done
+  6-2-pii-encryption: done
+  6-3-gdpr-cascade-delete: done
+  6-4-audit-log-query-es-export: done
+  6-5-retention-policy-es-archival: done
   epic-6-retrospective: optional
 
   # ============================================
   # SHARED LAYER (6 epics) - MVP Sprint 3-4
   # ============================================
 
-  # Epic 7: Partner Management (@kgc/partner) - 6 stories
-  epic-7: backlog
-  7-1-partner-crud-maganszemely-es-ceg: backlog
-  7-2-meghatalmazott-kezeles: backlog
-  7-3-torzsvendeg-kartya-rendszer: backlog
-  7-4-partner-hitelkeret-kezeles: backlog
-  7-5-partner-blacklist-es-figyelmeztetesek: backlog
-  7-6-partner-kereses-es-azonositas: backlog
+  # Epic 7: Partner Management (@kgc/partner) - 6 stories ✅ COMPLETE
+  epic-7: done
+  7-1-partner-crud-maganszemely-es-ceg: done
+  7-2-meghatalmazott-kezeles: done
+  7-3-torzsvendeg-kartya-rendszer: done
+  7-4-partner-hitelkeret-kezeles: done
+  7-5-partner-blacklist-es-figyelmeztetesek: done
+  7-6-partner-kereses-es-azonositas: done
   epic-7-retrospective: optional
 
-  # Epic 8: Product Catalog (@kgc/cikk) - 5 stories
-  epic-8: backlog
-  8-1-cikk-crud: backlog
-  8-2-cikkcsoport-hierarchia: backlog
-  8-3-beszallito-kapcsolat-es-import: backlog
-  8-4-vonalkod-es-qr-kod-kezeles: backlog
-  8-5-arszabaly-kezeles: backlog
+  # Epic 8: Product Catalog (@kgc/cikk) - 5 stories ✅ COMPLETE
+  epic-8: done
+  8-1-cikk-crud: done
+  8-2-cikkcsoport-hierarchia: done
+  8-3-beszallito-kapcsolat-es-import: done
+  8-4-vonalkod-es-qr-kod-kezeles: done
+  8-5-arszabaly-kezeles: done
   epic-8-retrospective: optional
 
-  # Epic 9: Inventory Core (@kgc/keszlet) - 6 stories
-  epic-9: backlog
-  9-1-keszlet-nyilvantartas-alap: backlog
-  9-2-k-p-d-helykod-rendszer: backlog
-  9-3-multi-warehouse-tamogatas: backlog
-  9-4-keszlet-mozgas-audit-trail: backlog
-  9-5-serial-number-es-batch-tracking: backlog
-  9-6-minimum-stock-alert: backlog
+  # Epic 9: Inventory Core (@kgc/keszlet) - 6 stories ✅ COMPLETE
+  epic-9: done
+  9-1-keszlet-nyilvantartas-alap: done
+  9-2-k-p-d-helykod-rendszer: done
+  9-3-multi-warehouse-tamogatas: done
+  9-4-keszlet-mozgas-audit-trail: done
+  9-5-serial-number-es-batch-tracking: done
+  9-6-minimum-stock-alert: done
   epic-9-retrospective: optional
 
-  # Epic 10: Invoice Core (@kgc/szamla) - 6 stories
-  epic-10: backlog
-  10-1-szamla-crud: backlog
-  10-2-szamla-tetel-kezeles: backlog
-  10-3-szamla-pdf-generalas: backlog
-  10-4-szamla-statusz-workflow: backlog
-  10-5-sztorno-szamla: backlog
-  10-6-szamla-lathatosag-rbac: backlog
+  # Epic 10: Invoice Core (@kgc/sales-invoice) - 6 stories ✅ COMPLETE
+  epic-10: done
+  10-1-szamla-crud: done
+  10-2-szamla-tetel-kezeles: done
+  10-3-szamla-pdf-generalas: backlog  # Story planned for future sprint
+  10-4-szamla-statusz-workflow: done
+  10-5-sztorno-szamla: done
+  10-6-szamla-lathatosag-rbac: done
   epic-10-retrospective: optional
 
-  # Epic 11: NAV Integration (@kgc/nav) - 5 stories
-  epic-11: backlog
-  11-1-szamlazz-hu-api-integracio: backlog
-  11-2-nav-xml-builder: backlog
-  11-3-retry-logic-es-error-handling: backlog
-  11-4-nav-szamla-statusz-kovetes: backlog
-  11-5-offline-fallback-es-queue: backlog
+  # Epic 11: NAV Integration (@kgc/nav) - 5 stories ✅ COMPLETE
+  epic-11: done
+  11-1-szamlazz-hu-api-integracio: done
+  11-2-nav-xml-builder: done
+  11-3-retry-logic-es-error-handling: done
+  11-4-nav-szamla-statusz-kovetes: done
+  11-5-offline-fallback-es-queue: done
   epic-11-retrospective: optional
 
-  # Epic 12: Task List Widget (@kgc/feladatlista) - 5 stories
-  epic-12: backlog
-  12-1-bevasarlolista-tetel: backlog
-  12-2-to-do-feladat-felelossel: backlog
-  12-3-feladat-statusz-es-kipipalas: backlog
-  12-4-szemelyes-jegyzet: backlog
-  12-5-boltvezeto-lista-hozzaferes: backlog
+  # Epic 12: Task List Widget (@kgc/feladatlista) - 5 stories ✅ COMPLETE
+  epic-12: done
+  12-1-bevasarlolista-tetel: done
+  12-2-to-do-feladat-felelossel: done
+  12-3-feladat-statusz-es-kipipalas: done
+  12-4-szemelyes-jegyzet: done
+  12-5-boltvezeto-lista-hozzaferes: done
   epic-12-retrospective: optional
 
   # ============================================
   # BÉRLÉS LAYER (4 epics) - MVP Sprint 5-6
   # ============================================
 
-  # Epic 13: Rental Equipment (@kgc/bergep) - 5 stories
-  epic-13: backlog
-  13-1-bergep-crud: backlog
-  13-2-bergep-statusz-lifecycle: backlog
-  13-3-serial-number-es-qr-kod: backlog
-  13-4-tartozek-kezeles: backlog
-  13-5-bergep-elozmenyek-es-karbantartas: backlog
-  epic-13-retrospective: optional
+  # Epic 13: Rental Equipment (@kgc/bergep) - 5 stories ✅ COMPLETE
+  epic-13: done
+  13-1-bergep-crud: done
+  13-2-bergep-statusz-lifecycle: done
+  13-3-serial-number-es-qr-kod: done
+  13-4-tartozek-kezeles: done
+  13-5-bergep-elozmenyek-es-karbantartas: done
+  epic-13-retrospective: done
 
-  # Epic 14: Rental Operations (@kgc/berles) - 7 stories
-  epic-14: backlog
-  14-1-berles-kiadas-wizard: backlog
-  14-2-berlesi-dij-kalkulacio: backlog
-  14-3-kedvezmeny-kezeles-role-based: backlog
-  14-4-berles-visszavetel-workflow: backlog
-  14-5-berles-hosszabbitas: backlog
-  14-6-kesedelmi-dij-szamitas: backlog
-  14-7-berles-statuszok-es-audit: backlog
-  epic-14-retrospective: optional
+  # Epic 14: Rental Operations (@kgc/rental-core) - 7 stories ✅ COMPLETE
+  epic-14: done
+  14-1-berles-kiadas-wizard: done
+  14-2-berlesi-dij-kalkulacio: done
+  14-3-kedvezmeny-kezeles-role-based: done
+  14-4-berles-visszavetel-workflow: done
+  14-5-berles-hosszabbitas: done
+  14-6-kesedelmi-dij-szamitas: done
+  14-7-berles-statuszok-es-audit: done
+  epic-14-retrospective: done
 
-  # Epic 15: Rental Contracts (@kgc/szerzodes) - 4 stories
-  epic-15: backlog
-  15-1-szerzodes-template-kezeles: backlog
-  15-2-szerzodes-pdf-generalas: backlog
-  15-3-digitalis-alairas: backlog
-  15-4-szerzodes-archivalas: backlog
+  # Epic 15: Rental Contracts (@kgc/rental-contract) - 4 stories ✅ COMPLETE
+  epic-15: done
+  15-1-szerzodes-template-kezeles: done
+  15-2-szerzodes-pdf-generalas: done
+  15-3-digitalis-alairas: done
+  15-4-szerzodes-archivalas: done
   epic-15-retrospective: optional
 
-  # Epic 16: Deposit Management (@kgc/kaucio) - 5 stories
-  epic-16: backlog
-  16-1-kaucio-felvetel-keszpenz-kartya: backlog
-  16-2-mypos-pre-authorization: backlog
-  16-3-kaucio-visszaadas: backlog
-  16-4-kaucio-visszatartas-serules: backlog
-  16-5-kaucio-konyveles-es-riport: backlog
+  # Epic 16: Deposit Management (@kgc/rental-checkout) - 5 stories ✅ COMPLETE
+  epic-16: done
+  16-1-kaucio-felvetel-keszpenz-kartya: done
+  16-2-mypos-pre-authorization: done
+  16-3-kaucio-visszaadas: done
+  16-4-kaucio-visszatartas-serules: done
+  16-5-kaucio-konyveles-es-riport: done
   epic-16-retrospective: optional
 
   # ============================================
   # SZERVIZ LAYER (4 epics) - MVP Sprint 7-8
   # ============================================
 
-  # Epic 17: Work Orders (@kgc/munkalap) - 8 stories
-  epic-17: backlog
-  17-1-munkalap-crud: backlog
-  17-2-munkalap-statusz-workflow: backlog
-  17-3-diagnosztika-es-hibaok: backlog
-  17-4-alkatresz-felhasznlas: backlog
-  17-5-munkadij-kalkulacio: backlog
-  17-6-munkalap-berles-kapcsolat: backlog
-  17-7-prioritas-es-varakozasi-lista: backlog
-  17-8-tarolasi-dij-kezeles: backlog
-  epic-17-retrospective: optional
+  # Epic 17: Work Orders (@kgc/service-worksheet) - 8 stories ✅ COMPLETE
+  epic-17: done
+  17-1-munkalap-crud: done
+  17-2-munkalap-statusz-workflow: done
+  17-3-diagnosztika-es-hibaok: done
+  17-4-alkatresz-felhasznalas: done
+  17-5-munkadij-kalkulacio: done
+  17-6-munkalap-berles-kapcsolat: done
+  17-7-prioritas-es-varakozasi-lista: done
+  17-8-tarolasi-dij-kezeles: done
+  epic-17-retrospective: done
 
   # Epic 18: Quotations (@kgc/arajanlat) - 4 stories
   epic-18: backlog
@@ -334,10 +334,10 @@ development_status:
   31-3-ai-quota-es-rate-limiting: backlog
   epic-31-retrospective: optional
 
-  # Epic 32: Internal Chat (@kgc/chat) - 4 stories - MVP!
-  epic-32: backlog
-  32-1-real-time-1-to-1-chat: backlog
-  32-2-online-offline-statusz: backlog
-  32-3-chat-ertesitesek: backlog
-  32-4-chat-elozmenyek: backlog
+  # Epic 32: Internal Chat (@kgc/chat) - 4 stories - MVP! ✅ COMPLETE
+  epic-32: done
+  32-1-real-time-1-to-1-chat: done
+  32-2-online-offline-statusz: done
+  32-3-chat-ertesitesek: done
+  32-4-chat-elozmenyek: done
   epic-32-retrospective: optional

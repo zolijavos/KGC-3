@@ -23,6 +23,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaClient } from '@prisma/client';
+import { UsersModule, ElevatedAccessService } from '@kgc/users';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -31,6 +32,7 @@ import { LoginThrottlerGuard } from './guards/login-throttle.guard';
 import { PasswordService } from './services/password.service';
 import { TokenService } from './services/token.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { ELEVATED_ACCESS_SERVICE } from './interfaces/elevated-access.interface';
 
 /**
  * Configuration options for AuthModule
@@ -40,6 +42,8 @@ export interface AuthModuleOptions {
   prisma?: PrismaClient;
   /** JWT Secret - if not provided, reads from JWT_SECRET env var */
   jwtSecret?: string;
+  /** Application base URL for password reset links - if not provided, reads from APP_BASE_URL env var */
+  appBaseUrl?: string;
 }
 
 /**
@@ -60,6 +64,28 @@ function getJwtSecret(options?: AuthModuleOptions): string {
   return secret;
 }
 
+/**
+ * Get application base URL from options or environment
+ * Used for password reset links - NEVER trust Host header (G-C1 security fix)
+ * @throws Error if APP_BASE_URL is not configured anywhere
+ */
+function getAppBaseUrl(options?: AuthModuleOptions): string {
+  const baseUrl = options?.appBaseUrl ?? process.env['APP_BASE_URL'];
+  if (!baseUrl) {
+    throw new Error(
+      'APP_BASE_URL environment variable is required. ' +
+        'Set your application URL (e.g., https://app.kgc.hu) in your .env file.'
+    );
+  }
+  // Validate URL format
+  try {
+    new URL(baseUrl);
+  } catch {
+    throw new Error(`APP_BASE_URL must be a valid URL. Got: "${baseUrl}"`);
+  }
+  return baseUrl;
+}
+
 @Module({})
 export class AuthModule {
   /**
@@ -68,6 +94,7 @@ export class AuthModule {
    */
   static forRoot(options: AuthModuleOptions = {}): DynamicModule {
     const jwtSecret = getJwtSecret(options);
+    const appBaseUrl = getAppBaseUrl(options);
 
     const providers: Provider[] = [
       AuthService,
@@ -81,14 +108,23 @@ export class AuthModule {
         useValue: jwtSecret,
       },
       {
+        provide: 'APP_BASE_URL',
+        useValue: appBaseUrl,
+      },
+      {
         provide: 'PRISMA_CLIENT',
         useValue: options.prisma ?? null,
+      },
+      {
+        provide: ELEVATED_ACCESS_SERVICE,
+        useExisting: ElevatedAccessService, // Use same instance from UsersModule
       },
     ];
 
     return {
       module: AuthModule,
       imports: [
+        UsersModule.forRoot(options),
         PassportModule.register({ defaultStrategy: 'jwt' }),
         JwtModule.register({
           secret: jwtSecret,

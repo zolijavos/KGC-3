@@ -1,0 +1,153 @@
+# Epic Auto-Pilot Workflow
+# Automatizált epic fejlesztés: story creation → dev → review → test → done
+# Version: 1.0.0
+
+id: epic-auto-pilot
+name: Epic Auto-Pilot
+description: |
+  Teljesen automatizált epic fejlesztési workflow, amely végigmegy az összes story-n:
+  - Automatikus story létrehozás backlog-ból
+  - Story implementálás (dev-story)
+  - Code review automatikus javítással
+  - Tesztek futtatása automatikus javítással
+  - Nincs user jóváhagyás szükséges
+
+  Beállítható: max retry, review szigorúság, coverage küszöb
+
+category: 4-implementation
+phase: implementation
+agent: dev
+
+# Workflow paraméterek
+parameters:
+  epic_number:
+    type: string
+    required: true
+    description: "Az epic száma (pl. '5' az Epic 5-höz)"
+
+  max_retries:
+    type: number
+    default: 3
+    description: "Maximum újrapróbálkozás story-nként hiba esetén"
+
+  review_strictness:
+    type: enum
+    values: [critical_only, critical_medium, all]
+    default: all
+    description: "Mely issue-kat kell javítani: critical_only, critical_medium, all"
+
+  coverage_threshold:
+    type: number
+    default: 80
+    description: "Minimum coverage % (figyelmeztetés ha alatta, de folytatódik)"
+
+  skip_on_failure:
+    type: boolean
+    default: true
+    description: "Max retry után skip-elje a story-t és folytassa"
+
+# Input fájlok
+inputs:
+  sprint_status: implementation-artifacts/sprint-status.yaml
+  epic_file: "planning-artifacts/epics/epic-{epic_number}.md"
+  story_location: implementation-artifacts/stories
+
+# Output
+outputs:
+  story_files: "implementation-artifacts/stories/{epic_number}-*.md"
+  review_files: "implementation-artifacts/reviews/epic-{epic_number}/"
+
+# Automatizálási beállítások
+automation:
+  requires_approval: false
+  auto_fix_issues: true
+  auto_retry: true
+  stop_on_epic_complete: true
+
+# Belső workflow-k amiket hív
+delegates_to:
+  - bmad:bmm:workflows:create-story
+  - bmad:bmm:workflows:dev-story
+  - bmad:bmm:workflows:code-review
+
+# Workflow lépések
+steps:
+  - id: initialize
+    name: "Inicializálás"
+    description: "Epic és sprint státusz betöltése, backlog story-k azonosítása"
+
+  - id: story_loop
+    name: "Story feldolgozási hurok"
+    description: "Végigmegy minden backlog story-n"
+    loop: true
+    loop_condition: "hasBacklogStories(epic_number)"
+    substeps:
+      - id: create_story
+        name: "Story létrehozás"
+        description: "Következő backlog story drafted → ready-for-dev"
+        delegate: bmad:bmm:workflows:create-story
+        auto: true
+
+      - id: dev_story
+        name: "Story implementálás"
+        description: "Story fejlesztése TDD módszerrel"
+        delegate: bmad:bmm:workflows:dev-story
+        auto: true
+        retry:
+          max: "{max_retries}"
+          on_failure: "mark_failed_and_continue"
+
+      - id: run_tests
+        name: "Tesztek futtatása"
+        description: "Unit és integration tesztek"
+        command: "pnpm test --filter @kgc/{package}"
+        auto_fix: true
+        retry:
+          max: "{max_retries}"
+
+      - id: code_review
+        name: "Code review"
+        description: "Adversarial review automatikus javítással"
+        delegate: bmad:bmm:workflows:code-review
+        auto: true
+        config:
+          reviewer: claude_only  # Nincs Gemini
+          auto_fix: true
+          strictness: "{review_strictness}"
+          requires_approval: false
+
+      - id: verify_coverage
+        name: "Coverage ellenőrzés"
+        description: "Coverage report és figyelmeztetés"
+        command: "pnpm test:coverage --filter @kgc/{package}"
+        on_below_threshold: warn_and_continue
+
+      - id: mark_done
+        name: "Story lezárás"
+        description: "Story státusz → done"
+        update_status: true
+
+  - id: epic_complete
+    name: "Epic lezárás"
+    description: "Epic státusz frissítése és összefoglaló"
+    update_epic_status: done
+
+# Hibakezelés
+error_handling:
+  story_failure:
+    action: "log_and_skip"
+    max_skipped: 2  # Max 2 story skip-elhető, utána leáll
+
+  test_failure:
+    action: "auto_fix_retry"
+    max_retries: "{max_retries}"
+
+  review_failure:
+    action: "auto_fix_retry"
+    max_retries: "{max_retries}"
+
+# Logging
+logging:
+  level: info
+  output: "implementation-artifacts/logs/epic-{epic_number}-autopilot.log"
+  include_timestamps: true
