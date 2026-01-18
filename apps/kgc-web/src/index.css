@@ -1,0 +1,205 @@
+@import 'tailwindcss';
+
+/* Enable dark mode with class selector (Tailwind v4) */
+@variant dark (&:where(.dark, .dark *));
+
+/* KGC ERP Custom Theme - Kisgépcentrum Colors */
+@theme {
+  /* Primary Teal Colors */
+  --color-kgc-primary: #2d7d8a;
+  --color-kgc-primary-light: #3a9aa8;
+  --color-kgc-primary-dark: #1f5f6b;
+  --color-kgc-primary-darker: #0f3d47;
+
+  /* Accent Orange */
+  --color-kgc-accent: #e87722;
+  --color-kgc-accent-light: #f58c3d;
+  --color-kgc-accent-dark: #c55f0f;
+
+  /* Background Teals */
+  --color-kgc-bg-light: #7fc4ca;
+  --color-kgc-bg-lighter: #a8dce0;
+
+  /* Status Colors */
+  --color-kgc-success: #10b981;
+  --color-kgc-warning: #f59e0b;
+  --color-kgc-error: #ef4444;
+  --color-kgc-info: #3b82f6;
+
+  /* Radius */
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
+}
+
+/* CSS Variables for Light/Dark Theme */
+:root {
+  /* Light Theme (default) - KGC Teal/Turquoise */
+  --bg-primary: #7fc4ca;
+  --bg-secondary: #a8dce0;
+  --bg-tertiary: #5fb0b8;
+  --bg-sidebar: #1f5f6b;
+  --bg-sidebar-hover: #2d7d8a;
+  --bg-sidebar-active: #e87722;
+
+  --text-primary: #0f3d47;
+  --text-secondary: #1f5f6b;
+  --text-tertiary: #3a7a85;
+  --text-inverse: #ffffff;
+
+  --border-primary: #5fb0b8;
+  --border-secondary: #3a9aa8;
+
+  --card-bg: #ffffff;
+  --card-shadow: 0 2px 8px rgba(15, 61, 71, 0.15);
+
+  color-scheme: light;
+}
+
+.dark {
+  /* Dark Theme - Darker KGC Teal */
+  --bg-primary: #0f3d47;
+  --bg-secondary: #1a4f5c;
+  --bg-tertiary: #1f5f6b;
+  --bg-sidebar: #0a2a32;
+  --bg-sidebar-hover: #0f3d47;
+  --bg-sidebar-active: #e87722;
+
+  --text-primary: #e8f4f5;
+  --text-secondary: #a8dce0;
+  --text-tertiary: #7fc4ca;
+  --text-inverse: #0f3d47;
+
+  --border-primary: #2d7d8a;
+  --border-secondary: #3a9aa8;
+
+  --card-bg: #1a4f5c;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  color-scheme: dark;
+}
+
+/* Base styles */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  @apply antialiased;
+  margin: 0;
+  min-height: 100vh;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Theme-aware utilities - KGC Teal backgrounds */
+.kgc-bg {
+  background-color: #7fc4ca !important;
+}
+
+.dark .kgc-bg {
+  background-color: #0f3d47 !important;
+}
+
+.kgc-card-bg {
+  background-color: #ffffff;
+}
+
+.dark .kgc-card-bg {
+  background-color: #1a4f5c;
+}
+
+.theme-bg-primary {
+  background-color: var(--bg-primary);
+}
+
+.theme-bg-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.theme-bg-tertiary {
+  background-color: var(--bg-tertiary);
+}
+
+.theme-bg-card {
+  background-color: var(--card-bg);
+  box-shadow: var(--card-shadow);
+}
+
+.theme-text-primary {
+  color: var(--text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary);
+}
+
+.theme-border {
+  border-color: var(--border-primary);
+}
+
+/* Sidebar theme */
+.sidebar-bg {
+  background-color: var(--bg-sidebar);
+}
+
+.sidebar-hover:hover {
+  background-color: var(--bg-sidebar-hover);
+}
+
+.sidebar-active {
+  background-color: var(--bg-sidebar-active);
+}
+
+/* Custom glass effect for both themes */
+.glass {
+  @apply bg-white/80 backdrop-blur-sm;
+}
+
+.dark .glass {
+  @apply bg-gray-900/80 backdrop-blur-sm;
+}
+
+/* Card styles */
+.theme-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--card-shadow);
+  border-radius: var(--radius-lg);
+}
+
+/* Input styles for dark mode */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
