@@ -11,9 +11,22 @@ import { CallHandler, ExecutionContext, ForbiddenException } from '@nestjs/commo
 import { Reflector } from '@nestjs/core';
 import { of } from 'rxjs';
 import { ConstraintInterceptor } from './constraint.interceptor';
+import { PermissionService } from '../services/permission.service';
+import { RoleService } from '../services/role.service';
 import { Permission } from '../interfaces/permission.interface';
 import { Role } from '../interfaces/user.interface';
 import { CONSTRAINT_KEY, ConstraintMetadata } from '../decorators/check-constraint.decorator';
+
+// C1v2 FIX: Create shared PermissionService for tests
+let permissionService: PermissionService;
+
+function getPermissionService(): PermissionService {
+  if (!permissionService) {
+    const roleService = new RoleService();
+    permissionService = new PermissionService(roleService);
+  }
+  return permissionService;
+}
 
 // Mock ExecutionContext factory
 function createMockExecutionContext(
@@ -71,7 +84,7 @@ describe('ConstraintInterceptor', () => {
     it('should proceed when no @CheckConstraint decorator is present', () => {
       // Arrange
       mockReflector = createMockReflector(undefined);
-      interceptor = new ConstraintInterceptor(mockReflector);
+      interceptor = new ConstraintInterceptor(mockReflector, getPermissionService());
       const context = createMockExecutionContext(
         { id: 'user-1', role: Role.OPERATOR, tenantId: 'tenant-1' },
         { discountPercent: 50 }
@@ -95,7 +108,7 @@ describe('ConstraintInterceptor', () => {
         valueField: 'discountPercent',
         useAbsoluteValue: true,
       });
-      interceptor = new ConstraintInterceptor(mockReflector);
+      interceptor = new ConstraintInterceptor(mockReflector, getPermissionService());
       const context = createMockExecutionContext(
         { id: 'user-1', role: Role.BOLTVEZETO, tenantId: 'tenant-1' },
         { discountPercent: 15 } // 15% < 20% limit
@@ -117,7 +130,7 @@ describe('ConstraintInterceptor', () => {
         valueField: 'discountPercent',
         useAbsoluteValue: true,
       });
-      interceptor = new ConstraintInterceptor(mockReflector);
+      interceptor = new ConstraintInterceptor(mockReflector, getPermissionService());
       const context = createMockExecutionContext(
         { id: 'user-1', role: Role.BOLTVEZETO, tenantId: 'tenant-1' },
         { discountPercent: 20 } // 20% = 20% limit (exact)
@@ -140,7 +153,7 @@ describe('ConstraintInterceptor', () => {
         valueField: 'discountPercent',
         useAbsoluteValue: true,
       });
-      interceptor = new ConstraintInterceptor(mockReflector);
+      interceptor = new ConstraintInterceptor(mockReflector, getPermissionService());
       const context = createMockExecutionContext(
         { id: 'user-1', role: Role.BOLTVEZETO, tenantId: 'tenant-1' },
         { discountPercent: 25 } // 25% > 20% limit
@@ -160,7 +173,7 @@ describe('ConstraintInterceptor', () => {
         valueField: 'discountPercent',
         useAbsoluteValue: true,
       });
-      interceptor = new ConstraintInterceptor(mockReflector);
+      interceptor = new ConstraintInterceptor(mockReflector, getPermissionService());
       const context = createMockExecutionContext(
         { id: 'user-1', role: Role.BOLTVEZETO, tenantId: 'tenant-1' },
         { discountPercent: 30 }
@@ -190,7 +203,7 @@ describe('ConstraintInterceptor', () => {
         valueField: 'discountPercent',
         useAbsoluteValue: true,
       });
-      interceptor = new ConstraintInterceptor(mockReflector);
+      interceptor = new ConstraintInterceptor(mockReflector, getPermissionService());
       const context = createMockExecutionContext(
         { id: 'user-1', role: Role.BOLTVEZETO, tenantId: 'tenant-1' },
         { discountPercent: -25 } // |-25| = 25 > 20% limit
@@ -210,7 +223,7 @@ describe('ConstraintInterceptor', () => {
         valueField: 'discountPercent',
         useAbsoluteValue: true,
       });
-      interceptor = new ConstraintInterceptor(mockReflector);
+      interceptor = new ConstraintInterceptor(mockReflector, getPermissionService());
       const context = createMockExecutionContext(
         { id: 'user-1', role: Role.BOLTVEZETO, tenantId: 'tenant-1' },
         { discountPercent: -15 } // |-15| = 15 < 20% limit
@@ -234,7 +247,7 @@ describe('ConstraintInterceptor', () => {
         useAbsoluteValue: true,
         message: 'Egyedi hibaüzenet a kedvezményhez',
       });
-      interceptor = new ConstraintInterceptor(mockReflector);
+      interceptor = new ConstraintInterceptor(mockReflector, getPermissionService());
       const context = createMockExecutionContext(
         { id: 'user-1', role: Role.BOLTVEZETO, tenantId: 'tenant-1' },
         { discountPercent: 50 }
@@ -263,7 +276,7 @@ describe('ConstraintInterceptor', () => {
         valueField: 'discountPercent',
         useAbsoluteValue: true,
       });
-      interceptor = new ConstraintInterceptor(mockReflector);
+      interceptor = new ConstraintInterceptor(mockReflector, getPermissionService());
       const context = createMockExecutionContext(
         { id: 'user-1', role: Role.PARTNER_OWNER, tenantId: 'tenant-1' },
         { discountPercent: 75 } // 75% < 100% limit
@@ -285,7 +298,7 @@ describe('ConstraintInterceptor', () => {
         constraintKey: 'discount_limit',
         valueField: 'discountPercent',
       });
-      interceptor = new ConstraintInterceptor(mockReflector);
+      interceptor = new ConstraintInterceptor(mockReflector, getPermissionService());
       const context = createMockExecutionContext(null, { discountPercent: 10 });
 
       // Act & Assert
@@ -303,7 +316,7 @@ describe('ConstraintInterceptor', () => {
         constraintKey: 'discount_limit',
         valueField: 'discountPercent',
       });
-      interceptor = new ConstraintInterceptor(mockReflector);
+      interceptor = new ConstraintInterceptor(mockReflector, getPermissionService());
       const context = createMockExecutionContext(
         { id: 'user-1', role: Role.BOLTVEZETO, tenantId: 'tenant-1' },
         { someOtherField: 'value' } // No discountPercent
@@ -325,7 +338,7 @@ describe('ConstraintInterceptor', () => {
         constraintKey: 'some_limit',
         valueField: 'someValue',
       });
-      interceptor = new ConstraintInterceptor(mockReflector);
+      interceptor = new ConstraintInterceptor(mockReflector, getPermissionService());
       const context = createMockExecutionContext(
         { id: 'user-1', role: Role.OPERATOR, tenantId: 'tenant-1' },
         { someValue: 1000 }

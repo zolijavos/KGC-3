@@ -1,0 +1,170 @@
+# KGC ERP - UAT (User Acceptance Testing) Environment
+# Ports: 32xx range, DB: 5434
+
+name: kgc-uat
+
+services:
+  # ===========================================
+  # KGC Core Services
+  # ===========================================
+
+  kgc-api:
+    build:
+      context: ../../
+      dockerfile: apps/kgc-api/Dockerfile
+    container_name: kgc-uat-api
+    ports:
+      - "3200:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://kgc:kgc_uat@kgc-db:5432/kgc_uat
+      REDIS_URL: redis://kgc-redis:6379
+      JWT_SECRET: ${JWT_SECRET_UAT}
+      APP_BASE_URL: https://uat.kgc.hu
+    depends_on:
+      kgc-db:
+        condition: service_healthy
+    networks:
+      - kgc-uat-network
+    restart: unless-stopped
+
+  # ===========================================
+  # Database
+  # ===========================================
+
+  kgc-db:
+    image: postgres:16-alpine
+    container_name: kgc-uat-db
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: kgc
+      POSTGRES_PASSWORD: kgc_uat
+      POSTGRES_DB: kgc_uat
+    volumes:
+      - kgc-uat-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kgc -d kgc_uat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kgc-uat-network
+    restart: unless-stopped
+
+  kgc-redis:
+    image: redis:7-alpine
+    container_name: kgc-uat-redis
+    ports:
+      - "6381:6379"
+    volumes:
+      - kgc-uat-redis-data:/data
+    networks:
+      - kgc-uat-network
+    restart: unless-stopped
+
+  # ===========================================
+  # Twenty CRM (UAT)
+  # ===========================================
+
+  twenty-server:
+    image: twentycrm/twenty:latest
+    container_name: kgc-uat-twenty
+    ports:
+      - "3201:3000"
+    environment:
+      PG_DATABASE_URL: postgresql://twenty:twenty_uat@twenty-db:5432/twenty_uat
+      REDIS_URL: redis://twenty-redis:6379
+      SERVER_URL: https://uat-crm.kgc.hu
+      APP_SECRET: ${TWENTY_SECRET_UAT}
+    depends_on:
+      twenty-db:
+        condition: service_healthy
+    networks:
+      - kgc-uat-network
+    restart: unless-stopped
+
+  twenty-db:
+    image: postgres:16-alpine
+    container_name: kgc-uat-twenty-db
+    environment:
+      POSTGRES_USER: twenty
+      POSTGRES_PASSWORD: twenty_uat
+      POSTGRES_DB: twenty_uat
+    volumes:
+      - twenty-uat-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U twenty -d twenty_uat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kgc-uat-network
+    restart: unless-stopped
+
+  twenty-redis:
+    image: redis:7-alpine
+    container_name: kgc-uat-twenty-redis
+    networks:
+      - kgc-uat-network
+    restart: unless-stopped
+
+  # ===========================================
+  # Chatwoot (UAT only - for testing support)
+  # ===========================================
+
+  chatwoot:
+    image: chatwoot/chatwoot:latest-ce
+    container_name: kgc-uat-chatwoot
+    ports:
+      - "3202:3000"
+    environment:
+      RAILS_ENV: production
+      SECRET_KEY_BASE: ${CHATWOOT_SECRET_UAT}
+      FRONTEND_URL: https://uat-support.kgc.hu
+      POSTGRES_HOST: chatwoot-db
+      POSTGRES_USERNAME: chatwoot
+      POSTGRES_PASSWORD: chatwoot_uat
+      POSTGRES_DATABASE: chatwoot_uat
+      REDIS_URL: redis://chatwoot-redis:6379
+    depends_on:
+      chatwoot-db:
+        condition: service_healthy
+    networks:
+      - kgc-uat-network
+    restart: unless-stopped
+
+  chatwoot-db:
+    image: pgvector/pgvector:pg16
+    container_name: kgc-uat-chatwoot-db
+    environment:
+      POSTGRES_USER: chatwoot
+      POSTGRES_PASSWORD: chatwoot_uat
+      POSTGRES_DB: chatwoot_uat
+    volumes:
+      - chatwoot-uat-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chatwoot -d chatwoot_uat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kgc-uat-network
+    restart: unless-stopped
+
+  chatwoot-redis:
+    image: redis:7-alpine
+    container_name: kgc-uat-chatwoot-redis
+    networks:
+      - kgc-uat-network
+    restart: unless-stopped
+
+volumes:
+  kgc-uat-db-data:
+  kgc-uat-redis-data:
+  twenty-uat-db-data:
+  chatwoot-uat-db-data:
+
+networks:
+  kgc-uat-network:
+    name: kgc-uat-network

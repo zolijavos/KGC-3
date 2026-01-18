@@ -57,11 +57,13 @@ interface AuthenticatedRequest {
 
 @Injectable()
 export class ConstraintInterceptor implements NestInterceptor {
-  private readonly permissionService: PermissionService;
-
-  constructor(private readonly reflector: Reflector) {
-    this.permissionService = new PermissionService();
-  }
+  /**
+   * C1v2 FIX: PermissionService now injected via DI instead of manual instantiation
+   */
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly permissionService: PermissionService
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     // 1. Get constraint metadata from decorator

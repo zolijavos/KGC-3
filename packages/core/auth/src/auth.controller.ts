@@ -30,31 +30,27 @@
  * - Elevated access verification (Story 2.4 AC6)
  */
 
-import { Body, Controller, HttpCode, HttpStatus, Inject, Post, Req, Res, UseGuards } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { Body, Controller, HttpCode, HttpStatus, Inject, Post, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
 import { AuthService } from './auth.service';
+import { getClientIp } from './utils/get-client-ip';
 import type { ForgotPasswordResponse } from './dto/forgot-password-response.dto';
-import { validateForgotPasswordInput } from './dto/forgot-password.dto';
-import { validateLoginInput } from './dto/login.dto';
-import {
-  LOGOUT_ERROR_MESSAGES,
-  type LogoutAllResponse,
-  type LogoutResponse,
-} from './dto/logout-response.dto';
-import { validateLogoutInput } from './dto/logout.dto';
+import { forgotPasswordSchema, type ForgotPasswordDto } from './dto/forgot-password.dto';
+import { loginSchema, type LoginDto } from './dto/login.dto';
+import { ZodValidationPipe } from './pipes/zod-validation.pipe';
+import { type LogoutAllResponse, type LogoutResponse } from './dto/logout-response.dto';
+import { logoutSchema, type LogoutDto } from './dto/logout.dto';
 import type { PinLoginResponse } from './dto/pin-login-response.dto';
-import { validatePinLoginInput } from './dto/pin-login.dto';
+import { pinLoginSchema, type PinLoginDto } from './dto/pin-login.dto';
 import type { RefreshResponse } from './dto/refresh-response.dto';
-import { validateRefreshInput } from './dto/refresh-token.dto';
-import { PasswordResetErrorCode, RESET_PASSWORD_MESSAGES } from './dto/reset-password-response.dto';
+import { refreshTokenSchema, type RefreshTokenDto } from './dto/refresh-token.dto';
 import type { ResetPasswordResponse } from './dto/reset-password-response.dto';
-import { validateResetPasswordInput } from './dto/reset-password.dto';
-import { VerifyPasswordErrorCode, VERIFY_PASSWORD_MESSAGES } from './dto/verify-password-response.dto';
+import { resetPasswordSchema, type ResetPasswordDto } from './dto/reset-password.dto';
 import type { VerifyPasswordResponse } from './dto/verify-password-response.dto';
-import { validateVerifyPasswordInput } from './dto/verify-password.dto';
+import { verifyPasswordSchema, type VerifyPasswordDto } from './dto/verify-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LoginThrottlerGuard } from './guards/login-throttle.guard';
-import type { ErrorResponse, LoginResponse } from './interfaces/jwt-payload.interface';
+import type { LoginResponse } from './interfaces/jwt-payload.interface';
 
 /**
  * Authenticated request with user context from JwtStrategy
@@ -76,17 +72,6 @@ export class AuthController {
   ) {}
 
   /**
-   * Extract client IP from request (supports proxies)
-   */
-  private getClientIp(request: Request): string {
-    const forwardedFor = request.headers['x-forwarded-for'];
-    if (typeof forwardedFor === 'string') {
-      return forwardedFor.split(',')[0]?.trim() ?? 'unknown';
-    }
-    return request.ip ?? 'unknown';
-  }
-
-  /**
    * POST /api/v1/auth/login
    *
    * Authenticates user with email and password, returns JWT tokens
@@ -100,56 +85,34 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(LoginThrottlerGuard)
   async login(
-    @Body() body: unknown,
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response
-  ): Promise<LoginResponse | ErrorResponse> {
-    // AC5: Runtime validation with Zod
-    const validationResult = validateLoginInput(body);
-    if (!validationResult.success) {
-      response.status(HttpStatus.BAD_REQUEST);
-      return {
-        error: validationResult.error,
-      };
-    }
-
-    const { email, password } = validationResult.data;
-    const ipAddress = this.getClientIp(request);
+    @Body(new ZodValidationPipe(loginSchema)) dto: LoginDto,
+    @Req() request: Request
+  ): Promise<LoginResponse> {
+    const { email, password } = dto;
+    const ipAddress = getClientIp(request);
     const userAgent = request.headers['user-agent'];
 
     try {
       const result = await this.authService.login(email, password);
 
-      // P6: Record successful login attempt
-      await this.authService.recordLoginAttempt(email, ipAddress, true, userAgent);
+      // P6: Record successful login attempt (non-blocking - don't fail login if audit fails)
+      try {
+        await this.authService.recordLoginAttempt(email, ipAddress, true, userAgent);
+      } catch (auditError) {
+        console.warn('[AuthController] Failed to record successful login attempt:', auditError);
+      }
 
       return result;
     } catch (error) {
-      // P6: Record failed login attempt
-      await this.authService.recordLoginAttempt(email, ipAddress, false, userAgent);
-
-      // Set appropriate status code based on error type
-      if (error instanceof Error) {
-        if (error.message === 'Invalid credentials') {
-          response.status(HttpStatus.UNAUTHORIZED);
-          return {
-            error: {
-              code: 'INVALID_CREDENTIALS',
-              message: 'Érvénytelen email vagy jelszó', // Hungarian: Invalid email or password
-            },
-          };
-        }
+      // P6: Record failed login attempt (non-blocking)
+      try {
+        await this.authService.recordLoginAttempt(email, ipAddress, false, userAgent);
+      } catch (auditError) {
+        console.warn('[AuthController] Failed to record failed login attempt:', auditError);
       }
 
-      // Generic server error - log for debugging
-      console.error('[AuthController] login failed unexpectedly:', error);
-      response.status(HttpStatus.INTERNAL_SERVER_ERROR);
-      return {
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'Szerverhiba történt', // Hungarian: Server error occurred
-        },
-      };
+      // Re-throw HttpException for NestJS to handle
+      throw error;
     }
   }
 
@@ -168,44 +131,10 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(
-    @Body() body: unknown,
-    @Res({ passthrough: true }) response: Response
-  ): Promise<RefreshResponse | ErrorResponse> {
-    // AC5: Runtime validation with Zod
-    const validationResult = validateRefreshInput(body);
-    if (!validationResult.success) {
-      response.status(HttpStatus.BAD_REQUEST);
-      return {
-        error: validationResult.error,
-      };
-    }
-
-    const { refreshToken } = validationResult.data;
-
-    try {
-      const result = await this.authService.refreshTokens(refreshToken);
-      return result;
-    } catch (error) {
-      // AC3, AC4: Invalid refresh token (expired, revoked, wrong type, not found)
-      if (error instanceof Error && error.message === 'Invalid refresh token') {
-        response.status(HttpStatus.UNAUTHORIZED);
-        return {
-          error: {
-            code: 'INVALID_REFRESH_TOKEN',
-            message: 'Érvénytelen vagy lejárt refresh token', // Hungarian: Invalid or expired refresh token
-          },
-        };
-      }
-
-      // Generic server error
-      response.status(HttpStatus.INTERNAL_SERVER_ERROR);
-      return {
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'Szerverhiba történt', // Hungarian: Server error occurred
-        },
-      };
-    }
+    @Body(new ZodValidationPipe(refreshTokenSchema)) dto: RefreshTokenDto
+  ): Promise<RefreshResponse> {
+    // Service throws UnauthorizedException for invalid tokens (AC3, AC4)
+    return await this.authService.refreshTokens(dto.refreshToken);
   }
 
   /**
@@ -215,75 +144,23 @@ export class AuthController {
    * Story 1.3: Logout és Session Invalidation
    *
    * AC1: Invalidates the provided refresh token
-   * AC4: Validates input, returns 400 for missing/malformed token
+   * AC4: Validates input, returns 400 for missing/malformed token (ZodValidationPipe)
    * AC5: Requires valid access token (protected endpoint)
    * P1 Security Fix: Token ownership validation
+   *
+   * Error handling: Service throws HttpExceptions (BadRequestException, ForbiddenException)
    */
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   async logout(
-    @Body() body: unknown,
-    @Req() request: AuthenticatedRequest,
-    @Res({ passthrough: true }) response: Response
-  ): Promise<LogoutResponse | ErrorResponse> {
-    // AC4: Runtime validation with Zod
-    const validationResult = validateLogoutInput(body);
-    if (!validationResult.success) {
-      response.status(HttpStatus.BAD_REQUEST);
-      return {
-        error: validationResult.error,
-      };
-    }
-
-    const { refreshToken } = validationResult.data;
+    @Body(new ZodValidationPipe(logoutSchema)) dto: LogoutDto,
+    @Req() request: AuthenticatedRequest
+  ): Promise<LogoutResponse> {
     // P1 Security Fix: Get userId from authenticated request for ownership validation
     const userId = request.user.id;
-
-    try {
-      const result = await this.authService.logout(refreshToken, userId);
-      return result;
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message === LOGOUT_ERROR_MESSAGES.TOKEN_NOT_FOUND) {
-          response.status(HttpStatus.BAD_REQUEST);
-          return {
-            error: {
-              code: 'TOKEN_NOT_FOUND',
-              message: 'Refresh token nem található', // Hungarian: Refresh token not found
-            },
-          };
-        }
-        if (error.message === LOGOUT_ERROR_MESSAGES.INVALID_TOKEN) {
-          response.status(HttpStatus.BAD_REQUEST);
-          return {
-            error: {
-              code: 'INVALID_TOKEN',
-              message: 'Érvénytelen refresh token', // Hungarian: Invalid refresh token
-            },
-          };
-        }
-        // P1 Security Fix: Handle token ownership error
-        if (error.message === LOGOUT_ERROR_MESSAGES.TOKEN_NOT_OWNED) {
-          response.status(HttpStatus.FORBIDDEN);
-          return {
-            error: {
-              code: 'TOKEN_NOT_OWNED',
-              message: 'A token nem ehhez a felhasználóhoz tartozik', // Hungarian: Token does not belong to this user
-            },
-          };
-        }
-      }
-
-      // Generic server error
-      response.status(HttpStatus.INTERNAL_SERVER_ERROR);
-      return {
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'Szerverhiba történt', // Hungarian: Server error occurred
-        },
-      };
-    }
+    // Service throws BadRequestException (token not found/invalid) or ForbiddenException (not owned)
+    return await this.authService.logout(dto.refreshToken, userId);
   }
 
   /**
@@ -294,28 +171,16 @@ export class AuthController {
    *
    * AC2: Invalidates all refresh tokens for the user
    * AC5: Requires valid access token (protected endpoint)
+   *
+   * Error handling: Service throws HttpExceptions for any errors
    */
   @Post('logout-all')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
-  async logoutAll(
-    @Req() request: AuthenticatedRequest
-  ): Promise<LogoutAllResponse | ErrorResponse> {
-    try {
-      // Extract user ID from JWT (set by JwtStrategy)
-      const userId = request.user.id;
-      const result = await this.authService.logoutAll(userId);
-      return result;
-    } catch (error) {
-      console.error('[AuthController] logoutAll failed unexpectedly:', error);
-      // Generic server error
-      return {
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'Szerverhiba történt', // Hungarian: Server error occurred
-        },
-      };
-    }
+  async logoutAll(@Req() request: AuthenticatedRequest): Promise<LogoutAllResponse> {
+    // Extract user ID from JWT (set by JwtStrategy)
+    const userId = request.user.id;
+    return await this.authService.logoutAll(userId);
   }
 
   // ============================================
@@ -331,76 +196,20 @@ export class AuthController {
    * AC1: Returns kiosk accessToken (4h TTL), no refresh token
    * AC2: Requires trusted device (deviceId validation)
    * AC3: Returns 429 when locked out (3 failed attempts → 15 min lockout)
-   * AC4: Validates PIN format (4-6 numeric digits), returns 400 for invalid
-   * AC5: Validates deviceId (UUID format), returns 400 for invalid/missing
+   * AC4: Validates PIN format (4-6 numeric digits), returns 400 for invalid (ZodValidationPipe)
+   * AC5: Validates deviceId (UUID format), returns 400 for invalid/missing (ZodValidationPipe)
    * AC6: Returns 401 with generic message (security - don't reveal which failed)
+   *
+   * Error handling: Service throws HttpExceptions (ForbiddenException, HttpException 429, UnauthorizedException)
    */
   @Post('pin-login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LoginThrottlerGuard)
   async pinLogin(
-    @Body() body: unknown,
-    @Res({ passthrough: true }) response: Response
-  ): Promise<PinLoginResponse | ErrorResponse> {
-    // AC4, AC5: Runtime validation with Zod
-    const validationResult = validatePinLoginInput(body);
-    if (!validationResult.success) {
-      response.status(HttpStatus.BAD_REQUEST);
-      return {
-        error: validationResult.error,
-      };
-    }
-
-    const { pin, deviceId } = validationResult.data;
-
-    try {
-      const result = await this.authService.pinLogin(pin, deviceId);
-      return result;
-    } catch (error) {
-      if (error instanceof Error) {
-        // AC2: Device not trusted - 403 Forbidden (P1, P8 fix)
-        if (error.message === 'Eszköz nem regisztrált') {
-          response.status(HttpStatus.FORBIDDEN);
-          return {
-            error: {
-              code: 'DEVICE_NOT_TRUSTED',
-              message: 'Ez az eszköz nincs regisztrálva kiosk módhoz', // Hungarian: Device not registered for kiosk mode
-            },
-          };
-        }
-
-        // AC3: PIN lockout (3 failed attempts → 15 min lockout)
-        if (error.message === 'Fiók zárolva') {
-          response.status(HttpStatus.TOO_MANY_REQUESTS);
-          return {
-            error: {
-              code: 'PIN_LOCKOUT',
-              message: 'Fiók ideiglenesen zárolva. Próbálja újra 15 perc múlva.', // Hungarian: Account temporarily locked
-            },
-          };
-        }
-
-        // AC6: Generic error for invalid credentials (security)
-        if (error.message === 'Érvénytelen hitelesítési adatok') {
-          response.status(HttpStatus.UNAUTHORIZED);
-          return {
-            error: {
-              code: 'INVALID_CREDENTIALS',
-              message: 'Érvénytelen PIN kód', // Hungarian: Invalid PIN code
-            },
-          };
-        }
-      }
-
-      // Generic server error
-      response.status(HttpStatus.INTERNAL_SERVER_ERROR);
-      return {
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'Szerverhiba történt', // Hungarian: Server error occurred
-        },
-      };
-    }
+    @Body(new ZodValidationPipe(pinLoginSchema)) dto: PinLoginDto
+  ): Promise<PinLoginResponse> {
+    // Service throws ForbiddenException (device not trusted), HttpException 429 (lockout), or UnauthorizedException
+    return await this.authService.pinLogin(dto.pin, dto.deviceId);
   }
 
   // ============================================
@@ -416,56 +225,21 @@ export class AuthController {
    * AC1: Generates reset token (1h TTL) and sends email
    * AC2: Returns same response for existing/non-existing email (no enumeration)
    * AC6: Rate limited to 3 requests per 15 minutes per email
-   * AC7: Validates input with Zod
+   * AC7: Validates input with Zod (ZodValidationPipe)
+   *
+   * Error handling: Service throws HttpException 429 for rate limiting
    */
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LoginThrottlerGuard)
   async forgotPassword(
-    @Body() body: unknown,
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response
-  ): Promise<ForgotPasswordResponse | ErrorResponse> {
-    // AC7: Runtime validation with Zod
-    const validationResult = validateForgotPasswordInput(body);
-    if (!validationResult.success) {
-      response.status(HttpStatus.BAD_REQUEST);
-      return {
-        error: validationResult.error,
-      };
-    }
-
-    const { email } = validationResult.data;
-
+    @Body(new ZodValidationPipe(forgotPasswordSchema)) dto: ForgotPasswordDto
+  ): Promise<ForgotPasswordResponse> {
     // G-C1 SECURITY FIX: Use configured APP_BASE_URL instead of trusting Host header
     // Host header is client-controlled and can lead to account takeover via password reset phishing
     const resetUrlBase = `${this.appBaseUrl}/reset-password`;
-
-    try {
-      const result = await this.authService.forgotPassword(email, resetUrlBase);
-      return result;
-    } catch (error) {
-      // AC6: Rate limit exceeded
-      if (error instanceof Error && error.message === 'Túl sok kérés') {
-        response.status(HttpStatus.TOO_MANY_REQUESTS);
-        return {
-          error: {
-            code: PasswordResetErrorCode.RATE_LIMITED,
-            message: RESET_PASSWORD_MESSAGES.RATE_LIMITED,
-          },
-        };
-      }
-
-      // Generic server error - but still return success-like response for security
-      // (don't reveal internal errors that could leak info)
-      response.status(HttpStatus.INTERNAL_SERVER_ERROR);
-      return {
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'Szerverhiba történt', // Hungarian: Server error occurred
-        },
-      };
-    }
+    // Service throws HttpException 429 for rate limiting
+    return await this.authService.forgotPassword(dto.email, resetUrlBase);
   }
 
   /**
@@ -475,51 +249,21 @@ export class AuthController {
    * Story 1.5: Password Reset Flow
    *
    * AC3: Validates token and updates password
-   * AC4: Validates password policy (min 8 chars, 1 uppercase, 1 number)
+   * AC4: Validates password policy (min 8 chars, 1 uppercase, 1 number) - ZodValidationPipe
    * AC5: Returns error for invalid/expired/used token
-   * AC7: Validates input with Zod
+   * AC7: Validates input with Zod (ZodValidationPipe)
+   *
+   * SECURITY: C-H1/G4 FIX - Rate limiting to prevent token brute-force attacks
+   * Error handling: Service throws BadRequestException for invalid token
    */
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(LoginThrottlerGuard)
   async resetPassword(
-    @Body() body: unknown,
-    @Res({ passthrough: true }) response: Response
-  ): Promise<ResetPasswordResponse | ErrorResponse> {
-    // AC7: Runtime validation with Zod (includes password policy - AC4)
-    const validationResult = validateResetPasswordInput(body);
-    if (!validationResult.success) {
-      response.status(HttpStatus.BAD_REQUEST);
-      return {
-        error: validationResult.error,
-      };
-    }
-
-    const { token, newPassword } = validationResult.data;
-
-    try {
-      const result = await this.authService.resetPassword(token, newPassword);
-      return result;
-    } catch (error) {
-      // AC5: Invalid/expired/used token
-      if (error instanceof Error && error.message === 'Érvénytelen token') {
-        response.status(HttpStatus.BAD_REQUEST);
-        return {
-          error: {
-            code: PasswordResetErrorCode.INVALID_TOKEN,
-            message: RESET_PASSWORD_MESSAGES.INVALID_TOKEN,
-          },
-        };
-      }
-
-      // Generic server error
-      response.status(HttpStatus.INTERNAL_SERVER_ERROR);
-      return {
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'Szerverhiba történt', // Hungarian: Server error occurred
-        },
-      };
-    }
+    @Body(new ZodValidationPipe(resetPasswordSchema)) dto: ResetPasswordDto
+  ): Promise<ResetPasswordResponse> {
+    // Service throws BadRequestException for invalid/expired/used token (AC5)
+    return await this.authService.resetPassword(dto.token, dto.newPassword);
   }
 
   // ============================================
@@ -536,74 +280,18 @@ export class AuthController {
    * Returns validUntil timestamp indicating when elevated access expires
    *
    * Requires valid access token (protected endpoint)
+   * Error handling: Service throws UnauthorizedException (invalid password),
+   *                 NotFoundException (user not found), ServiceUnavailableException (service not configured)
    */
   @Post('verify-password')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, LoginThrottlerGuard)
   async verifyPassword(
-    @Body() body: unknown,
-    @Req() request: AuthenticatedRequest,
-    @Res({ passthrough: true }) response: Response
-  ): Promise<VerifyPasswordResponse | ErrorResponse> {
-    // Runtime validation with Zod
-    const validationResult = validateVerifyPasswordInput(body);
-    if (!validationResult.success) {
-      response.status(HttpStatus.BAD_REQUEST);
-      return {
-        error: validationResult.error,
-      };
-    }
-
-    const { password } = validationResult.data;
+    @Body(new ZodValidationPipe(verifyPasswordSchema)) dto: VerifyPasswordDto,
+    @Req() request: AuthenticatedRequest
+  ): Promise<VerifyPasswordResponse> {
     const userId = request.user.id;
-
-    try {
-      const result = await this.authService.verifyPasswordForElevatedAccess(userId, password);
-      return result;
-    } catch (error) {
-      if (error instanceof Error) {
-        // Invalid password
-        if (error.message === 'Érvénytelen jelszó') {
-          response.status(HttpStatus.UNAUTHORIZED);
-          return {
-            error: {
-              code: VerifyPasswordErrorCode.INVALID_PASSWORD,
-              message: VERIFY_PASSWORD_MESSAGES.INVALID_PASSWORD,
-            },
-          };
-        }
-
-        // User not found (shouldn't happen if JWT is valid, but handle it)
-        if (error.message === 'Felhasználó nem található') {
-          response.status(HttpStatus.NOT_FOUND);
-          return {
-            error: {
-              code: VerifyPasswordErrorCode.USER_NOT_FOUND,
-              message: 'Felhasználó nem található', // Hungarian: User not found
-            },
-          };
-        }
-
-        // Service not configured
-        if (error.message === 'Elevated access service not configured') {
-          response.status(HttpStatus.INTERNAL_SERVER_ERROR);
-          return {
-            error: {
-              code: 'SERVICE_NOT_CONFIGURED',
-              message: 'Szolgáltatás nem elérhető', // Hungarian: Service not available
-            },
-          };
-        }
-      }
-
-      // Generic server error
-      response.status(HttpStatus.INTERNAL_SERVER_ERROR);
-      return {
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'Szerverhiba történt', // Hungarian: Server error occurred
-        },
-      };
-    }
+    // Service throws appropriate HttpExceptions
+    return await this.authService.verifyPasswordForElevatedAccess(userId, dto.password);
   }
 }

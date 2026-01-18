@@ -1,0 +1,119 @@
+# KGC ERP - TST (Test) Environment
+# Ports: 31xx range, DB: 5433
+
+name: kgc-tst
+
+services:
+  # ===========================================
+  # KGC Core Services
+  # ===========================================
+
+  kgc-api:
+    build:
+      context: ../../
+      dockerfile: apps/kgc-api/Dockerfile
+    container_name: kgc-tst-api
+    ports:
+      - "3100:3000"
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://kgc:kgc_tst@kgc-db:5432/kgc_tst
+      REDIS_URL: redis://kgc-redis:6379
+      JWT_SECRET: ${JWT_SECRET_TST}
+      APP_BASE_URL: https://tst.kgc.hu
+    depends_on:
+      kgc-db:
+        condition: service_healthy
+    networks:
+      - kgc-tst-network
+    restart: unless-stopped
+
+  # ===========================================
+  # Database
+  # ===========================================
+
+  kgc-db:
+    image: postgres:16-alpine
+    container_name: kgc-tst-db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: kgc
+      POSTGRES_PASSWORD: kgc_tst
+      POSTGRES_DB: kgc_tst
+    volumes:
+      - kgc-tst-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kgc -d kgc_tst"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kgc-tst-network
+    restart: unless-stopped
+
+  kgc-redis:
+    image: redis:7-alpine
+    container_name: kgc-tst-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - kgc-tst-redis-data:/data
+    networks:
+      - kgc-tst-network
+    restart: unless-stopped
+
+  # ===========================================
+  # Twenty CRM (TST)
+  # ===========================================
+
+  twenty-server:
+    image: twentycrm/twenty:latest
+    container_name: kgc-tst-twenty
+    ports:
+      - "3101:3000"
+    environment:
+      PG_DATABASE_URL: postgresql://twenty:twenty_tst@twenty-db:5432/twenty_tst
+      REDIS_URL: redis://twenty-redis:6379
+      SERVER_URL: https://tst-crm.kgc.hu
+      APP_SECRET: ${TWENTY_SECRET_TST}
+    depends_on:
+      twenty-db:
+        condition: service_healthy
+    networks:
+      - kgc-tst-network
+    restart: unless-stopped
+
+  twenty-db:
+    image: postgres:16-alpine
+    container_name: kgc-tst-twenty-db
+    environment:
+      POSTGRES_USER: twenty
+      POSTGRES_PASSWORD: twenty_tst
+      POSTGRES_DB: twenty_tst
+    volumes:
+      - twenty-tst-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U twenty -d twenty_tst"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kgc-tst-network
+    restart: unless-stopped
+
+  twenty-redis:
+    image: redis:7-alpine
+    container_name: kgc-tst-twenty-redis
+    networks:
+      - kgc-tst-network
+    restart: unless-stopped
+
+volumes:
+  kgc-tst-db-data:
+  kgc-tst-redis-data:
+  twenty-tst-db-data:
+
+networks:
+  kgc-tst-network:
+    name: kgc-tst-network

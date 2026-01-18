@@ -1,0 +1,119 @@
+# KGC ERP - DEV Environment
+# Ports: 30xx range, DB: 5432
+
+name: kgc-dev
+
+services:
+  # ===========================================
+  # KGC Core Services
+  # ===========================================
+
+  kgc-api:
+    build:
+      context: ../../
+      dockerfile: apps/kgc-api/Dockerfile
+    container_name: kgc-dev-api
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://kgc:kgc_dev@kgc-db:5432/kgc_dev
+      REDIS_URL: redis://kgc-redis:6379
+      JWT_SECRET: ${JWT_SECRET_DEV}
+      APP_BASE_URL: https://dev.kgc.hu
+    depends_on:
+      kgc-db:
+        condition: service_healthy
+    networks:
+      - kgc-dev-network
+    restart: unless-stopped
+
+  # ===========================================
+  # Database
+  # ===========================================
+
+  kgc-db:
+    image: postgres:16-alpine
+    container_name: kgc-dev-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: kgc
+      POSTGRES_PASSWORD: kgc_dev
+      POSTGRES_DB: kgc_dev
+    volumes:
+      - kgc-dev-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kgc -d kgc_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kgc-dev-network
+    restart: unless-stopped
+
+  kgc-redis:
+    image: redis:7-alpine
+    container_name: kgc-dev-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - kgc-dev-redis-data:/data
+    networks:
+      - kgc-dev-network
+    restart: unless-stopped
+
+  # ===========================================
+  # Twenty CRM (DEV)
+  # ===========================================
+
+  twenty-server:
+    image: twentycrm/twenty:latest
+    container_name: kgc-dev-twenty
+    ports:
+      - "3001:3000"
+    environment:
+      PG_DATABASE_URL: postgresql://twenty:twenty_dev@twenty-db:5432/twenty_dev
+      REDIS_URL: redis://twenty-redis:6379
+      SERVER_URL: https://dev-crm.kgc.hu
+      APP_SECRET: ${TWENTY_SECRET_DEV}
+    depends_on:
+      twenty-db:
+        condition: service_healthy
+    networks:
+      - kgc-dev-network
+    restart: unless-stopped
+
+  twenty-db:
+    image: postgres:16-alpine
+    container_name: kgc-dev-twenty-db
+    environment:
+      POSTGRES_USER: twenty
+      POSTGRES_PASSWORD: twenty_dev
+      POSTGRES_DB: twenty_dev
+    volumes:
+      - twenty-dev-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U twenty -d twenty_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kgc-dev-network
+    restart: unless-stopped
+
+  twenty-redis:
+    image: redis:7-alpine
+    container_name: kgc-dev-twenty-redis
+    networks:
+      - kgc-dev-network
+    restart: unless-stopped
+
+volumes:
+  kgc-dev-db-data:
+  kgc-dev-redis-data:
+  twenty-dev-db-data:
+
+networks:
+  kgc-dev-network:
+    name: kgc-dev-network

@@ -46,12 +46,25 @@ export type { GenerateTokenResult, PasswordResetTokenRecord } from './services/p
 export { MockEmailService, EMAIL_SERVICE } from './services/email.service';
 export type { IEmailService, PasswordResetEmailData } from './services/email.service';
 
+// Rate Limiting - Pluggable (in-memory for MVP, Redis for K8s/cluster)
+export { RATE_LIMITER } from './services/rate-limiter.interface';
+export type { IRateLimiter, RateLimitResult, RateLimiterConfig } from './services/rate-limiter.interface';
+export { InMemoryRateLimiter } from './services/in-memory-rate-limiter';
+export { RedisRateLimiter, createRedisRateLimiter } from './services/redis-rate-limiter';
+
 // Guards
 export { JwtAuthGuard } from './guards/jwt-auth.guard';
 export { LoginThrottlerGuard } from './guards/login-throttle.guard';
 
+// Pipes - Validation
+export { ZodValidationPipe, createZodPipe } from './pipes/zod-validation.pipe';
+export type { ZodValidationError } from './pipes/zod-validation.pipe';
+
 // Strategy
 export { JwtStrategy } from './strategies/jwt.strategy';
+
+// Utils - G-L1 FIX: Unified IP extraction
+export { getClientIp, getClientIpFromRecord } from './utils/get-client-ip';
 
 // DTOs
 export {

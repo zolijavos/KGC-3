@@ -12,12 +12,22 @@
  * - AC8: Tenant Isolation
  */
 
-import { Inject, Injectable, Optional } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  Optional,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 
 import { RoleService } from './services/role.service';
+import { PermissionService } from './services/permission.service';
 
 /**
  * Interface for AuthService token revocation capability
@@ -26,7 +36,6 @@ import { RoleService } from './services/role.service';
 interface IAuthService {
   revokeAllUserTokens(userId: string): Promise<void>;
 }
-import { PermissionService } from './services/permission.service';
 import { Role, UserStatus, UserListResponse, DeleteUserResponse, UserResponse } from './interfaces/user.interface';
 import { Permission, UserPermissionsResponse } from './interfaces/permission.interface';
 import { IAuditService, AUDIT_SERVICE, AuditAction } from './interfaces/audit.interface';
@@ -52,17 +61,14 @@ const TEMP_PASSWORD_LENGTH = 16;
 
 @Injectable()
 export class UsersService {
-  private readonly permissionService: PermissionService;
-
   constructor(
     @Inject('PRISMA_CLIENT') @Optional() private readonly prisma: PrismaClient | null,
     private readonly roleService: RoleService,
+    private readonly permissionService: PermissionService, // C1 FIX: Now injected via DI
     @Optional() private readonly authService?: IAuthService | null,
     @Optional() @Inject(AUDIT_SERVICE) private readonly auditService?: IAuditService | null,
     @Optional() @Inject(EMAIL_SERVICE) private readonly emailService?: IEmailService | null
-  ) {
-    this.permissionService = new PermissionService();
-  }
+  ) {}
 
   /**
    * Create a new user
@@ -81,12 +87,12 @@ export class UsersService {
     creatorRole: Role
   ): Promise<UserResponse> {
     if (!this.prisma) {
-      throw new Error('Database not available');
+      throw new ServiceUnavailableException('Database not available'); // M2 FIX: Consistent error
     }
 
     // Validate required tenantId
     if (!dto.tenantId) {
-      throw new Error('tenantId is required');
+      throw new BadRequestException('tenantId is required'); // H1 FIX: HttpException
     }
     const tenantId = dto.tenantId;
 
@@ -99,7 +105,7 @@ export class UsersService {
     });
 
     if (existingUser) {
-      throw new Error(USER_MESSAGES.EMAIL_EXISTS);
+      throw new ConflictException(USER_MESSAGES.EMAIL_EXISTS); // H1 FIX: HttpException
     }
 
     // AC6: Check role hierarchy - creator can only assign roles at equal or lower level
@@ -118,7 +124,7 @@ export class UsersService {
           },
         });
       }
-      throw new Error(USER_MESSAGES.ROLE_VIOLATION);
+      throw new ForbiddenException(USER_MESSAGES.ROLE_VIOLATION); // H1 FIX: HttpException
     }
 
     // Generate temporary password
@@ -163,8 +169,9 @@ export class UsersService {
    * @returns Paginated user list
    */
   async findAll(query: UserQueryDto, tenantId: string): Promise<UserListResponse> {
+    // C3 FIX: Throw ServiceUnavailableException instead of silent fail
     if (!this.prisma) {
-      return { data: [], pagination: { total: 0, limit: query.limit, offset: query.offset } };
+      throw new ServiceUnavailableException('Database not available');
     }
 
     // Build where clause with tenant isolation (AC8)
@@ -243,8 +250,9 @@ export class UsersService {
    * @returns User or null if not found
    */
   async findById(id: string, tenantId: string): Promise<UserResponse | null> {
+    // C3 FIX: Throw ServiceUnavailableException instead of silent fail
     if (!this.prisma) {
-      return null;
+      throw new ServiceUnavailableException('Database not available');
     }
 
     const user = await this.prisma.user.findFirst({
@@ -293,7 +301,7 @@ export class UsersService {
     tenantId: string
   ): Promise<UserResponse> {
     if (!this.prisma) {
-      throw new Error('Database not available');
+      throw new ServiceUnavailableException('Database not available'); // M2 FIX
     }
 
     // Find existing user (with tenant isolation)
@@ -302,12 +310,12 @@ export class UsersService {
     });
 
     if (!existingUser) {
-      throw new Error(USER_MESSAGES.NOT_FOUND);
+      throw new NotFoundException(USER_MESSAGES.NOT_FOUND); // H1 FIX
     }
 
     // AC6: Check role hierarchy if role is being changed
     if (dto.role && !this.roleService.canAssignRole(updaterRole, dto.role)) {
-      throw new Error(USER_MESSAGES.ROLE_VIOLATION);
+      throw new ForbiddenException(USER_MESSAGES.ROLE_VIOLATION); // H1 FIX
     }
 
     // Build update data (only include provided fields)
@@ -341,7 +349,7 @@ export class UsersService {
     tenantId: string
   ): Promise<DeleteUserResponse> {
     if (!this.prisma) {
-      throw new Error('Database not available');
+      throw new ServiceUnavailableException('Database not available'); // M2 FIX
     }
 
     // Find existing user (with tenant isolation)
@@ -350,7 +358,7 @@ export class UsersService {
     });
 
     if (!existingUser) {
-      throw new Error(USER_MESSAGES.NOT_FOUND);
+      throw new NotFoundException(USER_MESSAGES.NOT_FOUND); // H1 FIX
     }
 
     const now = new Date();
@@ -386,6 +394,9 @@ export class UsersService {
    * AC#1: PUT /users/:id/role endpoint
    * AC#2: Role hierarchy validation
    *
+   * C2 SECURITY FIX: Uses Prisma $transaction to prevent race conditions
+   * where concurrent requests could bypass validations
+   *
    * @param targetUserId - ID of the user to assign role to
    * @param dto - Role assignment data
    * @param assignerId - ID of the user making the assignment
@@ -402,31 +413,18 @@ export class UsersService {
     tenantId: string
   ): Promise<AssignRoleResponse> {
     if (!this.prisma) {
-      throw new Error('Database not available');
+      throw new ServiceUnavailableException('Database not available'); // M2 FIX
     }
 
-    // Check for self-assignment
+    // Check for self-assignment (before transaction - fast fail)
     if (targetUserId === assignerId) {
-      throw new Error(ROLE_ASSIGNMENT_MESSAGES.SELF_ASSIGNMENT);
-    }
-
-    // Find target user (with tenant isolation)
-    const targetUser = await this.prisma.user.findFirst({
-      where: { id: targetUserId, tenantId },
-    });
-
-    if (!targetUser) {
-      throw new Error(ROLE_ASSIGNMENT_MESSAGES.USER_NOT_FOUND);
-    }
-
-    // Check if same role
-    if (targetUser.role === dto.role) {
-      throw new Error(ROLE_ASSIGNMENT_MESSAGES.SAME_ROLE);
+      throw new ForbiddenException(ROLE_ASSIGNMENT_MESSAGES.SELF_ASSIGNMENT); // H1 FIX
     }
 
     // AC#2: Check role hierarchy - assigner can only assign roles at equal or lower level
+    // (before transaction - fast fail, doesn't depend on DB state)
     if (!this.roleService.canAssignRole(assignerRole, dto.role)) {
-      // Audit log for denied action
+      // Audit log for denied action (outside transaction OK - fire-and-forget)
       if (this.auditService) {
         await this.auditService.log({
           action: AuditAction.ROLE_ASSIGNMENT_DENIED,
@@ -437,24 +435,44 @@ export class UsersService {
           details: {
             assignerRole,
             attemptedRole: dto.role,
-            previousRole: targetUser.role,
             reason: 'Role hierarchy violation',
           },
         });
       }
-      throw new Error(ROLE_ASSIGNMENT_MESSAGES.HIERARCHY_VIOLATION);
+      throw new ForbiddenException(ROLE_ASSIGNMENT_MESSAGES.HIERARCHY_VIOLATION); // H1 FIX
     }
 
-    const previousRole = targetUser.role as Role;
     const now = new Date();
 
-    // Update user's role
-    await this.prisma.user.update({
-      where: { id: targetUserId },
-      data: { role: dto.role },
+    // C2 SECURITY FIX: Use transaction for atomic read-check-write
+    // This prevents race conditions where two concurrent requests could both pass validations
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Find target user (with tenant isolation) - inside transaction for consistency
+      const targetUser = await tx.user.findFirst({
+        where: { id: targetUserId, tenantId },
+      });
+
+      if (!targetUser) {
+        throw new NotFoundException(ROLE_ASSIGNMENT_MESSAGES.USER_NOT_FOUND);
+      }
+
+      // Check if same role (inside transaction to prevent TOCTOU race)
+      if (targetUser.role === dto.role) {
+        throw new BadRequestException(ROLE_ASSIGNMENT_MESSAGES.SAME_ROLE);
+      }
+
+      const previousRole = targetUser.role as Role;
+
+      // Update user's role atomically
+      await tx.user.update({
+        where: { id: targetUserId },
+        data: { role: dto.role },
+      });
+
+      return { previousRole };
     });
 
-    // AC#7: Audit log for successful assignment
+    // AC#7: Audit log for successful assignment (outside transaction - non-critical)
     if (this.auditService) {
       await this.auditService.log({
         action: AuditAction.ROLE_CHANGED,
@@ -463,7 +481,7 @@ export class UsersService {
         resourceType: 'USER',
         resourceId: targetUserId,
         details: {
-          previousRole,
+          previousRole: result.previousRole,
           newRole: dto.role,
           reason: dto.reason,
         },
@@ -472,7 +490,7 @@ export class UsersService {
 
     const responseData: AssignRoleResponse['data'] = {
       userId: targetUserId,
-      previousRole,
+      previousRole: result.previousRole,
       newRole: dto.role,
       assignedBy: assignerId,
       assignedAt: now,
@@ -503,7 +521,7 @@ export class UsersService {
     tenantId: string
   ): Promise<UserPermissionsResponse> {
     if (!this.prisma) {
-      throw new Error('Database not available');
+      throw new ServiceUnavailableException('Database not available'); // M2 FIX: HttpException
     }
 
     // Find target user (with tenant isolation)
@@ -512,7 +530,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new Error(ROLE_ASSIGNMENT_MESSAGES.USER_NOT_FOUND);
+      throw new NotFoundException(ROLE_ASSIGNMENT_MESSAGES.USER_NOT_FOUND); // H1 FIX: HttpException
     }
 
     const role = user.role as Role;
@@ -559,8 +577,9 @@ export class UsersService {
    * @returns Profile response or null if not found
    */
   async getProfile(userId: string, tenantId: string): Promise<ProfileResponseDto | null> {
+    // C3 FIX: Throw ServiceUnavailableException instead of silent fail
     if (!this.prisma) {
-      return null;
+      throw new ServiceUnavailableException('Database not available');
     }
 
     // SECURITY: findFirst with tenantId ensures user can only access their own tenant's data
@@ -600,7 +619,7 @@ export class UsersService {
     tenantId: string
   ): Promise<ProfileResponseDto> {
     if (!this.prisma) {
-      throw new Error('Database not available');
+      throw new ServiceUnavailableException('Database not available'); // M2 FIX: HttpException
     }
 
     // SECURITY: findFirst with tenantId ensures user can only modify their own tenant's data
@@ -612,7 +631,7 @@ export class UsersService {
     });
 
     if (!existingUser) {
-      throw new Error(PROFILE_MESSAGES.NOT_FOUND);
+      throw new NotFoundException(PROFILE_MESSAGES.NOT_FOUND); // H1 FIX: HttpException
     }
 
     // Build update data - only include provided fields
@@ -676,7 +695,7 @@ export class UsersService {
     password?: string
   ): Promise<UpdatePinResponse> {
     if (!this.prisma) {
-      throw new Error('Database not available');
+      throw new ServiceUnavailableException('Database not available'); // M2 FIX: HttpException
     }
 
     // SECURITY: Find user with tenantId to ensure multi-tenant isolation (ADR-001)
@@ -694,7 +713,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new Error(PROFILE_MESSAGES.NOT_FOUND);
+      throw new NotFoundException(PROFILE_MESSAGES.NOT_FOUND); // H1 FIX: HttpException
     }
 
     // SECURITY: Verification required before PIN change
@@ -716,13 +735,13 @@ export class UsersService {
             },
           });
         }
-        throw new Error(PROFILE_MESSAGES.INVALID_PIN);
+        throw new BadRequestException(PROFILE_MESSAGES.INVALID_PIN); // H1 FIX: HttpException
       }
     } else {
       // SECURITY FIX: First PIN setup requires password verification
       // Cannot allow PIN setup without identity verification
       if (!password) {
-        throw new Error('A jelszó megadása kötelező az első PIN beállításához'); // Password required for first PIN setup
+        throw new BadRequestException('A jelszó megadása kötelező az első PIN beállításához'); // H1 FIX: Password required for first PIN setup
       }
       const isValidPassword = await bcrypt.compare(password, user.passwordHash);
       if (!isValidPassword) {
@@ -740,7 +759,7 @@ export class UsersService {
             },
           });
         }
-        throw new Error('Érvénytelen jelszó'); // Invalid password
+        throw new BadRequestException('Érvénytelen jelszó'); // H1 FIX: Invalid password
       }
     }
 
@@ -779,11 +798,15 @@ export class UsersService {
    * Generate a secure temporary password
    * Uses cryptographically secure random bytes
    *
-   * @returns Random password string (alphanumeric)
+   * H4 FIX: Uses hex encoding for full entropy instead of sliced base64
+   * L2 FIX: Made private - only used internally
+   *
+   * @returns Random password string (hexadecimal, 32 characters = 128 bits entropy)
    */
-  generateTemporaryPassword(): string {
-    // Generate random bytes and convert to base64, then take required length
+  private generateTemporaryPassword(): string {
+    // H4 FIX: Use hex encoding for full entropy (16 bytes = 32 hex chars = 128 bits)
+    // Each hex char = 4 bits, so 32 chars = 128 bits of entropy
     const randomBuffer = randomBytes(TEMP_PASSWORD_LENGTH);
-    return randomBuffer.toString('base64').slice(0, TEMP_PASSWORD_LENGTH);
+    return randomBuffer.toString('hex');
   }
 }

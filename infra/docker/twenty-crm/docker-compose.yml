@@ -1,0 +1,143 @@
+# Twenty CRM Docker Compose Configuration
+# KGC ERP Integration - Story 33-1
+# Documentation: ./README.md
+
+name: kgc-twenty-crm
+
+services:
+  # ===========================================
+  # Twenty CRM Server (Main Application)
+  # ===========================================
+  twenty-server:
+    image: twentycrm/twenty:latest
+    container_name: kgc-twenty-server
+    ports:
+      - "${TWENTY_PORT:-3001}:3000"
+    depends_on:
+      twenty-db:
+        condition: service_healthy
+      twenty-redis:
+        condition: service_started
+    environment:
+      # Database
+      PG_DATABASE_URL: postgres://${POSTGRES_USER:-twenty}:${POSTGRES_PASSWORD:-twenty}@twenty-db:5432/${POSTGRES_DB:-twenty}
+      # Redis
+      REDIS_URL: redis://twenty-redis:6379
+      # Server
+      SERVER_URL: ${SERVER_URL:-http://localhost:3001}
+      FRONT_BASE_URL: ${FRONT_BASE_URL:-http://localhost:3001}
+      # Storage
+      STORAGE_TYPE: ${STORAGE_TYPE:-local}
+      STORAGE_LOCAL_PATH: /app/.local-storage
+      # Security
+      APP_SECRET: ${APP_SECRET:?APP_SECRET is required}
+      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET:-${APP_SECRET}}
+      LOGIN_TOKEN_SECRET: ${LOGIN_TOKEN_SECRET:-${APP_SECRET}}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-${APP_SECRET}}
+      FILE_TOKEN_SECRET: ${FILE_TOKEN_SECRET:-${APP_SECRET}}
+      # KGC Integration (placeholder)
+      # KGC_API_URL: ${KGC_API_URL:-http://host.docker.internal:3000}
+      # KGC_WEBHOOK_SECRET: ${KGC_WEBHOOK_SECRET:-}
+    volumes:
+      - twenty-server-data:/app/.local-storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - kgc-network
+
+  # ===========================================
+  # Twenty CRM Worker (Background Jobs)
+  # ===========================================
+  twenty-worker:
+    image: twentycrm/twenty:latest
+    container_name: kgc-twenty-worker
+    command: ["yarn", "worker:prod"]
+    depends_on:
+      twenty-server:
+        condition: service_healthy
+    environment:
+      # Database
+      PG_DATABASE_URL: postgres://${POSTGRES_USER:-twenty}:${POSTGRES_PASSWORD:-twenty}@twenty-db:5432/${POSTGRES_DB:-twenty}
+      # Redis
+      REDIS_URL: redis://twenty-redis:6379
+      # Server
+      SERVER_URL: ${SERVER_URL:-http://localhost:3001}
+      # Security
+      APP_SECRET: ${APP_SECRET:?APP_SECRET is required}
+      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET:-${APP_SECRET}}
+      LOGIN_TOKEN_SECRET: ${LOGIN_TOKEN_SECRET:-${APP_SECRET}}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-${APP_SECRET}}
+      FILE_TOKEN_SECRET: ${FILE_TOKEN_SECRET:-${APP_SECRET}}
+    restart: unless-stopped
+    networks:
+      - kgc-network
+
+  # ===========================================
+  # PostgreSQL Database (Twenty CRM Only)
+  # ===========================================
+  twenty-db:
+    image: postgres:16-alpine
+    container_name: kgc-twenty-db
+    ports:
+      - "${TWENTY_DB_PORT:-5433}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-twenty}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-twenty}
+      POSTGRES_DB: ${POSTGRES_DB:-twenty}
+    volumes:
+      - twenty-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-twenty} -d ${POSTGRES_DB:-twenty}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - kgc-network
+
+  # ===========================================
+  # Redis (Cache & Message Queue)
+  # ===========================================
+  twenty-redis:
+    image: redis:7-alpine
+    container_name: kgc-twenty-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy noeviction
+    ports:
+      - "${TWENTY_REDIS_PORT:-6380}:6379"
+    volumes:
+      - twenty-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - kgc-network
+
+# ===========================================
+# Volumes (Persistent Data)
+# ===========================================
+volumes:
+  twenty-db-data:
+    name: kgc-twenty-db-data
+  twenty-server-data:
+    name: kgc-twenty-server-data
+  twenty-redis-data:
+    name: kgc-twenty-redis-data
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  kgc-network:
+    name: kgc-network
+    driver: bridge
+    # External network allows connection to KGC API
+    # external: true  # Uncomment when integrating with full stack

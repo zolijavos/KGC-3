@@ -5,24 +5,23 @@
  *
  * Returns 429 Too Many Requests when limit exceeded
  * Includes X-RateLimit-Reset header with wait time
+ *
+ * G-L1 FIX: Uses unified getClientIpFromRecord helper
  */
 
 import { ExecutionContext, Injectable } from '@nestjs/common';
 import { ThrottlerException, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
+import { getClientIpFromRecord } from '../utils/get-client-ip';
 
 @Injectable()
 export class LoginThrottlerGuard extends ThrottlerGuard {
   /**
    * Get tracker for rate limiting (uses IP address)
-   * SECURITY: Prioritize req.ip over x-forwarded-for to prevent IP spoofing attacks.
-   * Only use x-forwarded-for when the application is explicitly configured behind a trusted proxy.
+   * G-L1 FIX: Uses unified IP extraction utility
    */
   protected async getTracker(req: Record<string, unknown>): Promise<string> {
-    // SECURITY FIX: Use req.ip as primary source to prevent x-forwarded-for spoofing
-    // req.ip is set by Express based on trust proxy settings
-    const ip = (req['ip'] as string | undefined) ?? 'unknown';
-    return ip;
+    return getClientIpFromRecord(req);
   }
 
   /**

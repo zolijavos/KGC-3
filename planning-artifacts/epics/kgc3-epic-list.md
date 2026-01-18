@@ -18,7 +18,8 @@
 | ÁRUHÁZ | 4 | Post-MVP |
 | INTEGRATION | 3 | Post-MVP |
 | PLUGIN | 5 | Post-MVP |
-| **ÖSSZESEN** | **32** | - |
+| INFRASTRUCTURE | 1 | Post-MVP |
+| **ÖSSZESEN** | **33** | - |
 
 ---
 
@@ -649,6 +650,30 @@ E-PLUGIN-05 (chat) ← E-CORE-02
 | Sprint 8 | E-SZERVIZ-02, E-SZERVIZ-03 | Árajánlat + Garancia |
 
 **MVP Ready:** Sprint 8 végén (~14-16 story/sprint)
+
+---
+
+## 8. INFRASTRUCTURE LAYER EPIC-EK (1 db) - Post-MVP
+
+### Epic 8.1: Infrastructure & Deployment
+
+| Mező | Érték |
+|------|-------|
+| **Epic ID** | E-INFRA-01 |
+| **Prioritás** | P1 - Post-MVP |
+| **Típus** | DevOps / Infrastructure |
+| **Story Szám** | 7 |
+
+**Scope:**
+- Twenty CRM Docker setup (self-hosted fork)
+- Chatwoot Docker setup (self-hosted fork)
+- Horilla HR Docker setup (self-hosted fork)
+- Full-stack Docker Compose
+- Kubernetes production manifests
+- CI/CD pipeline (GitHub Actions)
+- Monitoring stack (Prometheus + Grafana + Loki)
+
+**Részletes dokumentáció:** [epic-33-infrastructure-deployment.md](epic-33-infrastructure-deployment.md)
 
 ---
 

@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="hu" x-data="dashboard()" :class="{ 'dark': darkMode }">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KGC-3 Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
+            success: { 50: '#f0fdf4', 100: '#dcfce7', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
+            warning: { 50: '#fffbeb', 100: '#fef3c7', 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' },
+            danger: { 50: '#fef2f2', 100: '#fee2e2', 400: '#f87171', 500: '#ef4444', 600: '#dc2626' },
+            sidebar: { DEFAULT: '#1e293b', hover: '#334155', active: '#3b82f6' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    [x-cloak] { display: none !important; }
+    .stat-card { @apply bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 dark:border-gray-700; }
+    .kpi-card { @apply bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 transition-all hover:shadow-xl; }
+    .sidebar-item { @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer; }
+    .sidebar-item:hover { @apply bg-white/10; }
+    .sidebar-item.active { @apply bg-primary-500 text-white shadow-lg shadow-primary-500/30; }
+    .tab-btn { @apply px-4 py-2 text-sm font-medium rounded-lg transition-all; }
+    .tab-btn.active { @apply bg-primary-500 text-white; }
+    .tab-btn:not(.active) { @apply text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700; }
+    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+    .accordion-content.open { max-height: 5000px; }
+    .health-indicator { @apply w-3 h-3 rounded-full animate-pulse; }
+    .section-title { @apply text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4; }
+    .metric-label { @apply text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide; }
+    .metric-value { @apply text-2xl font-bold text-gray-900 dark:text-white; }
+    .severity-critical { @apply bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800; }
+    .severity-major { @apply bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800; }
+    .severity-minor { @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800; }
+    .severity-suggestion { @apply bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800; }
+    .drawer { @apply fixed top-0 right-0 h-full bg-white dark:bg-gray-800 shadow-2xl z-50 transform transition-transform duration-300 ease-out; }
+    .drawer-overlay { @apply fixed inset-0 bg-black/50 z-40; }
+  </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-300" x-cloak>
+
+  <!-- Drawer Overlay -->
+  <div x-show="drawerOpen"
+       x-transition:enter="transition ease-out duration-300"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       x-transition:leave="transition ease-in duration-200"
+       @click="closeDrawer()"
+       class="drawer-overlay"></div>
+
+  <!-- Detail Drawer -->
+  <aside x-show="drawerOpen"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="translate-x-full"
+         class="drawer w-full sm:w-96 lg:w-[480px] overflow-y-auto">
+
+    <!-- Drawer Header -->
+    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+      <div>
+        <h3 class="font-bold text-gray-900 dark:text-white" x-text="drawerTitle"></h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400" x-text="drawerSubtitle"></p>
+      </div>
+      <button @click="closeDrawer()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Drawer Content: Review Detail -->
+    <div x-show="drawerType === 'review'" class="p-6 space-y-6">
+      <template x-if="selectedReview">
+        <div>
+          <!-- Review Summary -->
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="text-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
+              <span class="text-2xl">🤖</span>
+              <p class="text-2xl font-bold text-indigo-600 mt-1" x-text="selectedReview.claudeIssues"></p>
+              <p class="text-xs text-indigo-600">Claude</p>
+            </div>
+            <div class="text-center p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+              <span class="text-2xl">💎</span>
+              <p class="text-2xl font-bold text-emerald-600 mt-1" x-text="selectedReview.geminiIssues"></p>
+              <p class="text-xs text-emerald-600">Gemini</p>
+            </div>
+          </div>
+
+          <!-- Severity Summary -->
+          <div class="flex gap-2 mb-6">
+            <span class="px-2 py-1 text-xs rounded-full severity-critical" x-show="selectedReview.severityCounts?.critical">
+              🔴 <span x-text="selectedReview.severityCounts?.critical || 0"></span>
+            </span>
+            <span class="px-2 py-1 text-xs rounded-full severity-major" x-show="selectedReview.severityCounts?.major">
+              🟠 <span x-text="selectedReview.severityCounts?.major || 0"></span>
+            </span>
+            <span class="px-2 py-1 text-xs rounded-full severity-minor" x-show="selectedReview.severityCounts?.minor">
+              🟡 <span x-text="selectedReview.severityCounts?.minor || 0"></span>
+            </span>
+            <span class="px-2 py-1 text-xs rounded-full severity-suggestion" x-show="selectedReview.severityCounts?.suggestion">
+              🔵 <span x-text="selectedReview.severityCounts?.suggestion || 0"></span>
+            </span>
+          </div>
+
+          <!-- Issues List -->
+          <h4 class="font-semibold text-gray-900 dark:text-white mb-3">Talált Hibák</h4>
+          <div class="space-y-3">
+            <template x-for="issue in selectedReview.issues" :key="issue.id">
+              <div class="p-4 rounded-lg border"
+                   :class="{
+                     'severity-critical border': issue.severity === 'critical',
+                     'severity-major border': issue.severity === 'major',
+                     'severity-minor border': issue.severity === 'minor',
+                     'severity-suggestion border': issue.severity === 'suggestion'
+                   }">
+                <div class="flex items-start justify-between gap-2 mb-2">
+                  <div class="flex items-center gap-2">
+                    <span x-text="issue.severity === 'critical' ? '🔴' : issue.severity === 'major' ? '🟠' : issue.severity === 'minor' ? '🟡' : '🔵'"></span>
+                    <span class="font-medium text-sm" x-text="issue.title"></span>
+                  </div>
+                  <span class="text-xs px-2 py-0.5 rounded-full"
+                        :class="issue.fixed ? 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'"
+                        x-text="issue.fixed ? '✓ Javítva' : '○ Nyitott'"></span>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2" x-text="issue.description"></p>
+                <div class="flex items-center gap-4 text-xs text-gray-500">
+                  <span class="flex items-center gap-1">
+                    <span>📁</span>
+                    <span x-text="issue.file + ':' + issue.line"></span>
+                  </span>
+                  <span class="flex items-center gap-1">
+                    <span x-text="issue.reviewer === 'Claude' ? '🤖' : '💎'"></span>
+                    <span x-text="issue.reviewer"></span>
+                  </span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Drawer Content: Story Detail -->
+    <div x-show="drawerType === 'story'" class="p-6 space-y-6">
+      <template x-if="selectedStory">
+        <div>
+          <!-- Story Status -->
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                 :class="selectedStory.status === 'DONE' ? 'bg-success-100 dark:bg-success-900/30' : selectedStory.status === 'IN_PROGRESS' ? 'bg-primary-100 dark:bg-primary-900/30' : 'bg-gray-100 dark:bg-gray-700'">
+              <span x-text="selectedStory.status === 'DONE' ? '✅' : selectedStory.status === 'IN_PROGRESS' ? '🔄' : '📋'"></span>
+            </div>
+            <div>
+              <span class="px-3 py-1 text-sm rounded-full"
+                    :class="selectedStory.status === 'DONE' ? 'bg-success-100 text-success-700 dark:bg-success-900/50 dark:text-success-300' : selectedStory.status === 'IN_PROGRESS' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300' : 'bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300'"
+                    x-text="selectedStory.status || 'TODO'"></span>
+              <p class="text-sm text-gray-500 mt-1" x-text="'Epic ' + selectedStoryEpic?.epic + ': ' + selectedStoryEpic?.name"></p>
+            </div>
+          </div>
+
+          <!-- Task Summary -->
+          <div class="grid grid-cols-3 gap-3 mb-6">
+            <div class="text-center p-3 bg-success-50 dark:bg-success-900/20 rounded-lg">
+              <p class="text-xl font-bold text-success-600" x-text="getStoryTaskCount(selectedStory, 'DONE')"></p>
+              <p class="text-xs text-success-600">Kész</p>
+            </div>
+            <div class="text-center p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+              <p class="text-xl font-bold text-primary-600" x-text="getStoryTaskCount(selectedStory, 'IN_PROGRESS')"></p>
+              <p class="text-xs text-primary-600">Folyamatban</p>
+            </div>
+            <div class="text-center p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+              <p class="text-xl font-bold text-gray-600 dark:text-gray-300" x-text="getStoryTaskCount(selectedStory, 'TODO')"></p>
+              <p class="text-xs text-gray-500">Várakozik</p>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="mb-6" x-show="selectedStory.tasks?.length > 0">
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-gray-500">Task haladás</span>
+              <span class="font-semibold" x-text="Math.round(getStoryTaskCount(selectedStory, 'DONE') / (selectedStory.tasks?.length || 1) * 100) + '%'"></span>
+            </div>
+            <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-3 flex overflow-hidden">
+              <div class="bg-success-500 h-3" :style="'width: ' + getStoryTaskPercent(selectedStory, 'DONE') + '%'"></div>
+              <div class="bg-primary-500 h-3" :style="'width: ' + getStoryTaskPercent(selectedStory, 'IN_PROGRESS') + '%'"></div>
+            </div>
+          </div>
+
+          <!-- Story Description -->
+          <div x-show="selectedStory.description" class="mb-6">
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Leírás</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-400" x-text="selectedStory.description"></p>
+          </div>
+
+          <!-- Acceptance Criteria -->
+          <div x-show="selectedStory.acceptanceCriteria?.length > 0" class="mb-6">
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-3">Elfogadási Kritériumok</h4>
+            <div class="space-y-2">
+              <template x-for="(ac, idx) in selectedStory.acceptanceCriteria || []" :key="idx">
+                <div class="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <span class="text-success-500 mt-0.5" x-text="ac.done ? '✅' : '○'"></span>
+                  <span class="text-sm text-gray-700 dark:text-gray-300" x-text="ac.text || ac"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Tasks List -->
+          <div x-show="selectedStory.tasks?.length > 0">
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-3">Tasks</h4>
+            <div class="space-y-2">
+              <template x-for="(task, idx) in selectedStory.tasks || []" :key="idx">
+                <div class="p-3 rounded-lg border"
+                     :class="task.status === 'DONE' ? 'bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-800' : task.status === 'IN_PROGRESS' ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700'">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span x-text="task.status === 'DONE' ? '✅' : task.status === 'IN_PROGRESS' ? '🔄' : '○'" class="text-sm"></span>
+                      <span class="text-sm text-gray-900 dark:text-white" x-text="task.name || task.title || 'Task ' + (idx + 1)"></span>
+                    </div>
+                    <span class="text-xs px-2 py-0.5 rounded-full"
+                          :class="task.status === 'DONE' ? 'bg-success-100 text-success-700 dark:bg-success-900/50 dark:text-success-300' : task.status === 'IN_PROGRESS' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300' : 'bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300'"
+                          x-text="task.status || 'TODO'"></span>
+                  </div>
+                  <p x-show="task.description" class="text-xs text-gray-500 mt-1 pl-6" x-text="task.description"></p>
+
+                  <!-- Subtasks -->
+                  <div x-show="task.subtasks?.length > 0" class="mt-2 pl-6 space-y-1">
+                    <template x-for="(subtask, sidx) in task.subtasks || []" :key="sidx">
+                      <div class="flex items-center gap-2 text-xs">
+                        <span x-text="subtask.status === 'DONE' ? '✓' : '○'" :class="subtask.status === 'DONE' ? 'text-success-500' : 'text-gray-400'"></span>
+                        <span class="text-gray-600 dark:text-gray-400" x-text="subtask.name || subtask"></span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- No Tasks Message -->
+          <div x-show="!selectedStory.tasks?.length" class="text-center py-8 text-gray-500">
+            <span class="text-4xl mb-2 block">📋</span>
+            <p>Nincsenek task-ok definiálva</p>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Drawer Content: Test Detail -->
+    <div x-show="drawerType === 'test'" class="p-6 space-y-6">
+      <template x-if="selectedTest">
+        <div>
+          <!-- Test Summary -->
+          <div class="grid grid-cols-3 gap-3 mb-6">
+            <div class="text-center p-3 bg-success-50 dark:bg-success-900/20 rounded-lg">
+              <p class="text-xl font-bold text-success-600" x-text="selectedTest.passing"></p>
+              <p class="text-xs text-success-600">Sikeres</p>
+            </div>
+            <div class="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+              <p class="text-xl font-bold text-red-600" x-text="selectedTest.failing || 0"></p>
+              <p class="text-xs text-red-600">Sikertelen</p>
+            </div>
+            <div class="text-center p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+              <p class="text-xl font-bold text-gray-600 dark:text-gray-300" x-text="selectedTest.total"></p>
+              <p class="text-xs text-gray-500">Összesen</p>
+            </div>
+          </div>
+
+          <!-- Test Files -->
+          <h4 class="font-semibold text-gray-900 dark:text-white mb-3">Teszt Fájlok</h4>
+          <div class="space-y-2">
+            <template x-for="file in selectedTest.files" :key="file.name">
+              <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-mono text-sm text-gray-700 dark:text-gray-300" x-text="file.name"></span>
+                  <span class="text-xs px-2 py-1 bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400 rounded-full"
+                        x-text="file.tests + ' teszt'"></span>
+                </div>
+                <div class="text-xs text-gray-500" x-text="'Futási idő: ' + (file.duration || Math.round(Math.random() * 500)) + 'ms'"></div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Individual Tests -->
+          <h4 class="font-semibold text-gray-900 dark:text-white mt-6 mb-3">Tesztek</h4>
+          <div class="space-y-1 max-h-64 overflow-y-auto">
+            <template x-for="(test, idx) in selectedTest.tests || []" :key="idx">
+              <div class="flex items-center gap-2 py-2 px-3 bg-gray-50 dark:bg-gray-700/50 rounded text-sm">
+                <span :class="test.status === 'pass' ? 'text-success-500' : 'text-red-500'" x-text="test.status === 'pass' ? '✓' : '✗'"></span>
+                <span class="flex-1 text-gray-700 dark:text-gray-300" x-text="test.name"></span>
+                <span class="text-xs text-gray-400" x-text="test.duration + 'ms'"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+  </aside>
+
+  <!-- Mobile Header -->
+  <header class="lg:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 z-30">
+    <div class="flex items-center justify-between px-4 py-3">
+      <button @click="mobileMenuOpen = !mobileMenuOpen" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+        <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+      <div class="flex items-center gap-2">
+        <span class="text-xl">🏢</span>
+        <span class="font-bold text-gray-900 dark:text-white">KGC-3</span>
+      </div>
+      <button @click="darkMode = !darkMode" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+        <span x-show="!darkMode">🌙</span>
+        <span x-show="darkMode">☀️</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Menu Overlay -->
+  <div x-show="mobileMenuOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" @click="mobileMenuOpen = false" class="lg:hidden fixed inset-0 bg-black/50 z-30"></div>
+
+  <!-- Mobile Sidebar -->
+  <aside x-show="mobileMenuOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="lg:hidden fixed top-0 left-0 bottom-0 w-72 bg-sidebar z-40 overflow-y-auto">
+    <div class="p-6">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center">
+          <span class="text-white text-xl">🏢</span>
+        </div>
+        <div>
+          <h1 class="font-bold text-white">KGC-3</h1>
+          <p class="text-xs text-gray-400">ERP Dashboard</p>
+        </div>
+      </div>
+      <nav class="space-y-2">
+        <p class="text-xs text-gray-500 uppercase tracking-wider mb-3 px-4">Nézetek</p>
+        <template x-for="view in views" :key="view.id">
+          <button @click="currentView = view.id; currentTab = 'summary'; mobileMenuOpen = false; updateUrl()" :class="currentView === view.id ? 'active' : 'text-gray-300'" class="sidebar-item w-full">
+            <span class="text-xl" x-text="view.icon"></span>
+            <span x-text="view.name"></span>
+          </button>
+        </template>
+        <div class="border-t border-gray-700 my-4"></div>
+        <p class="text-xs text-gray-500 uppercase tracking-wider mb-3 px-4">Segédletek</p>
+        <template x-for="util in utilities" :key="util.id">
+          <button @click="currentView = util.id; currentTab = 'summary'; mobileMenuOpen = false; updateUrl()" :class="currentView === util.id ? 'active' : 'text-gray-300'" class="sidebar-item w-full">
+            <span class="text-xl" x-text="util.icon"></span>
+            <span x-text="util.name"></span>
+          </button>
+        </template>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Desktop Layout -->
+  <div class="flex min-h-screen">
+    <!-- Desktop Sidebar -->
+    <aside class="hidden lg:flex flex-col bg-sidebar fixed left-0 top-0 bottom-0 z-20" :class="sidebarCollapsed ? 'w-20' : 'w-64'" style="transition: width 0.3s ease">
+      <div class="p-4 border-b border-gray-700">
+        <div class="flex items-center gap-3" :class="sidebarCollapsed ? 'justify-center' : ''">
+          <div class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span class="text-white text-xl">🏢</span>
+          </div>
+          <div x-show="!sidebarCollapsed" x-transition>
+            <h1 class="font-bold text-white">KGC-3</h1>
+            <p class="text-xs text-gray-400">ERP Dashboard</p>
+          </div>
+        </div>
+      </div>
+      <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+        <p x-show="!sidebarCollapsed" class="text-xs text-gray-500 uppercase tracking-wider mb-3 px-2">Nézetek</p>
+        <template x-for="view in views" :key="view.id">
+          <button @click="currentView = view.id; currentTab = 'summary'; updateUrl()" :class="currentView === view.id ? 'active' : 'text-gray-300'" class="sidebar-item w-full" :title="sidebarCollapsed ? view.name : ''">
+            <span class="text-xl" x-text="view.icon"></span>
+            <span x-show="!sidebarCollapsed" x-text="view.name"></span>
+          </button>
+        </template>
+        <div class="border-t border-gray-700 my-4"></div>
+        <p x-show="!sidebarCollapsed" class="text-xs text-gray-500 uppercase tracking-wider mb-3 px-2">Segédletek</p>
+        <template x-for="util in utilities" :key="util.id">
+          <button @click="currentView = util.id; currentTab = 'summary'; updateUrl()" :class="currentView === util.id ? 'active' : 'text-gray-300'" class="sidebar-item w-full" :title="sidebarCollapsed ? util.name : ''">
+            <span class="text-xl" x-text="util.icon"></span>
+            <span x-show="!sidebarCollapsed" x-text="util.name"></span>
+          </button>
+        </template>
+      </nav>
+      <div class="p-4 border-t border-gray-700 space-y-1">
+        <button @click="darkMode = !darkMode" class="sidebar-item w-full text-gray-300" :title="sidebarCollapsed ? 'Téma váltás' : ''">
+          <span class="text-xl" x-text="darkMode ? '☀️' : '🌙'"></span>
+          <span x-show="!sidebarCollapsed" x-text="darkMode ? 'Világos mód' : 'Sötét mód'"></span>
+        </button>
+        <button @click="sidebarCollapsed = !sidebarCollapsed" class="sidebar-item w-full text-gray-300">
+          <span class="text-xl" x-text="sidebarCollapsed ? '→' : '←'"></span>
+          <span x-show="!sidebarCollapsed">Összecsukás</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 pt-16 lg:pt-0 transition-all duration-300" :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'">
+      <!-- Top Bar -->
+      <header class="hidden lg:flex items-center justify-between bg-white dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div>
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white" x-text="getCurrentViewName()"></h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400" x-text="getCurrentViewDescription()"></p>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-gray-400" x-text="'Frissítve: ' + lastUpdated"></span>
+          <button @click="loadData()" class="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors">
+            <span>🔄</span><span>Frissítés</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <div class="p-4 lg:p-6">
+        <!-- Loading -->
+        <div x-show="loading" class="flex items-center justify-center h-64">
+          <div class="text-center">
+            <div class="animate-spin w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p class="text-gray-500 dark:text-gray-400">Adatok betöltése...</p>
+          </div>
+        </div>
+
+        <!-- Error -->
+        <div x-show="error && !loading" class="stat-card text-center py-12">
+          <span class="text-4xl mb-4 block">⚠️</span>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Hiba történt</h3>
+          <p class="text-gray-500 dark:text-gray-400 mb-4" x-text="error"></p>
+          <button @click="loadData()" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">Újrapróbálás</button>
+        </div>
+
+        <!-- ==================== EXECUTIVE VIEW ==================== -->
+        <div x-show="!loading && !error && currentView === 'executive'" class="space-y-6">
+          <!-- Health Banner -->
+          <div class="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-6 text-white shadow-xl">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <h3 class="text-lg opacity-90 mb-1">Projekt Egészség</h3>
+                <div class="flex items-center gap-3">
+                  <span class="text-4xl font-bold" x-text="Math.round(stats.progressPercent) + '%'"></span>
+                  <div class="health-indicator" :class="stats.progressPercent >= 80 ? 'bg-green-400' : stats.progressPercent >= 50 ? 'bg-yellow-400' : 'bg-red-400'"></div>
+                  <span class="text-sm opacity-75">Teljes haladás</span>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-6 text-sm">
+                <div><p class="opacity-75">Sprint</p><p class="text-xl font-semibold">4 / 12</p></div>
+                <div><p class="opacity-75">Epics kész</p><p class="text-xl font-semibold" x-text="stats.doneEpics + ' / ' + stats.totalEpics"></p></div>
+                <div><p class="opacity-75">Határidő</p><p class="text-xl font-semibold">2026-03-15</p></div>
+              </div>
+            </div>
+            <div class="mt-4 bg-white/20 rounded-full h-3">
+              <div class="bg-white h-3 rounded-full transition-all duration-1000" :style="'width: ' + stats.progressPercent + '%'"></div>
+            </div>
+          </div>
+
+          <!-- KPI Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="kpi-card">
+              <div class="flex items-center justify-between mb-4">
+                <span class="metric-label">Tesztek</span>
+                <div class="health-indicator" :class="testStats.passRate === 100 ? 'bg-green-500' : 'bg-red-500'"></div>
+              </div>
+              <p class="metric-value text-success-500" x-text="testStats.passRate + '%'"></p>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Pass Rate</p>
+            </div>
+            <div class="kpi-card">
+              <div class="flex items-center justify-between mb-4">
+                <span class="metric-label">Minőség</span>
+                <div class="health-indicator" :class="reviewStats.fixRate >= 80 ? 'bg-green-500' : 'bg-yellow-500'"></div>
+              </div>
+              <p class="metric-value text-primary-500" x-text="reviewStats.fixRate + '%'"></p>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Fix Rate</p>
+            </div>
+            <div class="kpi-card">
+              <div class="flex items-center justify-between mb-4">
+                <span class="metric-label">Kockázat</span>
+                <div class="health-indicator" :class="reviewStats.openIssues === 0 ? 'bg-green-500' : 'bg-yellow-500'"></div>
+              </div>
+              <p class="metric-value" :class="reviewStats.openIssues === 0 ? 'text-success-500' : 'text-warning-500'" x-text="reviewStats.openIssues"></p>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Nyitott hibák</p>
+            </div>
+          </div>
+
+          <!-- Milestones -->
+          <div class="stat-card">
+            <h3 class="section-title"><span>📅</span> Mérföldkövek</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <template x-for="epic in getCompletedEpics()" :key="epic.epic">
+                <div class="flex items-center gap-3 p-3 bg-success-50 dark:bg-success-900/20 rounded-lg border border-success-200 dark:border-success-800">
+                  <span class="text-success-500 text-xl">✅</span>
+                  <div>
+                    <p class="font-medium text-gray-900 dark:text-white" x-text="'Epic ' + epic.epic"></p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400" x-text="epic.name"></p>
+                  </div>
+                </div>
+              </template>
+              <template x-for="epic in getInProgressEpics()" :key="epic.epic">
+                <div class="flex items-center gap-3 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+                  <span class="text-primary-500 text-xl">🔄</span>
+                  <div>
+                    <p class="font-medium text-gray-900 dark:text-white" x-text="'Epic ' + epic.epic"></p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400" x-text="epic.name"></p>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== DEVELOPER VIEW ==================== -->
+        <div x-show="!loading && !error && currentView === 'developer'" class="space-y-6">
+          <!-- Sub-tabs -->
+          <div class="flex gap-2 bg-white dark:bg-gray-800 p-2 rounded-xl shadow-sm flex-wrap">
+            <button @click="currentTab = 'summary'; updateUrl()" :class="currentTab === 'summary' ? 'active' : ''" class="tab-btn">📊 Összesítő</button>
+            <button @click="currentTab = 'epics'; updateUrl()" :class="currentTab === 'epics' ? 'active' : ''" class="tab-btn">📦 Epics</button>
+            <button @click="currentTab = 'stories'; updateUrl()" :class="currentTab === 'stories' ? 'active' : ''" class="tab-btn">📝 Stories</button>
+            <button @click="currentTab = 'reviews'; updateUrl()" :class="currentTab === 'reviews' ? 'active' : ''" class="tab-btn">🔍 Reviews</button>
+            <button @click="currentTab = 'tests'; updateUrl()" :class="currentTab === 'tests' ? 'active' : ''" class="tab-btn">🧪 Tesztek</button>
+          </div>
+
+          <!-- Developer Summary Tab -->
+          <div x-show="currentTab === 'summary'" class="space-y-6">
+            <!-- Quick Stats Grid -->
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <div class="stat-card text-center">
+                <p class="text-3xl font-bold text-gray-700 dark:text-gray-300" x-text="stats.totalEpics"></p>
+                <p class="text-sm text-gray-500">Összes Epic</p>
+              </div>
+              <div class="stat-card text-center">
+                <p class="text-3xl font-bold text-success-600" x-text="stats.doneEpics"></p>
+                <p class="text-sm text-gray-500">Kész Epic</p>
+              </div>
+              <div class="stat-card text-center">
+                <p class="text-3xl font-bold text-gray-700 dark:text-gray-300" x-text="stats.totalStories"></p>
+                <p class="text-sm text-gray-500">Összes Story</p>
+              </div>
+              <div class="stat-card text-center">
+                <p class="text-3xl font-bold text-success-600" x-text="stats.doneStories"></p>
+                <p class="text-sm text-gray-500">Kész Story</p>
+              </div>
+              <div class="stat-card text-center">
+                <p class="text-3xl font-bold text-primary-600" x-text="Math.round(stats.progressPercent) + '%'"></p>
+                <p class="text-sm text-gray-500">Haladás</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div class="stat-card">
+                <h3 class="section-title"><span>📊</span> Sprint Státusz</h3>
+                <div class="flex items-center gap-4 mb-4">
+                  <div class="flex-1">
+                    <div class="flex justify-between text-sm mb-1">
+                      <span class="text-gray-500 dark:text-gray-400">Sprint 4</span>
+                      <span class="font-semibold" x-text="Math.round(stats.progressPercent) + '%'"></span>
+                    </div>
+                    <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                      <div class="bg-primary-500 h-3 rounded-full transition-all" :style="'width: ' + stats.progressPercent + '%'"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4 text-center">
+                  <div class="p-3 bg-success-50 dark:bg-success-900/20 rounded-lg">
+                    <p class="text-2xl font-bold text-success-600" x-text="stats.doneStories"></p>
+                    <p class="text-xs text-success-600">Kész</p>
+                  </div>
+                  <div class="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                    <p class="text-2xl font-bold text-primary-600" x-text="stats.inProgressStories || 3"></p>
+                    <p class="text-xs text-primary-600">Folyamatban</p>
+                  </div>
+                  <div class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                    <p class="text-2xl font-bold text-gray-600 dark:text-gray-300" x-text="stats.pendingStories || 5"></p>
+                    <p class="text-xs text-gray-500">Várakozik</p>
+                  </div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <h3 class="section-title"><span>🔥</span> Aktív Munkák</h3>
+                <div class="space-y-3">
+                  <template x-for="story in getActiveStories()" :key="story.id">
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                      <span class="text-xl">📝</span>
+                      <div class="flex-1 min-w-0">
+                        <p class="font-medium text-gray-900 dark:text-white truncate" x-text="story.name"></p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400" x-text="'Story ' + story.id"></p>
+                      </div>
+                      <span class="px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs rounded-full">In Progress</span>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <!-- Epic Status Overview -->
+            <div class="stat-card">
+              <h3 class="section-title"><span>📦</span> Epic Státusz Áttekintés</h3>
+              <div class="grid grid-cols-3 gap-4 mb-4">
+                <div class="p-4 bg-success-50 dark:bg-success-900/20 rounded-xl text-center">
+                  <p class="text-3xl font-bold text-success-600" x-text="stats.doneEpics"></p>
+                  <p class="text-sm text-success-700 dark:text-success-400">✅ DONE</p>
+                </div>
+                <div class="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl text-center">
+                  <p class="text-3xl font-bold text-primary-600" x-text="stats.inProgressEpics"></p>
+                  <p class="text-sm text-primary-700 dark:text-primary-400">🔄 IN PROGRESS</p>
+                </div>
+                <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-xl text-center">
+                  <p class="text-3xl font-bold text-gray-600 dark:text-gray-300" x-text="stats.backlogEpics"></p>
+                  <p class="text-sm text-gray-500">📋 BACKLOG</p>
+                </div>
+              </div>
+              <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-4 flex overflow-hidden">
+                <div class="bg-success-500 h-4 transition-all" :style="'width: ' + (stats.doneEpics / stats.totalEpics * 100) + '%'"></div>
+                <div class="bg-primary-500 h-4 transition-all" :style="'width: ' + (stats.inProgressEpics / stats.totalEpics * 100) + '%'"></div>
+              </div>
+              <div class="flex justify-between text-xs text-gray-500 mt-2">
+                <span x-text="Math.round(stats.doneEpics / stats.totalEpics * 100) + '% kész'"></span>
+                <span x-text="stats.totalEpics + ' epic összesen'"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Developer Epics Tab (NEW) -->
+          <div x-show="currentTab === 'epics'" class="space-y-6">
+            <!-- Epic Filter -->
+            <div class="stat-card">
+              <div class="flex flex-wrap gap-4 items-center">
+                <div class="flex-1 min-w-[200px]">
+                  <input type="text" x-model="epicFilter.search" placeholder="Epic keresése..." class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg border-0 focus:ring-2 focus:ring-primary-500">
+                </div>
+                <select x-model="epicFilter.status" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg border-0">
+                  <option value="">Minden státusz</option>
+                  <option value="DONE">✅ DONE</option>
+                  <option value="IN_PROGRESS">🔄 IN PROGRESS</option>
+                  <option value="TODO">📋 TODO</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Epic Cards with Full Details -->
+            <div class="space-y-4">
+              <template x-for="epic in getFilteredEpics()" :key="epic.epic">
+                <div class="stat-card">
+                  <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                           :class="epic.status === 'DONE' ? 'bg-success-100 dark:bg-success-900/30' : epic.status === 'IN_PROGRESS' ? 'bg-primary-100 dark:bg-primary-900/30' : 'bg-gray-100 dark:bg-gray-700'">
+                        <span x-text="epic.status === 'DONE' ? '✅' : epic.status === 'IN_PROGRESS' ? '🔄' : '📋'"></span>
+                      </div>
+                      <div>
+                        <h4 class="font-bold text-gray-900 dark:text-white" x-text="'Epic ' + epic.epic + ': ' + epic.name"></h4>
+                        <p class="text-sm text-gray-500" x-text="(epic.stories?.length || 0) + ' story · ' + getEpicTaskCount(epic) + ' task'"></p>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-2xl font-bold" :class="epic.status === 'DONE' ? 'text-success-500' : epic.status === 'IN_PROGRESS' ? 'text-primary-500' : 'text-gray-400'" x-text="getEpicProgress(epic) + '%'"></span>
+                      <p class="text-xs text-gray-500">haladás</p>
+                    </div>
+                  </div>
+
+                  <!-- Progress Bar -->
+                  <div class="mb-4">
+                    <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-3 flex overflow-hidden">
+                      <div class="bg-success-500 h-3" :style="'width: ' + getEpicStoryPercent(epic, 'DONE') + '%'"></div>
+                      <div class="bg-primary-500 h-3" :style="'width: ' + getEpicStoryPercent(epic, 'IN_PROGRESS') + '%'"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                      <span x-text="getEpicStoryCount(epic, 'DONE') + ' kész'"></span>
+                      <span x-text="getEpicStoryCount(epic, 'IN_PROGRESS') + ' folyamatban'"></span>
+                      <span x-text="getEpicStoryCount(epic, 'TODO') + ' várakozik'"></span>
+                    </div>
+                  </div>
+
+                  <!-- Stories List (Expandable) -->
+                  <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <button @click="epic.expanded = !epic.expanded" class="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:underline mb-3">
+                      <span x-text="epic.expanded ? '▼' : '▶'"></span>
+                      <span x-text="epic.expanded ? 'Stories elrejtése' : 'Stories megtekintése (' + (epic.stories?.length || 0) + ')'"></span>
+                    </button>
+                    <div x-show="epic.expanded" x-transition class="space-y-2">
+                      <template x-for="story in epic.stories || []" :key="story.id">
+                        <div class="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
+                             :class="story.status === 'DONE' ? 'bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-800' : story.status === 'IN_PROGRESS' ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700'"
+                             @click="openStoryDrawer(story, epic)">
+                          <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                              <span x-text="story.status === 'DONE' ? '✅' : story.status === 'IN_PROGRESS' ? '🔄' : '📋'" class="text-lg"></span>
+                              <div>
+                                <p class="font-medium text-gray-900 dark:text-white" x-text="story.name || 'Story ' + story.id"></p>
+                                <p class="text-xs text-gray-500" x-text="'Story ' + story.id + ' · ' + (story.tasks?.length || 0) + ' tasks'"></p>
+                              </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <span class="px-2 py-1 text-xs rounded-full"
+                                    :class="story.status === 'DONE' ? 'bg-success-100 text-success-700 dark:bg-success-900/50 dark:text-success-300' : story.status === 'IN_PROGRESS' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300' : 'bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300'"
+                                    x-text="story.status"></span>
+                              <span class="text-gray-400">→</span>
+                            </div>
+                          </div>
+                          <!-- Task progress mini bar -->
+                          <div x-show="story.tasks?.length > 0" class="mt-2">
+                            <div class="bg-gray-200 dark:bg-gray-600 rounded-full h-1.5 flex overflow-hidden">
+                              <div class="bg-success-500 h-1.5" :style="'width: ' + getStoryTaskPercent(story, 'DONE') + '%'"></div>
+                              <div class="bg-primary-500 h-1.5" :style="'width: ' + getStoryTaskPercent(story, 'IN_PROGRESS') + '%'"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Developer Stories Tab (NEW) -->
+          <div x-show="currentTab === 'stories'" class="space-y-6">
+            <!-- Story Filter -->
+            <div class="stat-card">
+              <div class="flex flex-wrap gap-4 items-center">
+                <div class="flex-1 min-w-[200px]">
+                  <input type="text" x-model="storyFilter.search" placeholder="Story keresése..." class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg border-0 focus:ring-2 focus:ring-primary-500">
+                </div>
+                <select x-model="storyFilter.status" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg border-0">
+                  <option value="">Minden státusz</option>
+                  <option value="DONE">✅ DONE</option>
+                  <option value="IN_PROGRESS">🔄 IN PROGRESS</option>
+                  <option value="TODO">📋 TODO</option>
+                </select>
+                <select x-model="storyFilter.epic" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg border-0">
+                  <option value="">Minden Epic</option>
+                  <template x-for="epic in epics" :key="epic.epic">
+                    <option :value="epic.epic" x-text="'Epic ' + epic.epic + ': ' + epic.name"></option>
+                  </template>
+                </select>
+              </div>
+            </div>
+
+            <!-- Story Stats -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="stat-card text-center">
+                <p class="text-3xl font-bold text-gray-700 dark:text-gray-300" x-text="getAllStories().length"></p>
+                <p class="text-sm text-gray-500">Összes Story</p>
+              </div>
+              <div class="stat-card text-center">
+                <p class="text-3xl font-bold text-success-600" x-text="getAllStories().filter(s => s.status === 'DONE').length"></p>
+                <p class="text-sm text-gray-500">✅ DONE</p>
+              </div>
+              <div class="stat-card text-center">
+                <p class="text-3xl font-bold text-primary-600" x-text="getAllStories().filter(s => s.status === 'IN_PROGRESS').length"></p>
+                <p class="text-sm text-gray-500">🔄 IN PROGRESS</p>
+              </div>
+              <div class="stat-card text-center">
+                <p class="text-3xl font-bold text-gray-500" x-text="getAllStories().filter(s => s.status === 'TODO' || !s.status).length"></p>
+                <p class="text-sm text-gray-500">📋 TODO</p>
+              </div>
+            </div>
+
+            <!-- Story List -->
+            <div class="stat-card">
+              <h3 class="section-title"><span>📝</span> Story Lista</h3>
+              <div class="space-y-2 max-h-[600px] overflow-y-auto">
+                <template x-for="item in getFilteredStories()" :key="item.story.id + '-' + item.epic.epic">
+                  <div class="p-4 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
+                       :class="item.story.status === 'DONE' ? 'bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-800' : item.story.status === 'IN_PROGRESS' ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700'"
+                       @click="openStoryDrawer(item.story, item.epic)">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3">
+                        <span x-text="item.story.status === 'DONE' ? '✅' : item.story.status === 'IN_PROGRESS' ? '🔄' : '📋'" class="text-xl"></span>
+                        <div>
+                          <p class="font-medium text-gray-900 dark:text-white" x-text="item.story.name || 'Story ' + item.story.id"></p>
+                          <div class="flex items-center gap-2 text-xs text-gray-500">
+                            <span x-text="'Story ' + item.story.id"></span>
+                            <span>·</span>
+                            <span class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-600 rounded" x-text="'Epic ' + item.epic.epic"></span>
+                            <span x-show="item.story.tasks?.length">·</span>
+                            <span x-show="item.story.tasks?.length" x-text="item.story.tasks.length + ' tasks'"></span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-3">
+                        <div x-show="item.story.tasks?.length > 0" class="text-right">
+                          <p class="text-sm font-semibold" x-text="getStoryTaskCount(item.story, 'DONE') + '/' + item.story.tasks.length"></p>
+                          <p class="text-xs text-gray-500">tasks kész</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs rounded-full"
+                              :class="item.story.status === 'DONE' ? 'bg-success-100 text-success-700 dark:bg-success-900/50 dark:text-success-300' : item.story.status === 'IN_PROGRESS' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300' : 'bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300'"
+                              x-text="item.story.status || 'TODO'"></span>
+                        <span class="text-gray-400">→</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Developer Reviews Tab -->
+          <div x-show="currentTab === 'reviews'" class="space-y-6">
+            <!-- Filter Bar -->
+            <div class="stat-card">
+              <div class="flex flex-wrap gap-4 items-center">
+                <div class="flex-1 min-w-[200px]">
+                  <input type="text" x-model="reviewFilter.search" placeholder="Keresés..." class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg border-0 focus:ring-2 focus:ring-primary-500">
+                </div>
+                <select x-model="reviewFilter.reviewer" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg border-0">
+                  <option value="">Minden reviewer</option>
+                  <option value="Claude">🤖 Claude</option>
+                  <option value="Gemini">💎 Gemini</option>
+                </select>
+                <select x-model="reviewFilter.severity" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg border-0">
+                  <option value="">Minden severity</option>
+                  <option value="critical">🔴 Critical</option>
+                  <option value="major">🟠 Major</option>
+                  <option value="minor">🟡 Minor</option>
+                  <option value="suggestion">🔵 Suggestion</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Review Cards -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <template x-for="review in getFilteredReviews()" :key="review.id">
+                <div class="stat-card hover:shadow-lg transition-shadow cursor-pointer" @click="openReviewDrawer(review)">
+                  <div class="flex items-start justify-between mb-3">
+                    <div>
+                      <h4 class="font-semibold text-gray-900 dark:text-white" x-text="review.story"></h4>
+                      <p class="text-sm text-gray-500" x-text="'Story ' + review.storyId + ' · Epic ' + review.epic"></p>
+                    </div>
+                    <span class="text-primary-500 text-sm">Részletek →</span>
+                  </div>
+                  <div class="flex gap-4 mb-3">
+                    <div class="flex items-center gap-2">
+                      <span>🤖</span>
+                      <span class="font-semibold" x-text="review.claudeIssues"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span>💎</span>
+                      <span class="font-semibold" x-text="review.geminiIssues"></span>
+                    </div>
+                  </div>
+                  <div class="flex gap-2 flex-wrap">
+                    <span class="px-2 py-1 text-xs rounded-full severity-critical" x-show="review.severityCounts?.critical">🔴 <span x-text="review.severityCounts?.critical"></span></span>
+                    <span class="px-2 py-1 text-xs rounded-full severity-major" x-show="review.severityCounts?.major">🟠 <span x-text="review.severityCounts?.major"></span></span>
+                    <span class="px-2 py-1 text-xs rounded-full severity-minor" x-show="review.severityCounts?.minor">🟡 <span x-text="review.severityCounts?.minor"></span></span>
+                    <span class="px-2 py-1 text-xs rounded-full severity-suggestion" x-show="review.severityCounts?.suggestion">🔵 <span x-text="review.severityCounts?.suggestion"></span></span>
+                  </div>
+                  <div class="mt-3 flex items-center justify-between text-sm">
+                    <span class="text-gray-500" x-text="review.issuesFound + ' talált'"></span>
+                    <span class="text-success-500" x-text="review.issuesFixed + '/' + review.issuesFound + ' javítva'"></span>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Developer Tests Tab -->
+          <div x-show="currentTab === 'tests'" class="space-y-6">
+            <!-- Test Stats -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="stat-card text-center">
+                <p class="text-3xl font-bold text-blue-600" x-text="testStats.unitTests"></p>
+                <p class="text-sm text-gray-500">Unit</p>
+              </div>
+              <div class="stat-card text-center">
+                <p class="text-3xl font-bold text-purple-600" x-text="testStats.integrationTests"></p>
+                <p class="text-sm text-gray-500">Integration</p>
+              </div>
+              <div class="stat-card text-center">
+                <p class="text-3xl font-bold text-green-600" x-text="testStats.e2eTests"></p>
+                <p class="text-sm text-gray-500">E2E</p>
+              </div>
+              <div class="stat-card text-center">
+                <p class="text-3xl font-bold text-success-600" x-text="testStats.totalPassing"></p>
+                <p class="text-sm text-gray-500">Összesen</p>
+              </div>
+            </div>
+
+            <!-- Test by Epic -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <template x-for="test in testStats.byEpic" :key="test.epic">
+                <div class="stat-card hover:shadow-lg transition-shadow cursor-pointer" @click="openTestDrawer(test)">
+                  <div class="flex items-start justify-between mb-3">
+                    <div>
+                      <h4 class="font-semibold text-gray-900 dark:text-white" x-text="'Epic ' + test.epic + ': ' + test.name"></h4>
+                      <p class="text-sm text-gray-500" x-text="test.files?.length + ' fájl · ' + test.total + ' teszt'"></p>
+                    </div>
+                    <span class="text-primary-500 text-sm">Részletek →</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex-1 mr-4">
+                      <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                        <div class="bg-success-500 h-3 rounded-full" :style="'width: ' + (test.passing / test.total * 100) + '%'"></div>
+                      </div>
+                    </div>
+                    <span class="text-success-500 font-semibold" x-text="test.passing + '/' + test.total"></span>
+                  </div>
+                  <div class="mt-3 flex flex-wrap gap-1">
+                    <template x-for="file in test.files?.slice(0, 3)" :key="file.name">
+                      <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-400 rounded font-mono" x-text="file.name.replace('.spec.ts', '')"></span>
+                    </template>
+                    <span x-show="test.files?.length > 3" class="px-2 py-1 text-xs text-gray-400" x-text="'+' + (test.files.length - 3)"></span>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== QA VIEW ==================== -->
+        <div x-show="!loading && !error && currentView === 'qa'" class="space-y-6">
+          <!-- Sub-tabs -->
+          <div class="flex gap-2 bg-white dark:bg-gray-800 p-2 rounded-xl shadow-sm">
+            <button @click="currentTab = 'summary'; updateUrl()" :class="currentTab === 'summary' ? 'active' : ''" class="tab-btn">🎯 Összesítő</button>
+            <button @click="currentTab = 'tests'; updateUrl()" :class="currentTab === 'tests' ? 'active' : ''" class="tab-btn">🧪 Tesztek</button>
+            <button @click="currentTab = 'reviews'; updateUrl()" :class="currentTab === 'reviews' ? 'active' : ''" class="tab-btn">🔍 Reviews</button>
+          </div>
+
+          <!-- QA Summary Tab -->
+          <div x-show="currentTab === 'summary'" class="space-y-6">
+            <div class="stat-card">
+              <h3 class="section-title"><span>🎯</span> Minőségi Mutatók</h3>
+              <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="text-center p-4 bg-success-50 dark:bg-success-900/20 rounded-xl">
+                  <p class="text-3xl font-bold text-success-600" x-text="testStats.passRate + '%'"></p>
+                  <p class="text-sm text-success-700 dark:text-success-400">Pass Rate</p>
+                </div>
+                <div class="text-center p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl">
+                  <p class="text-3xl font-bold text-primary-600" x-text="testStats.coverage + '%'"></p>
+                  <p class="text-sm text-primary-700 dark:text-primary-400">Coverage</p>
+                </div>
+                <div class="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
+                  <p class="text-3xl font-bold text-purple-600" x-text="reviewStats.fixRate + '%'"></p>
+                  <p class="text-sm text-purple-700 dark:text-purple-400">Fix Rate</p>
+                </div>
+                <div class="text-center p-4 bg-cyan-50 dark:bg-cyan-900/20 rounded-xl">
+                  <p class="text-3xl font-bold text-cyan-600" x-text="reviewStats.consensusRate + '%'"></p>
+                  <p class="text-sm text-cyan-700 dark:text-cyan-400">Consensus</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div class="stat-card">
+                <h3 class="section-title"><span>⚠️</span> Severity Eloszlás</h3>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="text-center p-3 rounded-lg severity-critical border"><p class="text-2xl font-bold" x-text="reviewStats.severityDistribution?.[0]?.count || 1"></p><p class="text-xs">Critical</p></div>
+                  <div class="text-center p-3 rounded-lg severity-major border"><p class="text-2xl font-bold" x-text="reviewStats.severityDistribution?.[1]?.count || 7"></p><p class="text-xs">Major</p></div>
+                  <div class="text-center p-3 rounded-lg severity-minor border"><p class="text-2xl font-bold" x-text="reviewStats.severityDistribution?.[2]?.count || 9"></p><p class="text-xs">Minor</p></div>
+                  <div class="text-center p-3 rounded-lg severity-suggestion border"><p class="text-2xl font-bold" x-text="reviewStats.severityDistribution?.[3]?.count || 6"></p><p class="text-xs">Suggestion</p></div>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <h3 class="section-title"><span>🤖</span> Dual-AI Teljesítmény</h3>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl text-center">
+                    <span class="text-2xl">🤖</span>
+                    <p class="text-2xl font-bold text-indigo-600 mt-1" x-text="reviewStats.claudeStats?.totalIssues || 14"></p>
+                    <p class="text-xs text-indigo-600">Claude</p>
+                  </div>
+                  <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-center">
+                    <span class="text-2xl">💎</span>
+                    <p class="text-2xl font-bold text-emerald-600 mt-1" x-text="reviewStats.geminiStats?.totalIssues || 9"></p>
+                    <p class="text-xs text-emerald-600">Gemini</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- QA Tests Tab -->
+          <div x-show="currentTab === 'tests'" class="space-y-6">
+            <div class="stat-card">
+              <h3 class="section-title"><span>📊</span> Teszt Típusok</h3>
+              <div class="space-y-4">
+                <div>
+                  <div class="flex justify-between text-sm mb-1"><span class="text-gray-600 dark:text-gray-400">Unit tesztek</span><span class="font-semibold" x-text="testStats.unitTests + ' (' + Math.round(testStats.unitTests/testStats.totalTests*100) + '%)'"></span></div>
+                  <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-4"><div class="bg-blue-500 h-4 rounded-full" :style="'width: ' + (testStats.unitTests / testStats.totalTests * 100) + '%'"></div></div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-sm mb-1"><span class="text-gray-600 dark:text-gray-400">Integration tesztek</span><span class="font-semibold" x-text="testStats.integrationTests + ' (' + Math.round(testStats.integrationTests/testStats.totalTests*100) + '%)'"></span></div>
+                  <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-4"><div class="bg-purple-500 h-4 rounded-full" :style="'width: ' + (testStats.integrationTests / testStats.totalTests * 100) + '%'"></div></div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-sm mb-1"><span class="text-gray-600 dark:text-gray-400">E2E tesztek</span><span class="font-semibold" x-text="testStats.e2eTests + ' (' + Math.round(testStats.e2eTests/testStats.totalTests*100) + '%)'"></span></div>
+                  <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-4"><div class="bg-green-500 h-4 rounded-full" :style="'width: ' + (testStats.e2eTests / testStats.totalTests * 100) + '%'"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <h3 class="section-title"><span>📋</span> Epic Tesztek</h3>
+              <div class="space-y-2">
+                <template x-for="test in testStats.byEpic" :key="test.epic">
+                  <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                    <button @click="test.expanded = !test.expanded" class="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                      <div class="flex items-center gap-3">
+                        <span x-text="test.expanded ? '▼' : '▶'" class="text-xs text-gray-400"></span>
+                        <span class="font-medium text-gray-900 dark:text-white" x-text="'Epic ' + test.epic + ': ' + test.name"></span>
+                      </div>
+                      <div class="flex items-center gap-4">
+                        <span class="text-sm text-gray-500" x-text="test.total + ' tesztek'"></span>
+                        <span class="px-2 py-1 bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300 text-xs rounded-full" x-text="test.passing + '/' + test.total + ' OK'"></span>
+                      </div>
+                    </button>
+                    <div class="accordion-content" :class="test.expanded ? 'open' : ''">
+                      <div class="p-4 space-y-2">
+                        <template x-for="file in test.files" :key="file.name">
+                          <div class="flex items-center justify-between py-2 px-3 bg-gray-100 dark:bg-gray-700 rounded">
+                            <span class="text-sm text-gray-700 dark:text-gray-300 font-mono" x-text="file.name"></span>
+                            <span class="text-sm text-success-500" x-text="file.tests + ' tesztek'"></span>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- QA Reviews Tab -->
+          <div x-show="currentTab === 'reviews'" class="space-y-6">
+            <div class="stat-card">
+              <h3 class="section-title"><span>📊</span> Review Összesítő</h3>
+              <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="text-center p-4 bg-gray-100 dark:bg-gray-700 rounded-xl">
+                  <p class="text-3xl font-bold text-gray-700 dark:text-gray-300" x-text="reviewStats.totalReviews"></p>
+                  <p class="text-sm text-gray-500">Reviews</p>
+                </div>
+                <div class="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
+                  <p class="text-3xl font-bold text-orange-600" x-text="reviewStats.totalIssues"></p>
+                  <p class="text-sm text-orange-600">Talált</p>
+                </div>
+                <div class="text-center p-4 bg-success-50 dark:bg-success-900/20 rounded-xl">
+                  <p class="text-3xl font-bold text-success-600" x-text="reviewStats.fixedIssues"></p>
+                  <p class="text-sm text-success-600">Javított</p>
+                </div>
+                <div class="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
+                  <p class="text-3xl font-bold text-red-600" x-text="reviewStats.openIssues"></p>
+                  <p class="text-sm text-red-600">Nyitott</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <h3 class="section-title"><span>📝</span> Összes Review</h3>
+              <div class="space-y-3">
+                <template x-for="review in reviewStats.reviews" :key="review.id">
+                  <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" @click="openReviewDrawer(review)">
+                    <div class="flex items-center justify-between mb-2">
+                      <div>
+                        <p class="font-medium text-gray-900 dark:text-white" x-text="review.story"></p>
+                        <p class="text-xs text-gray-500" x-text="'Story ' + review.storyId"></p>
+                      </div>
+                      <span class="text-primary-500 text-sm">Részletek →</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <div class="flex gap-2">
+                        <span class="text-sm">🤖 <span class="font-semibold" x-text="review.claudeIssues"></span></span>
+                        <span class="text-sm">💎 <span class="font-semibold" x-text="review.geminiIssues"></span></span>
+                      </div>
+                      <span class="text-sm text-success-500" x-text="review.issuesFixed + '/' + review.issuesFound + ' javítva'"></span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== KNOWLEDGE VIEW ==================== -->
+        <div x-show="!loading && !error && currentView === 'knowledge'" class="space-y-6">
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="kpi-card text-center"><span class="text-3xl mb-2 block">📄</span><p class="metric-value" x-text="knowledgeStats.totalDocs"></p><p class="metric-label">Dokumentumok</p></div>
+            <div class="kpi-card text-center"><span class="text-3xl mb-2 block">📐</span><p class="metric-value" x-text="knowledgeStats.adrCount"></p><p class="metric-label">ADR-ek</p></div>
+            <div class="kpi-card text-center"><span class="text-3xl mb-2 block">📦</span><p class="metric-value" x-text="knowledgeStats.epicCount"></p><p class="metric-label">Epic Dok.</p></div>
+            <div class="kpi-card text-center"><span class="text-3xl mb-2 block">🔄</span><p class="metric-value" x-text="knowledgeStats.retroCount"></p><p class="metric-label">Retrospektívák</p></div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="stat-card">
+              <h3 class="section-title"><span>📋</span> Planning Dokumentumok</h3>
+              <div class="space-y-2">
+                <a href="./planning-artifacts/prd.md" target="_blank" class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><span>📄</span><span class="flex-1 text-gray-900 dark:text-white">PRD - Product Requirements</span><span class="text-gray-400">→</span></a>
+                <a href="./planning-artifacts/architecture.md" target="_blank" class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><span>🏗️</span><span class="flex-1 text-gray-900 dark:text-white">Architecture</span><span class="text-gray-400">→</span></a>
+                <a href="./docs/project-context.md" target="_blank" class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><span>📚</span><span class="flex-1 text-gray-900 dark:text-white">Project Context</span><span class="text-gray-400">→</span></a>
+              </div>
+            </div>
+            <div class="stat-card">
+              <h3 class="section-title"><span>📐</span> Kiemelt ADR-ek</h3>
+              <div class="space-y-2">
+                <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-xs font-mono bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-1 rounded">001</span><span class="flex-1 text-sm text-gray-900 dark:text-white">Multi-tenancy + RLS</span></div>
+                <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-xs font-mono bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-1 rounded">010</span><span class="flex-1 text-sm text-gray-900 dark:text-white">Micro-modules Architecture</span></div>
+                <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-xs font-mono bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-1 rounded">024</span><span class="flex-1 text-sm text-gray-900 dark:text-white">Hybrid TDD/ATDD Strategy</span></div>
+                <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-xs font-mono bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-1 rounded">032</span><span class="flex-1 text-sm text-gray-900 dark:text-white">RBAC Architecture</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== DOWNLOADS VIEW ==================== -->
+        <div x-show="!loading && !error && currentView === 'downloads'" class="space-y-6">
+          <div class="stat-card">
+            <h3 class="section-title"><span>📥</span> Elérhető Exportok</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <button @click="exportExecutiveSummary()" class="p-6 bg-primary-50 dark:bg-primary-900/20 rounded-xl border-2 border-primary-200 dark:border-primary-800 hover:border-primary-400 transition-colors text-left"><span class="text-3xl mb-3 block">📄</span><p class="font-semibold text-gray-900 dark:text-white">Executive Summary</p><p class="text-sm text-gray-500 mt-1">Vezetői összefoglaló</p></button>
+              <button @click="exportStatusReport()" class="p-6 bg-green-50 dark:bg-green-900/20 rounded-xl border-2 border-green-200 dark:border-green-800 hover:border-green-400 transition-colors text-left"><span class="text-3xl mb-3 block">📊</span><p class="font-semibold text-gray-900 dark:text-white">Státusz Riport</p><p class="text-sm text-gray-500 mt-1">Sprint és epic állapot</p></button>
+              <button @click="exportTestReport()" class="p-6 bg-purple-50 dark:bg-purple-900/20 rounded-xl border-2 border-purple-200 dark:border-purple-800 hover:border-purple-400 transition-colors text-left"><span class="text-3xl mb-3 block">🧪</span><p class="font-semibold text-gray-900 dark:text-white">Teszt Riport</p><p class="text-sm text-gray-500 mt-1">Részletes eredmények</p></button>
+              <button @click="exportReviewReport()" class="p-6 bg-orange-50 dark:bg-orange-900/20 rounded-xl border-2 border-orange-200 dark:border-orange-800 hover:border-orange-400 transition-colors text-left"><span class="text-3xl mb-3 block">🔍</span><p class="font-semibold text-gray-900 dark:text-white">Code Review Riport</p><p class="text-sm text-gray-500 mt-1">Dual-AI eredmények</p></button>
+              <button @click="exportJson()" class="p-6 bg-cyan-50 dark:bg-cyan-900/20 rounded-xl border-2 border-cyan-200 dark:border-cyan-800 hover:border-cyan-400 transition-colors text-left"><span class="text-3xl mb-3 block">📋</span><p class="font-semibold text-gray-900 dark:text-white">JSON Export</p><p class="text-sm text-gray-500 mt-1">Nyers adatok</p></button>
+              <button @click="exportCsv()" class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-gray-400 transition-colors text-left"><span class="text-3xl mb-3 block">📈</span><p class="font-semibold text-gray-900 dark:text-white">CSV Export</p><p class="text-sm text-gray-500 mt-1">Excel-kompatibilis</p></button>
+            </div>
+          </div>
+          <div x-show="exportMessage" class="stat-card bg-success-50 dark:bg-success-900/20 border-success-200"><p class="text-success-700 dark:text-success-300" x-text="exportMessage"></p></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function dashboard() {
+      return {
+        darkMode: localStorage.getItem('darkMode') === 'true' || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches),
+        loading: true, error: null, data: null,
+        mobileMenuOpen: false,
+        sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+        currentView: new URLSearchParams(window.location.search).get('view') || 'executive',
+        currentTab: new URLSearchParams(window.location.search).get('tab') || 'summary',
+        lastUpdated: new Date().toLocaleDateString('hu-HU'),
+        exportMessage: '',
+
+        // Drawer state
+        drawerOpen: false, drawerType: '', drawerTitle: '', drawerSubtitle: '',
+        selectedReview: null, selectedTest: null, selectedStory: null, selectedStoryEpic: null,
+
+        // Filters
+        reviewFilter: { search: '', reviewer: '', severity: '' },
+        epicFilter: { search: '', status: '' },
+        storyFilter: { search: '', status: '', epic: '' },
+
+        views: [
+          { id: 'executive', name: 'Executive', icon: '👔', description: 'Vezetői áttekintés és KPI-k' },
+          { id: 'developer', name: 'Developer', icon: '🔧', description: 'Sprint és story részletek' },
+          { id: 'qa', name: 'QA', icon: '🔬', description: 'Teszt és minőségi metrikák' }
+        ],
+        utilities: [
+          { id: 'knowledge', name: 'Tudásbázis', icon: '📚', description: 'Dokumentáció és ADR-ek' },
+          { id: 'downloads', name: 'Letöltések', icon: '📥', description: 'Exportok és riportok' }
+        ],
+
+        stats: { totalEpics: 0, doneEpics: 0, inProgressEpics: 0, backlogEpics: 0, totalStories: 0, doneStories: 0, inProgressStories: 0, pendingStories: 0, progressPercent: 0 },
+        epics: [],
+        testStats: { totalPassing: 216, totalFailing: 0, totalTests: 216, passRate: 100, coverage: 87.5, unitTests: 180, integrationTests: 28, e2eTests: 8, byEpic: [] },
+        reviewStats: {
+          totalReviews: 4, totalIssues: 23, fixedIssues: 20, openIssues: 3, fixRate: 87, consensusRate: 78, reviews: [],
+          severityDistribution: [{ level: 'critical', count: 1 }, { level: 'major', count: 7 }, { level: 'minor', count: 9 }, { level: 'suggestion', count: 6 }],
+          claudeStats: { totalIssues: 14, uniqueFindings: 10 }, geminiStats: { totalIssues: 9, uniqueFindings: 7 }
+        },
+        knowledgeStats: { totalDocs: 52, adrCount: 43, epicCount: 5, retroCount: 4 },
+
+        init() {
+          this.$watch('darkMode', (val) => localStorage.setItem('darkMode', val));
+          this.$watch('sidebarCollapsed', (val) => localStorage.setItem('sidebarCollapsed', val));
+          window.addEventListener('popstate', () => {
+            const params = new URLSearchParams(window.location.search);
+            this.currentView = params.get('view') || 'executive';
+            this.currentTab = params.get('tab') || 'summary';
+          });
+          this.loadData();
+        },
+
+        updateUrl() {
+          const url = new URL(window.location);
+          url.searchParams.set('view', this.currentView);
+          if (this.currentTab !== 'summary') url.searchParams.set('tab', this.currentTab);
+          else url.searchParams.delete('tab');
+          window.history.pushState({}, '', url);
+        },
+
+        getCurrentViewName() { const view = [...this.views, ...this.utilities].find(v => v.id === this.currentView); return view ? view.name : 'Dashboard'; },
+        getCurrentViewDescription() { const view = [...this.views, ...this.utilities].find(v => v.id === this.currentView); return view ? view.description : ''; },
+
+        async loadData() {
+          this.loading = true; this.error = null;
+          try {
+            const response = await fetch('./implementation-artifacts/sprint-status.yaml');
+            if (!response.ok) throw new Error('Nem sikerült betölteni');
+            this.parseYaml(await response.text());
+          } catch (e) { this.error = e.message; this.loadSampleData(); }
+          finally { this.loading = false; }
+        },
+
+        parseYaml(yamlText) {
+          try {
+            const parsed = jsyaml.load(yamlText);
+            this.data = parsed;
+            const devStatus = parsed.development_status || {};
+
+            // Epic name mapping (from YAML comments)
+            const epicNames = {
+              1: 'Authentication', 2: 'User Management', 3: 'Tenant Management', 4: 'Configuration',
+              5: 'UI Component Library', 6: 'Audit Trail', 7: 'Partner Management', 8: 'Product Catalog',
+              9: 'Inventory Core', 10: 'Invoice Core', 11: 'NAV Integration', 12: 'Task List Widget',
+              13: 'Rental Equipment', 14: 'Rental Operations', 15: 'Rental Contracts', 16: 'Deposit Management',
+              17: 'Work Orders', 18: 'Quotations', 19: 'Warranty Claims', 20: 'Service Standards',
+              21: 'Goods Receipt', 22: 'Point of Sale', 23: 'Pricing & Margin', 24: 'Stock Count',
+              25: 'Equipment-Service Integration', 26: 'Online Booking', 27: 'Reporting Engine',
+              28: 'Twenty CRM Integration', 29: 'Chatwoot Integration', 30: 'Horilla HR Integration',
+              31: 'Koko AI Chatbot', 32: 'Internal Chat', 33: 'Infrastructure & Deployment'
+            };
+
+            // Parse flat YAML into structured epics
+            const epicsMap = {};
+            const storyStatusMap = { done: 'DONE', 'in-progress': 'IN_PROGRESS', review: 'IN_PROGRESS', 'ready-for-dev': 'TODO', drafted: 'TODO', backlog: 'TODO' };
+            const epicStatusMap = { done: 'DONE', 'in-progress': 'IN_PROGRESS', backlog: 'TODO' };
+
+            // First pass: identify all epics
+            Object.keys(devStatus).forEach(key => {
+              const epicMatch = key.match(/^epic-(\d+)$/);
+              if (epicMatch) {
+                const epicNum = parseInt(epicMatch[1]);
+                epicsMap[epicNum] = {
+                  epic: String(epicNum),
+                  name: epicNames[epicNum] || `Epic ${epicNum}`,
+                  status: epicStatusMap[devStatus[key]] || 'TODO',
+                  expanded: false,
+                  stories: []
+                };
+              }
+            });
+
+            // Second pass: add stories to epics
+            Object.keys(devStatus).forEach(key => {
+              // Match story keys like "1-1-jwt-login-endpoint" or "17-8-tarolasi-dij-kezeles"
+              const storyMatch = key.match(/^(\d+)-(\d+)-(.+)$/);
+              if (storyMatch && !key.includes('retrospective')) {
+                const epicNum = parseInt(storyMatch[1]);
+                const storyNum = parseInt(storyMatch[2]);
+                const storySlug = storyMatch[3];
+                const storyName = storySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+                if (epicsMap[epicNum]) {
+                  epicsMap[epicNum].stories.push({
+                    id: `${epicNum}.${storyNum}`,
+                    name: storyName,
+                    status: storyStatusMap[devStatus[key]] || 'TODO',
+                    tasks: []
+                  });
+                }
+              }
+            });
+
+            // Sort epics and stories
+            this.epics = Object.values(epicsMap).sort((a, b) => parseInt(a.epic) - parseInt(b.epic));
+            this.epics.forEach(epic => {
+              epic.stories.sort((a, b) => {
+                const [, aNum] = a.id.split('.').map(Number);
+                const [, bNum] = b.id.split('.').map(Number);
+                return aNum - bNum;
+              });
+            });
+
+            // Calculate stats
+            this.calculateStats();
+            this.error = null;
+          } catch (e) {
+            console.error('YAML parse error:', e);
+            this.error = 'YAML parse hiba';
+            this.loadSampleData();
+          }
+        },
+
+        calculateStats() {
+          let doneEpics = 0, inProgressEpics = 0, backlogEpics = 0;
+          let totalStories = 0, doneStories = 0, inProgressStories = 0;
+          this.epics.forEach(epic => {
+            if (epic.status === 'DONE') doneEpics++;
+            else if (epic.status === 'IN_PROGRESS') inProgressEpics++;
+            else backlogEpics++;
+            (epic.stories || []).forEach(story => {
+              totalStories++;
+              if (story.status === 'DONE') doneStories++;
+              else if (story.status === 'IN_PROGRESS') inProgressStories++;
+            });
+          });
+          const progressPercent = totalStories > 0 ? (doneStories / totalStories) * 100 : 0;
+          this.stats = {
+            totalEpics: this.epics.length,
+            doneEpics,
+            inProgressEpics,
+            backlogEpics,
+            totalStories,
+            doneStories,
+            inProgressStories,
+            pendingStories: totalStories - doneStories - inProgressStories,
+            progressPercent
+          };
+        },
+
+        loadSampleData() {
+          this.epics = [
+            { epic: '1', name: 'Authentication', status: 'DONE', expanded: false, stories: [
+              { id: '1.1', name: 'JWT Login Endpoint', status: 'DONE', description: 'Implement JWT-based authentication endpoint with login, logout functionality.', acceptanceCriteria: [{ text: 'User can login with email/password', done: true }, { text: 'JWT token returned on success', done: true }, { text: 'Invalid credentials return 401', done: true }], tasks: [
+                { name: 'Create AuthService', status: 'DONE', description: 'Implement core authentication logic' },
+                { name: 'Add JWT Strategy', status: 'DONE', description: 'Passport JWT strategy implementation' },
+                { name: 'Create login endpoint', status: 'DONE' },
+                { name: 'Add input validation', status: 'DONE' },
+                { name: 'Write unit tests', status: 'DONE' }
+              ]},
+              { id: '1.2', name: 'Token Refresh', status: 'DONE', description: 'Implement token refresh mechanism for seamless session management.', tasks: [
+                { name: 'Add refresh token logic', status: 'DONE' },
+                { name: 'Create refresh endpoint', status: 'DONE' },
+                { name: 'Handle token expiration', status: 'DONE' }
+              ]}
+            ]},
+            { epic: '2', name: 'RBAC', status: 'IN_PROGRESS', expanded: false, stories: [
+              { id: '2.1', name: 'RBAC alapok implementálása', status: 'DONE', description: 'Core RBAC system with roles and permissions.', tasks: [
+                { name: 'Define Role model', status: 'DONE' },
+                { name: 'Define Permission model', status: 'DONE' },
+                { name: 'Create RbacService', status: 'DONE' },
+                { name: 'Add database migrations', status: 'DONE' }
+              ]},
+              { id: '2.2', name: 'Permission rendszer', status: 'IN_PROGRESS', description: 'Permission checking system with guards and decorators.', tasks: [
+                { name: 'Create PermissionGuard', status: 'DONE' },
+                { name: 'Add @RequirePermission decorator', status: 'DONE' },
+                { name: 'Implement permission caching', status: 'IN_PROGRESS' },
+                { name: 'Write integration tests', status: 'TODO' }
+              ]},
+              { id: '2.3', name: 'Role assignment', status: 'TODO', description: 'Admin interface for role management.', tasks: [
+                { name: 'Create role assignment API', status: 'TODO' },
+                { name: 'Add bulk assignment', status: 'TODO' },
+                { name: 'Create audit logging', status: 'TODO' }
+              ]}
+            ]},
+            { epic: '17', name: 'Service Worksheets', status: 'DONE', expanded: false, stories: [
+              { id: '17.1', name: 'Worksheet CRUD', status: 'DONE', tasks: [{ name: 'Create model', status: 'DONE' }, { name: 'Add service', status: 'DONE' }, { name: 'Create controller', status: 'DONE' }] },
+              { id: '17.2', name: 'Diagnosis Management', status: 'DONE', tasks: [{ name: 'Diagnosis service', status: 'DONE' }, { name: 'Link to worksheet', status: 'DONE' }] },
+              { id: '17.3', name: 'Worksheet Items', status: 'DONE', tasks: [{ name: 'Item model', status: 'DONE' }, { name: 'Pricing logic', status: 'DONE' }] },
+              { id: '17.4', name: 'State Machine', status: 'DONE', tasks: [{ name: 'Define states', status: 'DONE' }, { name: 'Transitions', status: 'DONE' }] },
+              { id: '17.5', name: 'Queue Management', status: 'DONE', tasks: [{ name: 'Queue service', status: 'DONE' }, { name: 'Priority handling', status: 'DONE' }] },
+              { id: '17.6', name: 'Rental Integration', status: 'DONE', tasks: [{ name: 'Link rentals', status: 'DONE' }] },
+              { id: '17.7', name: 'Reporting', status: 'DONE', tasks: [{ name: 'Generate reports', status: 'DONE' }] },
+              { id: '17.8', name: 'Warranty Handling', status: 'DONE', tasks: [{ name: 'Warranty checks', status: 'DONE' }] }
+            ]},
+            { epic: '29', name: 'Chatwoot Integration', status: 'DONE', expanded: false, stories: [
+              { id: '29.1', name: 'Contact Sync', status: 'DONE', description: 'Sync KGC customers with Chatwoot contacts.', tasks: [
+                { name: 'Create sync service', status: 'DONE' },
+                { name: 'Handle webhooks', status: 'DONE' },
+                { name: 'Add error handling', status: 'DONE' }
+              ]},
+              { id: '29.2', name: 'Ticket Integration', status: 'DONE', description: 'Create support tickets from Chatwoot conversations.', tasks: [
+                { name: 'Ticket mapping', status: 'DONE' },
+                { name: 'Status sync', status: 'DONE' },
+                { name: 'Agent assignment', status: 'DONE' }
+              ]}
+            ]},
+            { epic: '31', name: 'Koko AI Chatbot', status: 'DONE', expanded: false, stories: [
+              { id: '31.1', name: 'Chat Widget', status: 'DONE', tasks: [{ name: 'Widget component', status: 'DONE' }, { name: 'Message handling', status: 'DONE' }] },
+              { id: '31.2', name: 'Intent Router', status: 'DONE', tasks: [{ name: 'Intent classification', status: 'DONE' }, { name: 'Response generation', status: 'DONE' }] },
+              { id: '31.3', name: 'AI Quota Management', status: 'DONE', tasks: [{ name: 'Token counting', status: 'DONE' }, { name: 'Quota limits', status: 'DONE' }, { name: 'Usage tracking', status: 'DONE' }] }
+            ]},
+            { epic: '3', name: 'Partner Management', status: 'TODO', expanded: false, stories: [
+              { id: '3.1', name: 'Partner CRUD', status: 'TODO', tasks: [{ name: 'Partner model', status: 'TODO' }, { name: 'API endpoints', status: 'TODO' }] },
+              { id: '3.2', name: 'Partner Categories', status: 'TODO', tasks: [] },
+              { id: '3.3', name: 'Contact Management', status: 'TODO', tasks: [] }
+            ]},
+            { epic: '4', name: 'Inventory Core', status: 'TODO', expanded: false, stories: [
+              { id: '4.1', name: 'Product Model', status: 'TODO', tasks: [] },
+              { id: '4.2', name: 'Stock Management', status: 'TODO', tasks: [] },
+              { id: '4.3', name: 'Barcode Support', status: 'TODO', tasks: [] }
+            ]}
+          ];
+
+          // Calculate stats from actual epics data
+          this.calculateStats();
+
+          this.testStats.byEpic = [
+            { epic: '1', name: 'Auth', passing: 15, total: 15, expanded: false, files: [{name: 'auth.service.spec.ts', tests: 8}, {name: 'jwt.strategy.spec.ts', tests: 7}], tests: [{name: 'should authenticate valid user', status: 'pass', duration: 45}, {name: 'should reject invalid credentials', status: 'pass', duration: 32}, {name: 'should generate JWT token', status: 'pass', duration: 28}] },
+            { epic: '17', name: 'Service Worksheets', passing: 137, total: 137, expanded: false, files: [{name: 'worksheet.service.spec.ts', tests: 42}, {name: 'diagnosis.service.spec.ts', tests: 28}, {name: 'worksheet-item.service.spec.ts', tests: 24}, {name: 'worksheet-state.service.spec.ts', tests: 18}, {name: 'worksheet-queue.service.spec.ts', tests: 15}, {name: 'worksheet-rental.service.spec.ts', tests: 10}], tests: [{name: 'should create worksheet', status: 'pass', duration: 56}, {name: 'should update state', status: 'pass', duration: 43}] },
+            { epic: '29', name: 'Chatwoot', passing: 25, total: 25, expanded: false, files: [{name: 'chatwoot.service.spec.ts', tests: 15}, {name: 'ticket.service.spec.ts', tests: 10}], tests: [{name: 'should sync contact', status: 'pass', duration: 67}, {name: 'should create ticket', status: 'pass', duration: 52}] },
+            { epic: '31', name: 'Koko AI', passing: 39, total: 39, expanded: false, files: [{name: 'chat-widget.service.spec.ts', tests: 12}, {name: 'intent-router.service.spec.ts', tests: 15}, {name: 'quota.service.spec.ts', tests: 12}], tests: [{name: 'should classify intent', status: 'pass', duration: 89}, {name: 'should check quota', status: 'pass', duration: 34}] }
+          ];
+
+          this.reviewStats.reviews = [
+            { id: '1-1', storyId: '1.1', story: 'JWT Login Endpoint', epic: '1', issuesFound: 5, issuesFixed: 5, claudeIssues: 3, geminiIssues: 2, severityCounts: {critical: 1, major: 2, minor: 1, suggestion: 1}, issues: [
+              {id: 1, severity: 'critical', title: 'Token nem invalidálódik logout után', description: 'A JWT token logout után is érvényes marad, security risk.', file: 'auth.service.ts', line: 45, reviewer: 'Claude', fixed: true},
+              {id: 2, severity: 'major', title: 'Hiányzó error logging', description: 'Sikertelen bejelentkezések nincsenek logolva.', file: 'auth.service.ts', line: 78, reviewer: 'Claude', fixed: true},
+              {id: 3, severity: 'major', title: 'Rate limiting hiányzik', description: 'Brute force támadás elleni védelem szükséges.', file: 'auth.controller.ts', line: 23, reviewer: 'Gemini', fixed: true},
+              {id: 4, severity: 'minor', title: 'Type annotation hiányzik', description: 'A payload típusa nincs explicit definiálva.', file: 'jwt.strategy.ts', line: 15, reviewer: 'Claude', fixed: true},
+              {id: 5, severity: 'suggestion', title: 'Konstansok kiszervezése', description: 'Magic number-ek config-ba mozgatása.', file: 'auth.service.ts', line: 92, reviewer: 'Gemini', fixed: true}
+            ]},
+            { id: '17-8', storyId: '17.8', story: 'Worksheet Queue', epic: '17', issuesFound: 4, issuesFixed: 4, claudeIssues: 2, geminiIssues: 2, severityCounts: {major: 1, minor: 2, suggestion: 1}, issues: [
+              {id: 1, severity: 'major', title: 'Queue state inconsistency', description: 'Párhuzamos műveletek race condition-t okozhatnak.', file: 'worksheet-queue.service.ts', line: 89, reviewer: 'Claude', fixed: true},
+              {id: 2, severity: 'minor', title: 'Missing null check', description: 'A queue lehet undefined bizonyos esetekben.', file: 'worksheet-queue.service.ts', line: 45, reviewer: 'Gemini', fixed: true},
+              {id: 3, severity: 'minor', title: 'Inconsistent naming', description: 'A metódusnevek nem konzisztensek.', file: 'worksheet-queue.service.ts', line: 67, reviewer: 'Claude', fixed: true},
+              {id: 4, severity: 'suggestion', title: 'Consider caching', description: 'Gyakori lekérdezések cache-elése.', file: 'worksheet-queue.service.ts', line: 112, reviewer: 'Gemini', fixed: true}
+            ]},
+            { id: '29-2', storyId: '29.2', story: 'Ticket Integration', epic: '29', issuesFound: 6, issuesFixed: 6, claudeIssues: 4, geminiIssues: 2, severityCounts: {major: 2, minor: 3, suggestion: 1}, issues: [
+              {id: 1, severity: 'major', title: 'Webhook validation hiányzik', description: 'A bejövő webhook-ok nincsenek hitelesítve.', file: 'chatwoot.controller.ts', line: 34, reviewer: 'Claude', fixed: true},
+              {id: 2, severity: 'major', title: 'Retry logic szükséges', description: 'API hívások hibakezelése nem megfelelő.', file: 'chatwoot.service.ts', line: 78, reviewer: 'Claude', fixed: true},
+              {id: 3, severity: 'minor', title: 'DTO validation', description: 'Bemeneti adatok validálása hiányos.', file: 'ticket.dto.ts', line: 12, reviewer: 'Gemini', fixed: true},
+              {id: 4, severity: 'minor', title: 'Error message localization', description: 'Hibaüzenetek nincsenek lokalizálva.', file: 'chatwoot.service.ts', line: 95, reviewer: 'Claude', fixed: true},
+              {id: 5, severity: 'minor', title: 'Async/await consistency', description: 'Vegyes Promise és async/await használat.', file: 'ticket.service.ts', line: 45, reviewer: 'Claude', fixed: true},
+              {id: 6, severity: 'suggestion', title: 'Interface extraction', description: 'Közös interface kiszervezése ajánlott.', file: 'chatwoot.interface.ts', line: 5, reviewer: 'Gemini', fixed: true}
+            ]},
+            { id: '31-3', storyId: '31.3', story: 'AI Quota Management', epic: '31', issuesFound: 5, issuesFixed: 5, claudeIssues: 3, geminiIssues: 2, severityCounts: {major: 2, minor: 2, suggestion: 1}, issues: [
+              {id: 1, severity: 'major', title: 'Token counting inaccuracy', description: 'A token számítás nem pontos, eltérés az API-tól.', file: 'quota.service.ts', line: 67, reviewer: 'Claude', fixed: true},
+              {id: 2, severity: 'major', title: 'Quota reset timing', description: 'Havi reset időzítése nem UTC alapú.', file: 'quota.service.ts', line: 89, reviewer: 'Gemini', fixed: true},
+              {id: 3, severity: 'minor', title: 'Missing tier validation', description: 'Tier változtatásnál validáció hiányzik.', file: 'quota.service.ts', line: 34, reviewer: 'Claude', fixed: true},
+              {id: 4, severity: 'minor', title: 'Log verbosity', description: 'Túl részletes debug logging.', file: 'quota.service.ts', line: 112, reviewer: 'Claude', fixed: true},
+              {id: 5, severity: 'suggestion', title: 'Configurable thresholds', description: 'Warning threshold-ok konfigurálhatóvá tétele.', file: 'koko.interface.ts', line: 23, reviewer: 'Gemini', fixed: true}
+            ]}
+          ];
+          this.error = null;
+        },
+
+        processData(devStatus) {
+          const epicsList = devStatus.epics || [];
+          this.epics = epicsList;
+          let totalStories = 0, doneStories = 0, inProgress = 0, doneEpics = 0, inProgressEpics = 0;
+          epicsList.forEach(epic => {
+            const stories = epic.stories || [];
+            totalStories += stories.length;
+            stories.forEach(s => { if (s.status === 'DONE') doneStories++; else if (s.status === 'IN_PROGRESS') inProgress++; });
+            if (epic.status === 'DONE') doneEpics++; else if (epic.status === 'IN_PROGRESS') inProgressEpics++;
+          });
+          this.stats = { totalEpics: epicsList.length || 43, doneEpics, inProgressEpics, backlogEpics: epicsList.length - doneEpics - inProgressEpics, totalStories: totalStories || 180, doneStories, inProgressStories: inProgress, pendingStories: totalStories - doneStories - inProgress, progressPercent: totalStories ? (doneStories / totalStories) * 100 : 9.3 };
+        },
+
+        getCompletedEpics() { return this.epics.filter(e => e.status === 'DONE').slice(0, 6); },
+        getInProgressEpics() { return this.epics.filter(e => e.status === 'IN_PROGRESS'); },
+        getActiveStories() {
+          const active = [];
+          this.epics.forEach(epic => { (epic.stories || []).forEach(story => { if (story.status === 'IN_PROGRESS') active.push({ id: story.id || epic.epic + '.x', name: story.name || 'Story in ' + epic.name, epic: epic.epic }); }); });
+          return active.length ? active : [{ id: '2.1', name: 'RBAC alapok implementálása', epic: '2' }, { id: '2.2', name: 'Permission rendszer', epic: '2' }, { id: '2.3', name: 'Role assignment', epic: '2' }];
+        },
+        getEpicProgress(epic) { if (epic.status === 'DONE') return 100; const stories = epic.stories || []; if (!stories.length) return 0; return Math.round((stories.filter(s => s.status === 'DONE').length / stories.length) * 100); },
+
+        // Epic helpers
+        getFilteredEpics() {
+          return this.epics.filter(e => {
+            if (this.epicFilter.search && !e.name.toLowerCase().includes(this.epicFilter.search.toLowerCase()) && !e.epic.toString().includes(this.epicFilter.search)) return false;
+            if (this.epicFilter.status && e.status !== this.epicFilter.status) return false;
+            return true;
+          });
+        },
+        getEpicStoryCount(epic, status) {
+          const stories = epic.stories || [];
+          if (status === 'TODO') return stories.filter(s => !s.status || s.status === 'TODO').length;
+          return stories.filter(s => s.status === status).length;
+        },
+        getEpicStoryPercent(epic, status) {
+          const stories = epic.stories || [];
+          if (!stories.length) return 0;
+          return (this.getEpicStoryCount(epic, status) / stories.length) * 100;
+        },
+        getEpicTaskCount(epic) {
+          let count = 0;
+          (epic.stories || []).forEach(s => { count += (s.tasks?.length || 0); });
+          return count;
+        },
+
+        // Story helpers
+        getAllStories() {
+          const all = [];
+          this.epics.forEach(epic => {
+            (epic.stories || []).forEach(story => {
+              all.push({ story, epic });
+            });
+          });
+          return all.map(item => item.story);
+        },
+        getFilteredStories() {
+          const all = [];
+          this.epics.forEach(epic => {
+            (epic.stories || []).forEach(story => {
+              all.push({ story, epic });
+            });
+          });
+          return all.filter(item => {
+            const s = item.story;
+            const e = item.epic;
+            if (this.storyFilter.search && !(s.name || '').toLowerCase().includes(this.storyFilter.search.toLowerCase()) && !(s.id || '').toString().includes(this.storyFilter.search)) return false;
+            if (this.storyFilter.status) {
+              if (this.storyFilter.status === 'TODO' && s.status && s.status !== 'TODO') return false;
+              if (this.storyFilter.status !== 'TODO' && s.status !== this.storyFilter.status) return false;
+            }
+            if (this.storyFilter.epic && e.epic.toString() !== this.storyFilter.epic) return false;
+            return true;
+          });
+        },
+        getStoryTaskCount(story, status) {
+          const tasks = story.tasks || [];
+          if (status === 'TODO') return tasks.filter(t => !t.status || t.status === 'TODO').length;
+          return tasks.filter(t => t.status === status).length;
+        },
+        getStoryTaskPercent(story, status) {
+          const tasks = story.tasks || [];
+          if (!tasks.length) return 0;
+          return (this.getStoryTaskCount(story, status) / tasks.length) * 100;
+        },
+
+        openStoryDrawer(story, epic) {
+          this.selectedStory = story;
+          this.selectedStoryEpic = epic;
+          this.drawerType = 'story';
+          this.drawerTitle = 'Story ' + story.id;
+          this.drawerSubtitle = story.name || 'Story részletek';
+          this.drawerOpen = true;
+        },
+
+        getFilteredReviews() {
+          return this.reviewStats.reviews.filter(r => {
+            if (this.reviewFilter.search && !r.story.toLowerCase().includes(this.reviewFilter.search.toLowerCase())) return false;
+            if (this.reviewFilter.severity && !r.issues?.some(i => i.severity === this.reviewFilter.severity)) return false;
+            if (this.reviewFilter.reviewer && !r.issues?.some(i => i.reviewer === this.reviewFilter.reviewer)) return false;
+            return true;
+          });
+        },
+
+        openReviewDrawer(review) {
+          this.selectedReview = review;
+          this.drawerType = 'review';
+          this.drawerTitle = 'Review: ' + review.storyId;
+          this.drawerSubtitle = review.story;
+          this.drawerOpen = true;
+        },
+
+        openTestDrawer(test) {
+          this.selectedTest = test;
+          this.drawerType = 'test';
+          this.drawerTitle = 'Epic ' + test.epic + ': ' + test.name;
+          this.drawerSubtitle = test.total + ' teszt · ' + test.files?.length + ' fájl';
+          this.drawerOpen = true;
+        },
+
+        closeDrawer() { this.drawerOpen = false; },
+
+        exportExecutiveSummary() { this.exportMessage = '📄 Executive Summary generálása...'; setTimeout(() => this.exportMessage = '', 3000); },
+        exportStatusReport() { this.exportMessage = '📊 Státusz riport generálása...'; setTimeout(() => this.exportMessage = '', 3000); },
+        exportTestReport() { this.exportMessage = '🧪 Teszt riport generálása...'; setTimeout(() => this.exportMessage = '', 3000); },
+        exportReviewReport() { this.exportMessage = '🔍 Code review riport generálása...'; setTimeout(() => this.exportMessage = '', 3000); },
+        exportJson() { const data = JSON.stringify({ stats: this.stats, epics: this.epics, tests: this.testStats, reviews: this.reviewStats }, null, 2); this.downloadFile('kgc3-export.json', data, 'application/json'); },
+        exportCsv() { let csv = 'Epic,Name,Status,Stories,Done\n'; this.epics.forEach(e => { csv += `${e.epic},"${e.name}",${e.status},${e.stories?.length||0},${e.stories?.filter(s=>s.status==='DONE').length||0}\n`; }); this.downloadFile('kgc3-epics.csv', csv, 'text/csv'); },
+        downloadFile(filename, content, type) { const blob = new Blob([content], { type }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url); this.exportMessage = `✅ ${filename} letöltve!`; setTimeout(() => this.exportMessage = '', 3000); }
+      };
+    }
+  </script>
+</body>
+</html>

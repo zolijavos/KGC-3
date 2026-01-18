@@ -11,14 +11,18 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { PermissionService } from './permission.service';
+import { RoleService } from './role.service';
 import { Permission } from '../interfaces/permission.interface';
 import { Role } from '../interfaces/user.interface';
 
 describe('PermissionService', () => {
   let permissionService: PermissionService;
+  let roleService: RoleService;
 
   beforeEach(() => {
-    permissionService = new PermissionService();
+    // C1v2 FIX: PermissionService now requires RoleService via DI
+    roleService = new RoleService();
+    permissionService = new PermissionService(roleService);
   });
 
   // ============================================
@@ -255,6 +259,7 @@ describe('PermissionService', () => {
 
   // ============================================
   // getConstraint() tests
+  // C3 SECURITY FIX: Now returns Math.max() of all inherited values
   // ============================================
 
   describe('getConstraint()', () => {
@@ -296,6 +301,32 @@ describe('PermissionService', () => {
       );
 
       expect(constraint).toBeUndefined();
+    });
+
+    // C3 SECURITY FIX: Test Math.max() of inherited constraints
+    it('should return Math.max() when role has higher constraint than inherited (C3 FIX)', () => {
+      // PARTNER_OWNER has 100% direct, inherits 20% from BOLTVEZETO
+      // Should return 100 (the maximum)
+      const constraint = permissionService.getConstraint(
+        Role.PARTNER_OWNER,
+        Permission.RENTAL_DISCOUNT,
+        'discount_limit'
+      );
+
+      expect(constraint).toBe(100);
+    });
+
+    it('should return inherited constraint when direct role has no constraint (C3 FIX)', () => {
+      // SUPER_ADMIN has 100% direct constraint for RENTAL_DISCOUNT
+      // Also inherits from PARTNER_OWNER (100%) and BOLTVEZETO (20%)
+      // Should return 100 (the maximum from direct + inherited)
+      const constraint = permissionService.getConstraint(
+        Role.SUPER_ADMIN,
+        Permission.RENTAL_DISCOUNT,
+        'discount_limit'
+      );
+
+      expect(constraint).toBe(100);
     });
   });
 

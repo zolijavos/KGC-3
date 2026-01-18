@@ -52,16 +52,16 @@ interface AuthenticatedRequest {
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
-  private readonly permissionService: PermissionService;
-
+  /**
+   * C1v2 FIX: PermissionService now injected via DI instead of manual instantiation
+   */
   constructor(
     private readonly reflector: Reflector,
+    private readonly permissionService: PermissionService,
     @Optional()
     @Inject(AUDIT_SERVICE)
     private readonly auditService: IAuditService | null
-  ) {
-    this.permissionService = new PermissionService();
-  }
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // 1. Get required permissions from decorator metadata

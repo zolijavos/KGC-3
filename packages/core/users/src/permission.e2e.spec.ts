@@ -21,11 +21,24 @@ import { of } from 'rxjs';
 
 import { PermissionGuard } from './guards/permission.guard';
 import { ConstraintInterceptor } from './interceptors/constraint.interceptor';
+import { PermissionService } from './services/permission.service';
+import { RoleService } from './services/role.service';
 import { Permission } from './interfaces/permission.interface';
 import { Role } from './interfaces/user.interface';
 import { AuditAction, IAuditService } from './interfaces/audit.interface';
 import { PERMISSIONS_KEY, PERMISSION_LOGIC_KEY } from './decorators/require-permission.decorator';
 import { CONSTRAINT_KEY, ConstraintMetadata } from './decorators/check-constraint.decorator';
+
+// C1v2 FIX: Create shared PermissionService for tests
+let permissionService: PermissionService;
+
+function getPermissionService(): PermissionService {
+  if (!permissionService) {
+    const roleService = new RoleService();
+    permissionService = new PermissionService(roleService);
+  }
+  return permissionService;
+}
 
 // Test UUIDs
 const testUserId = '00000000-0000-0000-0000-000000000001';
@@ -108,7 +121,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
     it('should allow access when user has required permission (OPERATOR → rental:view)', async () => {
       // Arrange
       const reflector = createPermissionReflector([Permission.RENTAL_VIEW], 'ALL');
-      const guard = new PermissionGuard(reflector, null);
+      const guard = new PermissionGuard(reflector, getPermissionService(), null);
       const context = createMockContext({
         id: testUserId,
         role: Role.OPERATOR,
@@ -125,7 +138,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
     it('should allow BOLTVEZETO to access rental:discount endpoint', async () => {
       // Arrange
       const reflector = createPermissionReflector([Permission.RENTAL_DISCOUNT], 'ALL');
-      const guard = new PermissionGuard(reflector, null);
+      const guard = new PermissionGuard(reflector, getPermissionService(), null);
       const context = createMockContext({
         id: testUserId,
         role: Role.BOLTVEZETO,
@@ -148,7 +161,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
     it('should return 403 with correct error code when OPERATOR accesses admin:config', async () => {
       // Arrange
       const reflector = createPermissionReflector([Permission.ADMIN_CONFIG], 'ALL');
-      const guard = new PermissionGuard(reflector, null);
+      const guard = new PermissionGuard(reflector, getPermissionService(), null);
       const context = createMockContext({
         id: testUserId,
         role: Role.OPERATOR,
@@ -172,7 +185,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
     it('should return 403 when TECHNIKUS tries to access rental:discount', async () => {
       // Arrange - TECHNIKUS does NOT have rental:discount
       const reflector = createPermissionReflector([Permission.RENTAL_DISCOUNT], 'ALL');
-      const guard = new PermissionGuard(reflector, null);
+      const guard = new PermissionGuard(reflector, getPermissionService(), null);
       const context = createMockContext({
         id: testUserId,
         role: Role.TECHNIKUS,
@@ -195,7 +208,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
         [Permission.RENTAL_VIEW, Permission.RENTAL_DISCOUNT],
         'ALL'
       );
-      const guard = new PermissionGuard(reflector, null);
+      const guard = new PermissionGuard(reflector, getPermissionService(), null);
       const context = createMockContext({
         id: testUserId,
         role: Role.BOLTVEZETO,
@@ -215,7 +228,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
         [Permission.RENTAL_VIEW, Permission.RENTAL_DISCOUNT],
         'ALL'
       );
-      const guard = new PermissionGuard(reflector, null);
+      const guard = new PermissionGuard(reflector, getPermissionService(), null);
       const context = createMockContext({
         id: testUserId,
         role: Role.OPERATOR,
@@ -238,7 +251,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
         [Permission.RENTAL_VIEW, Permission.ADMIN_CONFIG],
         'ANY'
       );
-      const guard = new PermissionGuard(reflector, null);
+      const guard = new PermissionGuard(reflector, getPermissionService(), null);
       const context = createMockContext({
         id: testUserId,
         role: Role.OPERATOR,
@@ -258,7 +271,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
         [Permission.ADMIN_CONFIG, Permission.ADMIN_SYSTEM],
         'ANY'
       );
-      const guard = new PermissionGuard(reflector, null);
+      const guard = new PermissionGuard(reflector, getPermissionService(), null);
       const context = createMockContext({
         id: testUserId,
         role: Role.OPERATOR,
@@ -283,7 +296,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
         valueField: 'discountPercent',
         useAbsoluteValue: true,
       });
-      const interceptor = new ConstraintInterceptor(reflector);
+      const interceptor = new ConstraintInterceptor(reflector, getPermissionService());
       const context = createMockContext(
         { id: testUserId, role: Role.BOLTVEZETO, tenantId: testTenantId },
         { discountPercent: 15 }
@@ -305,7 +318,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
         valueField: 'discountPercent',
         useAbsoluteValue: true,
       });
-      const interceptor = new ConstraintInterceptor(reflector);
+      const interceptor = new ConstraintInterceptor(reflector, getPermissionService());
       const context = createMockContext(
         { id: testUserId, role: Role.BOLTVEZETO, tenantId: testTenantId },
         { discountPercent: 25 }
@@ -324,7 +337,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
         valueField: 'discountPercent',
         useAbsoluteValue: true,
       });
-      const interceptor = new ConstraintInterceptor(reflector);
+      const interceptor = new ConstraintInterceptor(reflector, getPermissionService());
       const context = createMockContext(
         { id: testUserId, role: Role.PARTNER_OWNER, tenantId: testTenantId },
         { discountPercent: 75 }
@@ -346,7 +359,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
         valueField: 'discountPercent',
         useAbsoluteValue: true,
       });
-      const interceptor = new ConstraintInterceptor(reflector);
+      const interceptor = new ConstraintInterceptor(reflector, getPermissionService());
       const context = createMockContext(
         { id: testUserId, role: Role.BOLTVEZETO, tenantId: testTenantId },
         { discountPercent: -25 } // Negative discount
@@ -366,7 +379,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
     it('should return 403 when user is not present (no JWT)', async () => {
       // Arrange
       const reflector = createPermissionReflector([Permission.RENTAL_VIEW], 'ALL');
-      const guard = new PermissionGuard(reflector, null);
+      const guard = new PermissionGuard(reflector, getPermissionService(), null);
       const context = createMockContext(null);
 
       // Act & Assert
@@ -393,7 +406,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
       // Arrange - BOLTVEZETO inherits from TECHNIKUS which inherits from OPERATOR
       // OPERATOR has rental:create
       const reflector = createPermissionReflector([Permission.RENTAL_CREATE], 'ALL');
-      const guard = new PermissionGuard(reflector, null);
+      const guard = new PermissionGuard(reflector, getPermissionService(), null);
       const context = createMockContext({
         id: testUserId,
         role: Role.BOLTVEZETO,
@@ -411,7 +424,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
       // Arrange - PARTNER_OWNER inherits from BOLTVEZETO
       // BOLTVEZETO has rental:discount
       const reflector = createPermissionReflector([Permission.RENTAL_DISCOUNT], 'ALL');
-      const guard = new PermissionGuard(reflector, null);
+      const guard = new PermissionGuard(reflector, getPermissionService(), null);
       const context = createMockContext({
         id: testUserId,
         role: Role.PARTNER_OWNER,
@@ -428,7 +441,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
     it('should allow TECHNIKUS to access service:warranty (direct permission)', async () => {
       // Arrange
       const reflector = createPermissionReflector([Permission.SERVICE_WARRANTY], 'ALL');
-      const guard = new PermissionGuard(reflector, null);
+      const guard = new PermissionGuard(reflector, getPermissionService(), null);
       const context = createMockContext({
         id: testUserId,
         role: Role.TECHNIKUS,
@@ -445,7 +458,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
     it('should NOT allow OPERATOR to access TECHNIKUS permissions (no inheritance up)', async () => {
       // Arrange - OPERATOR does NOT inherit from TECHNIKUS
       const reflector = createPermissionReflector([Permission.SERVICE_WARRANTY], 'ALL');
-      const guard = new PermissionGuard(reflector, null);
+      const guard = new PermissionGuard(reflector, getPermissionService(), null);
       const context = createMockContext({
         id: testUserId,
         role: Role.OPERATOR,
@@ -466,7 +479,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
       // Arrange
       const reflector = createPermissionReflector([Permission.ADMIN_CONFIG], 'ALL');
       const auditService = createMockAuditService();
-      const guard = new PermissionGuard(reflector, auditService);
+      const guard = new PermissionGuard(reflector, getPermissionService(), auditService);
       const context = createMockContext(
         { id: testUserId, role: Role.OPERATOR, tenantId: testTenantId },
         {},
@@ -506,7 +519,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
         'ALL'
       );
       const auditService = createMockAuditService();
-      const guard = new PermissionGuard(reflector, auditService);
+      const guard = new PermissionGuard(reflector, getPermissionService(), auditService);
       const context = createMockContext({
         id: testUserId,
         role: Role.OPERATOR,
@@ -538,7 +551,7 @@ describe('Permission E2E Tests (Story 2.3)', () => {
       // Arrange
       const reflector = createPermissionReflector([Permission.RENTAL_VIEW], 'ALL');
       const auditService = createMockAuditService();
-      const guard = new PermissionGuard(reflector, auditService);
+      const guard = new PermissionGuard(reflector, getPermissionService(), auditService);
       const context = createMockContext({
         id: testUserId,
         role: Role.OPERATOR,

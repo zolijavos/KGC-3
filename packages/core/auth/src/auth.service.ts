@@ -27,7 +27,18 @@
  * - No email enumeration (Story 1.5 AC2)
  */
 
-import { Inject, Injectable, Optional } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  NotFoundException,
+  Optional,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { AUDIT_SERVICE, AuditAction, type IAuditService } from './interfaces/audit.interface';
 import { FORGOT_PASSWORD_MESSAGE } from './dto/forgot-password-response.dto';
@@ -101,19 +112,19 @@ export class AuthService {
       // SECURITY: Must be a valid 60-character bcrypt hash for constant-time comparison
       const DUMMY_HASH = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.lLNJxfMbFMPmla';
       await this.passwordService.verifyPassword(password, DUMMY_HASH);
-      throw new Error('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     // Verify password (constant-time comparison - AC2)
     const isPasswordValid = await this.passwordService.verifyPassword(password, user.passwordHash);
 
     if (!isPasswordValid) {
-      throw new Error('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     // Check if user is active
     if (user.status !== 'ACTIVE') {
-      throw new Error('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     // Generate tokens (AC1)
@@ -273,35 +284,35 @@ export class AuthService {
    *
    * @param refreshToken - The refresh token to validate and rotate
    * @returns RefreshResponse with new access and refresh tokens
-   * @throws Error('Invalid refresh token') for invalid/expired/revoked tokens
+   * @throws UnauthorizedException for invalid/expired/revoked tokens
    */
   async refreshTokens(refreshToken: string): Promise<RefreshResponse> {
     // Step 1: Validate JWT signature and type (AC4)
     const isValidJwt = await this.tokenService.validateRefreshToken(refreshToken);
     if (!isValidJwt) {
-      throw new Error('Invalid refresh token');
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
     // Step 2: Check token exists in database and is valid (AC3)
     const tokenRecord = await this.findValidRefreshToken(refreshToken);
     if (!tokenRecord) {
-      throw new Error('Invalid refresh token');
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
     // Step 3: Check if token is expired (AC3)
     if (tokenRecord.expiresAt < new Date()) {
-      throw new Error('Invalid refresh token');
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
     // Step 4: Check if token is revoked (AC3)
     if (tokenRecord.isRevoked) {
-      throw new Error('Invalid refresh token');
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
     // Step 5: Get user for new token generation
     const user = await this.findUserById(tokenRecord.userId);
     if (!user || user.status !== 'ACTIVE') {
-      throw new Error('Invalid refresh token');
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
     // Step 6: Create user for token
@@ -436,30 +447,27 @@ export class AuthService {
    * @param refreshToken - The refresh token to revoke
    * @param userId - The authenticated user's ID (for ownership validation - P1 security fix)
    * @returns LogoutResponse with success status
-   * @throws Error('Invalid token') for invalid JWT or wrong token type
-   * @throws Error('Token not found') for non-existent token
-   * @throws Error('Token not owned') if token belongs to different user (P1 security fix)
+   * @throws UnauthorizedException for invalid JWT or wrong token type
+   * @throws NotFoundException for non-existent token
+   * @throws ForbiddenException if token belongs to different user (P1 security fix)
    */
   async logout(refreshToken: string, userId: string): Promise<LogoutResponse> {
     // Step 1: Validate JWT signature and type
     const isValidJwt = await this.tokenService.validateRefreshToken(refreshToken);
     if (!isValidJwt) {
-      // Code Review Fix (G-L1): Use constant instead of magic string
-      throw new Error(LOGOUT_ERROR_MESSAGES.INVALID_TOKEN);
+      throw new UnauthorizedException(LOGOUT_ERROR_MESSAGES.INVALID_TOKEN);
     }
 
     // Step 2: Find token in database
     const tokenRecord = await this.findValidRefreshToken(refreshToken);
     if (!tokenRecord) {
-      // Code Review Fix (G-L1): Use constant instead of magic string
-      throw new Error(LOGOUT_ERROR_MESSAGES.TOKEN_NOT_FOUND);
+      throw new NotFoundException(LOGOUT_ERROR_MESSAGES.TOKEN_NOT_FOUND);
     }
 
     // Step 3: P1 Security Fix - Verify token ownership
     // User can only revoke their own tokens
     if (tokenRecord.userId !== userId) {
-      // Code Review Fix (G-L1): Use constant instead of magic string
-      throw new Error(LOGOUT_ERROR_MESSAGES.TOKEN_NOT_OWNED);
+      throw new ForbiddenException(LOGOUT_ERROR_MESSAGES.TOKEN_NOT_OWNED);
     }
 
     // Step 4: If already revoked, return success (idempotent)
@@ -556,18 +564,18 @@ export class AuthService {
    * @param pin - 4-6 digit PIN code
    * @param deviceId - Trusted device UUID
    * @returns PinLoginResponse with kiosk token (no refresh token)
-   * @throws Error('Eszköz nem regisztrált') for untrusted device (AC2: 403)
-   * @throws Error('Érvénytelen hitelesítési adatok') for invalid PIN (AC6: generic error)
-   * @throws Error('Fiók zárolva') when user is locked out (AC3)
+   * @throws ForbiddenException for untrusted device (AC2: 403)
+   * @throws UnauthorizedException for invalid PIN (AC6: generic error)
+   * @throws ForbiddenException when user is locked out (AC3)
    */
   async pinLogin(pin: string, deviceId: string): Promise<PinLoginResponse> {
     // Step 1: Validate trusted device (AC2)
     const device = await this.findTrustedDevice(deviceId);
     if (!device) {
-      throw new Error('Eszköz nem regisztrált'); // AC2: 403 Forbidden - device not registered
+      throw new ForbiddenException('Eszköz nem regisztrált'); // AC2: 403 Forbidden - device not registered
     }
     if (device.status !== 'ACTIVE') {
-      throw new Error('Eszköz nem regisztrált'); // AC2: suspended/revoked treated same as not found
+      throw new ForbiddenException('Eszköz nem regisztrált'); // AC2: suspended/revoked treated same as not found
     }
 
     // Step 2: Find user by PIN at device's location
@@ -576,16 +584,22 @@ export class AuthService {
       // No matching user found - increment lockout counter for this device
       // Use deviceId as pseudo-userId for device-level lockout
       const lockoutResult = await this.incrementPinAttempt(deviceId, deviceId);
+
+      // H2 FIX: Record failed PIN attempt for audit (use 'unknown' for email since user not found)
+      await this.recordPinLoginAttempt('unknown', deviceId, false);
+
       if (lockoutResult?.isLocked) {
-        throw new Error('Fiók zárolva');
+        throw new ForbiddenException('Fiók zárolva');
       }
-      throw new Error('Érvénytelen hitelesítési adatok');
+      throw new UnauthorizedException('Érvénytelen hitelesítési adatok');
     }
 
     // Step 3: Check lockout status for found user (AC3)
     const isLocked = await this.checkPinLockout(user.id, deviceId);
     if (isLocked) {
-      throw new Error('Fiók zárolva');
+      // H2 FIX: Record lockout event for audit
+      await this.recordPinLoginAttempt(user.email, deviceId, false);
+      throw new ForbiddenException('Fiók zárolva');
     }
 
     // Step 4: Reset failed attempts on success
@@ -866,12 +880,24 @@ export class AuthService {
       },
     });
 
-    // Try to match PIN against each user (constant-time for security)
+    // H1 FIX: Constant-time PIN verification to prevent timing attacks
+    // Check ALL users' PINs regardless of match to ensure consistent execution time
+    // This prevents attackers from determining user count or position via timing analysis
+    let matchedUser: {
+      id: string;
+      email: string;
+      name: string;
+      role: string;
+      tenantId: string;
+      status: string;
+    } | null = null;
+
     for (const user of usersWithPin) {
       if (user.pinHash) {
         const isMatch = await this.verifyUserPin(pin, user.pinHash);
-        if (isMatch) {
-          return {
+        // Only store first match (in case of collision, though bcrypt makes this extremely unlikely)
+        if (isMatch && !matchedUser) {
+          matchedUser = {
             id: user.id,
             email: user.email,
             name: user.name,
@@ -883,7 +909,7 @@ export class AuthService {
       }
     }
 
-    return null;
+    return matchedUser;
   }
 
   /**
@@ -929,19 +955,20 @@ export class AuthService {
    * @param email - User email address
    * @param resetUrlBase - Base URL for reset link (e.g., https://app.kgc.hu/reset-password)
    * @returns ForgotPasswordResponse with generic message (AC2)
-   * @throws Error('Túl sok kérés') when rate limited (AC6)
+   * @throws HttpException(429) when rate limited (AC6)
    */
   async forgotPassword(email: string, resetUrlBase: string = ''): Promise<ForgotPasswordResponse> {
     // M4 fix: Normalize email to lowercase for consistent handling
     const normalizedEmail = email.toLowerCase();
 
-    // Step 1: Check rate limit (AC6)
-    if (this.passwordResetService?.checkRateLimit(normalizedEmail)) {
-      throw new Error('Túl sok kérés'); // Hungarian: Too many requests
+    // Step 1: Check rate limit (AC6) - now async for Redis support
+    const isRateLimited = await this.passwordResetService?.checkRateLimit(normalizedEmail);
+    if (isRateLimited) {
+      throw new HttpException('Túl sok kérés', HttpStatus.TOO_MANY_REQUESTS); // Hungarian: Too many requests
     }
 
-    // Step 2: Increment rate limit counter (before any processing)
-    this.passwordResetService?.incrementRateLimit(normalizedEmail);
+    // Step 2: Increment rate limit counter (before any processing) - now async for Redis support
+    await this.passwordResetService?.incrementRateLimit(normalizedEmail);
 
     // Step 3: Find user by email (silently - AC2)
     const user = await this.findUserByEmail(normalizedEmail);
@@ -984,6 +1011,23 @@ export class AuthService {
         // L2 fix: Log error for debugging while still not revealing to user (AC2)
         console.error('[AuthService] forgotPassword error (not revealed to user):', error);
       }
+    } else {
+      // TIMING ATTACK FIX (AC2): Normalize response time when user doesn't exist
+      // Without this, attackers can enumerate valid emails by measuring response times:
+      // - User exists + active: ~115-515ms (token gen + DB write + email)
+      // - User not found: ~1-5ms (early return)
+      //
+      // Fix: Perform dummy operations to make both paths take similar time
+      try {
+        // Step 1: CPU work - generate a token we won't use (simulates real work)
+        this.passwordResetService?.generateToken();
+
+        // Step 2: Add random delay to match typical email sending time (50-150ms)
+        const randomDelay = 50 + Math.floor(Math.random() * 100);
+        await new Promise((resolve) => setTimeout(resolve, randomDelay));
+      } catch {
+        // Ignore errors in dummy operations - they're just for timing normalization
+      }
     }
 
     // Step 7: Always return same response (AC2 - no email enumeration)
@@ -1003,20 +1047,20 @@ export class AuthService {
    * @param token - Reset token from email
    * @param newPassword - New password (must meet policy)
    * @returns ResetPasswordResponse with success status
-   * @throws Error('Érvénytelen token') for invalid/expired/used token (AC5)
+   * @throws BadRequestException for invalid/expired/used token (AC5)
    */
   async resetPassword(token: string, newPassword: string): Promise<ResetPasswordResponse> {
     // Step 1: Validate token
     const tokenRecord = await this.passwordResetService?.findValidToken(token);
 
     if (!tokenRecord) {
-      throw new Error('Érvénytelen token'); // Hungarian: Invalid token
+      throw new BadRequestException('Érvénytelen token'); // Hungarian: Invalid token
     }
 
     // Step 2: Get user
     const user = await this.findUserById(tokenRecord.userId);
     if (!user || user.status !== 'ACTIVE') {
-      throw new Error('Érvénytelen token'); // Don't reveal user status
+      throw new BadRequestException('Érvénytelen token'); // Don't reveal user status
     }
 
     // Step 3: Hash new password
@@ -1060,9 +1104,9 @@ export class AuthService {
    * @param userId - User ID (from JWT)
    * @param password - Current password to verify
    * @returns VerifyPasswordResponse with validUntil timestamp
-   * @throws Error('Elevated access service not configured') when service not available
-   * @throws Error('Felhasználó nem található') for non-existent/inactive user
-   * @throws Error('Érvénytelen jelszó') for invalid password
+   * @throws ServiceUnavailableException when elevated access service not available
+   * @throws NotFoundException for non-existent/inactive user
+   * @throws ForbiddenException for invalid password
    */
   async verifyPasswordForElevatedAccess(
     userId: string,
@@ -1070,7 +1114,7 @@ export class AuthService {
   ): Promise<VerifyPasswordResponse> {
     // Step 1: Check if elevated access service is configured
     if (!this.elevatedAccessService) {
-      throw new Error('Elevated access service not configured');
+      throw new ServiceUnavailableException('Elevated access service not configured');
     }
 
     // Step 2: Find user by ID
@@ -1078,13 +1122,13 @@ export class AuthService {
 
     // Step 3: Check if user exists and is active
     if (!user || user.status !== 'ACTIVE') {
-      throw new Error('Felhasználó nem található'); // Hungarian: User not found
+      throw new NotFoundException('Felhasználó nem található'); // Hungarian: User not found
     }
 
     // Step 4: Get password hash and verify
     const userWithPassword = await this.findUserByIdWithPassword(userId);
     if (!userWithPassword) {
-      throw new Error('Felhasználó nem található');
+      throw new NotFoundException('Felhasználó nem található');
     }
 
     // Step 5: Verify password (constant-time comparison)
@@ -1094,7 +1138,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new Error('Érvénytelen jelszó'); // Hungarian: Invalid password
+      throw new ForbiddenException('Érvénytelen jelszó'); // Hungarian: Invalid password
     }
 
     // Step 6: Record verification in elevated access service

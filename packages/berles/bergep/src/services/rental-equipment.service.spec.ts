@@ -10,12 +10,6 @@ import {
 import {
   CreateEquipmentDto,
   UpdateEquipmentDto,
-  ChangeEquipmentStatusDto,
-  ScanEquipmentDto,
-  CreateAccessoryDto,
-  AccessoryChecklistDto,
-  CreateMaintenanceRecordDto,
-  EquipmentFilterDto,
 } from '../dto/rental-equipment.dto';
 
 describe('RentalEquipmentService', () => {

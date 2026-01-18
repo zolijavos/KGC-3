@@ -213,11 +213,11 @@ const ROLE_CONSTRAINTS: Partial<
 
 @Injectable()
 export class PermissionService {
-  private readonly roleService: RoleService;
-
-  constructor() {
-    this.roleService = new RoleService();
-  }
+  /**
+   * C1v2 FIX: RoleService now injected via DI instead of manual instantiation
+   * This enables proper mocking in tests and follows NestJS best practices
+   */
+  constructor(private readonly roleService: RoleService) {}
 
   /**
    * Get direct permissions for a role (not including inherited)
@@ -261,10 +261,15 @@ export class PermissionService {
 
   /**
    * Get constraint value for a permission
+   *
+   * C3 SECURITY FIX: Returns Math.max() of all inherited constraint values
+   * instead of first found. This ensures users with higher roles get the
+   * maximum constraint benefit (e.g., highest discount_limit).
+   *
    * @param role - Role to check
    * @param permission - Permission to get constraint for
    * @param constraintKey - Constraint key (e.g., 'discount_limit')
-   * @returns Constraint value or undefined
+   * @returns Maximum constraint value across role hierarchy, or undefined
    */
   getConstraint(
     role: Role,
@@ -276,28 +281,36 @@ export class PermissionService {
       return undefined;
     }
 
+    // C3 FIX: Collect ALL constraint values from role hierarchy, return Math.max()
+    const constraintValues: number[] = [];
+
     // Check for direct constraint on this role
     const roleConstraints = ROLE_CONSTRAINTS[role];
     if (roleConstraints) {
       const permissionConstraints = roleConstraints[permission];
       if (permissionConstraints && constraintKey in permissionConstraints) {
-        return permissionConstraints[constraintKey];
+        constraintValues.push(permissionConstraints[constraintKey] as number);
       }
     }
 
-    // Check inherited roles for constraint
+    // Check ALL inherited roles for constraints (collect all, not first found)
     const inheritedRoles = this.roleService.getInheritedRoles(role);
     for (const inheritedRole of inheritedRoles) {
       const inheritedConstraints = ROLE_CONSTRAINTS[inheritedRole];
       if (inheritedConstraints) {
         const permissionConstraints = inheritedConstraints[permission];
         if (permissionConstraints && constraintKey in permissionConstraints) {
-          return permissionConstraints[constraintKey];
+          constraintValues.push(permissionConstraints[constraintKey] as number);
         }
       }
     }
 
-    return undefined;
+    // C3 FIX: Return maximum value if any found, otherwise undefined
+    if (constraintValues.length === 0) {
+      return undefined;
+    }
+
+    return Math.max(...constraintValues);
   }
 
   /**

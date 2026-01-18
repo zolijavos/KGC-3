@@ -4,18 +4,26 @@
  * AC1: Reset token generation (64 char hex, 1h TTL)
  * AC3: Token validation and one-time use
  * AC5: Invalid/expired token handling
- * AC6: Rate limiting
+ * AC6: Rate limiting (via pluggable IRateLimiter)
  *
  * Security:
  * - Tokens stored as SHA-256 hash (not plain text)
  * - Crypto-random token generation
  * - One-time use tokens
  * - 1 hour TTL
+ *
+ * Rate Limiting:
+ * - Uses pluggable IRateLimiter interface
+ * - InMemoryRateLimiter for single instance (MVP)
+ * - RedisRateLimiter for distributed (K8s/PM2 cluster)
+ * - Configured via RATE_LIMITER DI token
  */
 
 import { Inject, Injectable, OnModuleDestroy, Optional } from '@nestjs/common';
 import type { PrismaClient } from '@prisma/client';
 import { createHash, randomBytes } from 'crypto';
+import { IRateLimiter, RATE_LIMITER } from './rate-limiter.interface';
+import { InMemoryRateLimiter } from './in-memory-rate-limiter';
 
 /** Reset token TTL in milliseconds (1 hour) */
 export const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
@@ -56,39 +64,30 @@ export interface PasswordResetTokenRecord {
 
 @Injectable()
 export class PasswordResetService implements OnModuleDestroy {
-  /** In-memory rate limiting (for email-based limiting) */
-  private rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-  /** M1 fix: Cleanup interval ID for memory management */
-  private cleanupIntervalId?: ReturnType<typeof setInterval>;
+  /**
+   * Pluggable rate limiter - supports in-memory (MVP) or Redis (production K8s)
+   * Injected via RATE_LIMITER token, defaults to InMemoryRateLimiter if not provided
+   */
+  private readonly rateLimiter: IRateLimiter;
 
   constructor(
-    @Inject('PRISMA_CLIENT') @Optional() private readonly prisma?: PrismaClient | null
+    @Inject('PRISMA_CLIENT') @Optional() private readonly prisma?: PrismaClient | null,
+    @Inject(RATE_LIMITER) @Optional() rateLimiter?: IRateLimiter | null
   ) {
-    // M1 fix: Start periodic cleanup of expired rate limit entries (every 5 minutes)
-    this.cleanupIntervalId = setInterval(() => this.cleanupExpiredRateLimits(), 5 * 60 * 1000);
+    // Use injected rate limiter or create default InMemoryRateLimiter
+    this.rateLimiter =
+      rateLimiter ??
+      new InMemoryRateLimiter({
+        maxRequests: FORGOT_PASSWORD_MAX_REQUESTS,
+        windowMs: FORGOT_PASSWORD_WINDOW_MS,
+      });
   }
 
   /**
-   * M1 fix: NestJS lifecycle hook - cleanup on module destroy
+   * NestJS lifecycle hook - cleanup on module destroy
    */
   onModuleDestroy(): void {
-    if (this.cleanupIntervalId) {
-      clearInterval(this.cleanupIntervalId);
-    }
-  }
-
-  /**
-   * M1 fix: Clean up expired rate limit entries to prevent memory leak
-   * Called automatically every 5 minutes
-   */
-  private cleanupExpiredRateLimits(): void {
-    const now = Date.now();
-    for (const [key, value] of this.rateLimitMap.entries()) {
-      if (value.resetAt < now) {
-        this.rateLimitMap.delete(key);
-      }
-    }
+    this.rateLimiter.cleanup();
   }
 
   /**
@@ -216,46 +215,33 @@ export class PasswordResetService implements OnModuleDestroy {
 
   /**
    * Check rate limit for forgot password requests
+   * Uses pluggable IRateLimiter (works with Redis for K8s or in-memory for single instance)
+   *
    * @param email - Email address to check
    * @returns true if rate limited, false if allowed
    */
-  checkRateLimit(email: string): boolean {
-    const now = Date.now();
-    const key = email.toLowerCase();
-    const existing = this.rateLimitMap.get(key);
-
-    // Clean up expired entries
-    if (existing && existing.resetAt < now) {
-      this.rateLimitMap.delete(key);
+  async checkRateLimit(email: string): Promise<boolean> {
+    try {
+      const result = await this.rateLimiter.check(email);
+      return result.isLimited;
+    } catch (error) {
+      // Fail open on error - don't rate limit
+      console.warn('[PasswordResetService] Rate limit check failed, failing open:', error);
       return false;
     }
-
-    // Check if rate limited
-    if (existing && existing.count >= FORGOT_PASSWORD_MAX_REQUESTS) {
-      return true;
-    }
-
-    return false;
   }
 
   /**
    * Increment rate limit counter
+   * Uses pluggable IRateLimiter (works with Redis for K8s or in-memory for single instance)
+   *
    * @param email - Email address
    */
-  incrementRateLimit(email: string): void {
-    const now = Date.now();
-    const key = email.toLowerCase();
-    const existing = this.rateLimitMap.get(key);
-
-    if (existing && existing.resetAt > now) {
-      // Increment existing counter
-      existing.count++;
-    } else {
-      // Create new counter
-      this.rateLimitMap.set(key, {
-        count: 1,
-        resetAt: now + FORGOT_PASSWORD_WINDOW_MS,
-      });
+  async incrementRateLimit(email: string): Promise<void> {
+    try {
+      await this.rateLimiter.increment(email);
+    } catch (error) {
+      console.warn('[PasswordResetService] Failed to increment rate limit:', error);
     }
   }
 
@@ -264,20 +250,13 @@ export class PasswordResetService implements OnModuleDestroy {
    * @param email - Email address
    * @returns Remaining time in minutes, or 0 if not rate limited
    */
-  getRateLimitRemainingMinutes(email: string): number {
-    const key = email.toLowerCase();
-    const existing = this.rateLimitMap.get(key);
-
-    if (!existing) {
+  async getRateLimitRemainingMinutes(email: string): Promise<number> {
+    try {
+      const result = await this.rateLimiter.check(email);
+      return Math.ceil(result.resetInSeconds / 60);
+    } catch {
       return 0;
     }
-
-    const remainingMs = existing.resetAt - Date.now();
-    if (remainingMs <= 0) {
-      return 0;
-    }
-
-    return Math.ceil(remainingMs / 60000);
   }
 
   /**

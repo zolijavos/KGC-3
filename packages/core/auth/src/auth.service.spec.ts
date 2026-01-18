@@ -1242,9 +1242,9 @@ describe('AuthService - Password Reset (Story 1.5)', () => {
 
   describe('forgotPassword() - AC6: Rate limiting', () => {
     it('should throw error when rate limited', async () => {
-      // Arrange: Trigger rate limit (3 requests)
+      // Arrange: Trigger rate limit (3 requests) - now async
       for (let i = 0; i < 3; i++) {
-        passwordResetService.incrementRateLimit(mockUser.email);
+        await passwordResetService.incrementRateLimit(mockUser.email);
       }
 
       // Act & Assert
@@ -1479,31 +1479,31 @@ describe('PasswordResetService', () => {
   });
 
   describe('checkRateLimit()', () => {
-    it('should return false when not rate limited', () => {
+    it('should return false when not rate limited', async () => {
       const passwordResetService = new PasswordResetService();
 
-      expect(passwordResetService.checkRateLimit('test@example.com')).toBe(false);
+      expect(await passwordResetService.checkRateLimit('test@example.com')).toBe(false);
     });
 
-    it('should return true after 3 requests', () => {
+    it('should return true after 3 requests', async () => {
       const passwordResetService = new PasswordResetService();
       const email = 'test@example.com';
 
-      passwordResetService.incrementRateLimit(email);
-      passwordResetService.incrementRateLimit(email);
-      passwordResetService.incrementRateLimit(email);
+      await passwordResetService.incrementRateLimit(email);
+      await passwordResetService.incrementRateLimit(email);
+      await passwordResetService.incrementRateLimit(email);
 
-      expect(passwordResetService.checkRateLimit(email)).toBe(true);
+      expect(await passwordResetService.checkRateLimit(email)).toBe(true);
     });
 
-    it('should be case insensitive', () => {
+    it('should be case insensitive', async () => {
       const passwordResetService = new PasswordResetService();
 
-      passwordResetService.incrementRateLimit('TEST@Example.com');
-      passwordResetService.incrementRateLimit('test@EXAMPLE.COM');
-      passwordResetService.incrementRateLimit('Test@Example.Com');
+      await passwordResetService.incrementRateLimit('TEST@Example.com');
+      await passwordResetService.incrementRateLimit('test@EXAMPLE.COM');
+      await passwordResetService.incrementRateLimit('Test@Example.Com');
 
-      expect(passwordResetService.checkRateLimit('test@example.com')).toBe(true);
+      expect(await passwordResetService.checkRateLimit('test@example.com')).toBe(true);
     });
   });
 });

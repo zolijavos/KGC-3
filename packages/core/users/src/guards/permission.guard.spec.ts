@@ -13,10 +13,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PermissionGuard } from './permission.guard';
+import { PermissionService } from '../services/permission.service';
+import { RoleService } from '../services/role.service';
 import { Permission } from '../interfaces/permission.interface';
 import { Role } from '../interfaces/user.interface';
 import { PERMISSIONS_KEY, PERMISSION_LOGIC_KEY } from '../decorators/require-permission.decorator';
 import { AuditAction, IAuditService } from '../interfaces/audit.interface';
+
+// C1v2 FIX: Create shared PermissionService for tests
+let permissionService: PermissionService;
+
+function getPermissionService(): PermissionService {
+  if (!permissionService) {
+    const roleService = new RoleService();
+    permissionService = new PermissionService(roleService);
+  }
+  return permissionService;
+}
 
 // Mock ExecutionContext factory
 function createMockExecutionContext(
@@ -74,7 +87,7 @@ describe('PermissionGuard', () => {
     it('should allow access when no @RequirePermission decorator is present', async () => {
       // Arrange
       mockReflector = createMockReflector(undefined, undefined);
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.OPERATOR,
@@ -91,7 +104,7 @@ describe('PermissionGuard', () => {
     it('should allow access when permissions array is empty', async () => {
       // Arrange
       mockReflector = createMockReflector([], undefined);
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.OPERATOR,
@@ -110,7 +123,7 @@ describe('PermissionGuard', () => {
     it('should allow access when user has the required permission', async () => {
       // Arrange - OPERATOR has RENTAL_VIEW
       mockReflector = createMockReflector([Permission.RENTAL_VIEW], 'ALL');
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.OPERATOR,
@@ -130,7 +143,7 @@ describe('PermissionGuard', () => {
       // Arrange - OPERATOR does not have ADMIN_CONFIG
       mockReflector = createMockReflector([Permission.ADMIN_CONFIG], 'ALL');
       mockAuditService = createMockAuditService();
-      guard = new PermissionGuard(mockReflector, mockAuditService);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), mockAuditService);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.OPERATOR,
@@ -144,7 +157,7 @@ describe('PermissionGuard', () => {
     it('should include permission in error message', async () => {
       // Arrange
       mockReflector = createMockReflector([Permission.ADMIN_CONFIG], 'ALL');
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.OPERATOR,
@@ -173,7 +186,7 @@ describe('PermissionGuard', () => {
         [Permission.RENTAL_VIEW, Permission.RENTAL_DISCOUNT],
         'ALL'
       );
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.BOLTVEZETO,
@@ -193,7 +206,7 @@ describe('PermissionGuard', () => {
         [Permission.RENTAL_VIEW, Permission.RENTAL_DISCOUNT],
         'ALL'
       );
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.OPERATOR,
@@ -212,7 +225,7 @@ describe('PermissionGuard', () => {
         [Permission.USER_VIEW, Permission.RENTAL_VIEW],
         'ANY'
       );
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.OPERATOR,
@@ -232,7 +245,7 @@ describe('PermissionGuard', () => {
         [Permission.ADMIN_CONFIG, Permission.ADMIN_SYSTEM],
         'ANY'
       );
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.OPERATOR,
@@ -248,7 +261,7 @@ describe('PermissionGuard', () => {
     it('should throw ForbiddenException when user is not present', async () => {
       // Arrange
       mockReflector = createMockReflector([Permission.RENTAL_VIEW], 'ALL');
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext(null);
 
       // Act & Assert
@@ -258,7 +271,7 @@ describe('PermissionGuard', () => {
     it('should throw ForbiddenException with correct error code when user is missing', async () => {
       // Arrange
       mockReflector = createMockReflector([Permission.RENTAL_VIEW], 'ALL');
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext(null);
 
       // Act & Assert
@@ -281,7 +294,7 @@ describe('PermissionGuard', () => {
       // Arrange
       mockReflector = createMockReflector([Permission.ADMIN_CONFIG], 'ALL');
       mockAuditService = createMockAuditService();
-      guard = new PermissionGuard(mockReflector, mockAuditService);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), mockAuditService);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.OPERATOR,
@@ -314,7 +327,7 @@ describe('PermissionGuard', () => {
         'ALL'
       );
       mockAuditService = createMockAuditService();
-      guard = new PermissionGuard(mockReflector, mockAuditService);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), mockAuditService);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.OPERATOR,
@@ -344,7 +357,7 @@ describe('PermissionGuard', () => {
     it('should not fail if audit service is not provided', async () => {
       // Arrange
       mockReflector = createMockReflector([Permission.ADMIN_CONFIG], 'ALL');
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.OPERATOR,
@@ -360,7 +373,7 @@ describe('PermissionGuard', () => {
     it('should respect role inheritance (TECHNIKUS inherits from OPERATOR)', async () => {
       // Arrange - OPERATOR has RENTAL_VIEW, TECHNIKUS inherits from OPERATOR
       mockReflector = createMockReflector([Permission.RENTAL_VIEW], 'ALL');
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.TECHNIKUS,
@@ -377,7 +390,7 @@ describe('PermissionGuard', () => {
     it('should respect role inheritance (BOLTVEZETO inherits from TECHNIKUS)', async () => {
       // Arrange - TECHNIKUS has SERVICE_WARRANTY, BOLTVEZETO inherits
       mockReflector = createMockReflector([Permission.SERVICE_WARRANTY], 'ALL');
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.BOLTVEZETO,
@@ -394,7 +407,7 @@ describe('PermissionGuard', () => {
     it('should respect role inheritance (PARTNER_OWNER inherits from BOLTVEZETO)', async () => {
       // Arrange - BOLTVEZETO has RENTAL_DISCOUNT, PARTNER_OWNER inherits
       mockReflector = createMockReflector([Permission.RENTAL_DISCOUNT], 'ALL');
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.PARTNER_OWNER,
@@ -414,7 +427,7 @@ describe('PermissionGuard', () => {
       // Arrange
       mockReflector = createMockReflector([Permission.RENTAL_VIEW], 'ALL');
       mockAuditService = createMockAuditService();
-      guard = new PermissionGuard(mockReflector, mockAuditService);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), mockAuditService);
       const context = createMockExecutionContext({
         id: 'user-1',
         role: Role.OPERATOR,
@@ -436,7 +449,7 @@ describe('PermissionGuard', () => {
         [Permission.RENTAL_VIEW, Permission.RENTAL_DISCOUNT],
         undefined
       );
-      guard = new PermissionGuard(mockReflector, null);
+      guard = new PermissionGuard(mockReflector, getPermissionService(), null);
       // OPERATOR has RENTAL_VIEW but NOT RENTAL_DISCOUNT
       const context = createMockExecutionContext({
         id: 'user-1',

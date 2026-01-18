@@ -1,0 +1,103 @@
+# Horilla HR Docker Compose Configuration
+# KGC ERP Integration - Story 33-3
+# Documentation: ./README.md
+
+name: kgc-horilla-hr
+
+services:
+  # ===========================================
+  # Horilla HR Application (Django)
+  # ===========================================
+  horilla-app:
+    image: horilla/horilla:latest
+    container_name: kgc-horilla-app
+    ports:
+      - "${HORILLA_PORT:-3003}:8000"
+    depends_on:
+      horilla-db:
+        condition: service_healthy
+    environment:
+      # Django Settings
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY is required}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,horilla-app}
+
+      # Database
+      DATABASE_URL: postgres://${POSTGRES_USER:-horilla}:${POSTGRES_PASSWORD:-horilla}@horilla-db:5432/${POSTGRES_DB:-horilla}
+      DB_HOST: horilla-db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-horilla}
+      DB_USER: ${POSTGRES_USER:-horilla}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-horilla}
+
+      # Application
+      SITE_URL: ${SITE_URL:-http://localhost:3003}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost:3003,http://127.0.0.1:3003}
+
+      # Email (optional)
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
+
+      # KGC Integration (placeholder)
+      # KGC_API_URL: ${KGC_API_URL:-http://host.docker.internal:3000}
+      # KGC_API_KEY: ${KGC_API_KEY:-}
+    volumes:
+      - horilla-static:/app/staticfiles
+      - horilla-media:/app/media
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/", "||", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    networks:
+      - kgc-network
+
+  # ===========================================
+  # PostgreSQL Database (Horilla HR Only)
+  # ===========================================
+  horilla-db:
+    image: postgres:16-alpine
+    container_name: kgc-horilla-db
+    ports:
+      - "${HORILLA_DB_PORT:-5434}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-horilla}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-horilla}
+      POSTGRES_DB: ${POSTGRES_DB:-horilla}
+    volumes:
+      - horilla-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-horilla} -d ${POSTGRES_DB:-horilla}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - kgc-network
+
+# ===========================================
+# Volumes (Persistent Data)
+# ===========================================
+volumes:
+  horilla-db-data:
+    name: kgc-horilla-db-data
+  horilla-static:
+    name: kgc-horilla-static
+  horilla-media:
+    name: kgc-horilla-media
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  kgc-network:
+    name: kgc-network
+    driver: bridge
+    # External network allows connection to KGC API
+    # external: true  # Uncomment when integrating with full stack

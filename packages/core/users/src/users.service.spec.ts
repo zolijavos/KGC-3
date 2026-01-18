@@ -37,14 +37,16 @@ vi.mock('bcrypt', async (importOriginal) => {
 
 import { UsersService } from './users.service';
 import { RoleService } from './services/role.service';
+import { PermissionService } from './services/permission.service';
 import { Role, UserStatus } from './interfaces/user.interface';
+import { Permission } from './interfaces/permission.interface';
 import type { CreateUserDto } from './dto/create-user.dto';
 import type { UpdateUserDto } from './dto/update-user.dto';
 import type { UserQueryDto } from './dto/user-query.dto';
 
 // Mock PrismaClient
-const createMockPrisma = () => ({
-  user: {
+const createMockPrisma = () => {
+  const userMocks = {
     create: vi.fn(),
     findUnique: vi.fn(),
     findFirst: vi.fn(),
@@ -52,8 +54,16 @@ const createMockPrisma = () => ({
     count: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
-  },
-});
+  };
+
+  return {
+    user: userMocks,
+    // C2 FIX: Add $transaction mock for assignRole race condition fix
+    $transaction: vi.fn((callback: (tx: { user: typeof userMocks }) => Promise<unknown>) => {
+      return callback({ user: userMocks });
+    }),
+  };
+};
 
 // Mock AuthService (for token revocation)
 const createMockAuthService = () => ({
@@ -65,6 +75,14 @@ const createMockAuditService = () => ({
   log: vi.fn().mockResolvedValue(undefined),
 });
 
+// Mock PermissionService - C1 FIX: Now injected via DI
+const createMockPermissionService = () => ({
+  getAllPermissions: vi.fn().mockReturnValue([Permission.USER_VIEW, Permission.USER_CREATE]),
+  getDirectPermissions: vi.fn().mockReturnValue([Permission.USER_VIEW]),
+  hasPermission: vi.fn().mockReturnValue(true),
+  getConstraint: vi.fn().mockReturnValue(undefined),
+});
+
 describe('UsersService', () => {
   let usersService: UsersService;
   let usersServiceWithAudit: UsersService;
@@ -72,6 +90,7 @@ describe('UsersService', () => {
   let mockAuthService: ReturnType<typeof createMockAuthService>;
   let mockAuditService: ReturnType<typeof createMockAuditService>;
   let roleService: RoleService;
+  let permissionService: PermissionService;
 
   const testTenantId = '00000000-0000-0000-0000-000000000001';
   const testUserId = '00000000-0000-0000-0000-000000000002';
@@ -83,21 +102,26 @@ describe('UsersService', () => {
     mockAuthService = createMockAuthService();
     mockAuditService = createMockAuditService();
     roleService = new RoleService();
+    // C1 FIX: Use real PermissionService for accurate permission tests
+    permissionService = new PermissionService(roleService);
     // Default bcrypt mock behavior - return realistic hash for hash(), true for compare()
     // bcrypt hash is ~60 chars: $2b$XX$ + 53 chars
     mockBcryptHash.mockResolvedValue('$2b$12$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP');
     mockBcryptCompare.mockResolvedValue(true);
+    // C1 FIX: PermissionService now injected via DI (3rd parameter)
     usersService = new UsersService(
       mockPrisma as unknown as Parameters<typeof UsersService.prototype.constructor>[0],
       roleService,
-      mockAuthService as unknown as Parameters<typeof UsersService.prototype.constructor>[2]
+      permissionService,
+      mockAuthService as unknown as Parameters<typeof UsersService.prototype.constructor>[3]
     );
     // Service with audit for testing audit integration
     usersServiceWithAudit = new UsersService(
       mockPrisma as unknown as Parameters<typeof UsersService.prototype.constructor>[0],
       roleService,
-      mockAuthService as unknown as Parameters<typeof UsersService.prototype.constructor>[2],
-      mockAuditService as unknown as Parameters<typeof UsersService.prototype.constructor>[3]
+      permissionService,
+      mockAuthService as unknown as Parameters<typeof UsersService.prototype.constructor>[3],
+      mockAuditService as unknown as Parameters<typeof UsersService.prototype.constructor>[4]
     );
   });
 
@@ -671,6 +695,8 @@ describe('UsersService', () => {
     });
 
     it('should log ROLE_ASSIGNMENT_DENIED to audit service on hierarchy violation', async () => {
+      // C2 FIX: Hierarchy check now happens BEFORE user lookup for faster fail
+      // So previousRole is no longer included in audit log (not yet known)
       mockPrisma.user.findFirst.mockResolvedValue(existingUser);
 
       await expect(
@@ -693,7 +719,7 @@ describe('UsersService', () => {
           details: expect.objectContaining({
             assignerRole: Role.BOLTVEZETO,
             attemptedRole: Role.PARTNER_OWNER,
-            previousRole: Role.OPERATOR,
+            // C2 FIX: previousRole no longer available at this point
             reason: 'Role hierarchy violation',
           }),
         })
@@ -1242,36 +1268,39 @@ describe('UsersService', () => {
 
   // ============================================
   // generateTemporaryPassword() tests
+  // H4 FIX: Now uses hex encoding for full entropy
+  // L2 FIX: Now private, use type assertion for testing
   // ============================================
 
   describe('generateTemporaryPassword()', () => {
-    it('should generate password of correct length', () => {
-      const password = usersService.generateTemporaryPassword();
-      expect(password.length).toBeGreaterThanOrEqual(12);
+    // L2 FIX: Access private method via type assertion for testing
+    const callGeneratePassword = () =>
+      (usersService as unknown as { generateTemporaryPassword: () => string }).generateTemporaryPassword();
+
+    it('should generate password of correct length (H4 FIX: 32 hex chars = 128 bits entropy)', () => {
+      const password = callGeneratePassword();
+      // H4 FIX: hex encoding of 16 bytes = 32 characters
+      expect(password.length).toBe(32);
     });
 
     it('should generate unique passwords', () => {
-      const password1 = usersService.generateTemporaryPassword();
-      const password2 = usersService.generateTemporaryPassword();
+      const password1 = callGeneratePassword();
+      const password2 = callGeneratePassword();
       expect(password1).not.toBe(password2);
     });
 
-    it('should generate password with expected length (16 chars)', () => {
-      const password = usersService.generateTemporaryPassword();
-      expect(password.length).toBe(16);
+    it('should generate valid hex string (H4 FIX: full entropy)', () => {
+      const password = callGeneratePassword();
+      // H4 FIX: Should be valid hex (only 0-9 and a-f)
+      expect(password).toMatch(/^[0-9a-f]+$/);
     });
 
-    it('should generate cryptographically strong password (not just alphanumeric)', () => {
-      // Base64 includes +, /, = characters
-      const passwords = Array.from({ length: 10 }, () =>
-        usersService.generateTemporaryPassword()
-      );
-      // At least some passwords should contain non-alphanumeric base64 chars
-      const hasSpecialChars = passwords.some((p) =>
-        /[+/=]/.test(p)
-      );
-      // This is probabilistic but should pass almost always
-      expect(hasSpecialChars || passwords.every((p) => p.length === 16)).toBe(true);
+    it('should generate cryptographically strong password with full entropy', () => {
+      // H4 FIX: Hex encoding preserves full entropy (no slicing)
+      // 16 bytes = 32 hex chars = 128 bits of entropy
+      const passwords = Array.from({ length: 10 }, () => callGeneratePassword());
+      // All passwords should be valid hex and 32 chars
+      expect(passwords.every((p) => p.length === 32 && /^[0-9a-f]+$/.test(p))).toBe(true);
     });
   });
 });

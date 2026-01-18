@@ -41,9 +41,9 @@ function parseTtlToSeconds(ttl: string): number {
     throw new Error(`Invalid TTL format: "${ttl}"`);
   }
 
-  // Fix: The regex ensures match[1] and match[2] exist if match is not null
-  const value = parseInt(match[1]!, 10);
-  const unit = match[2]!;
+  // M1 FIX: Use nullish coalescing instead of non-null assertion for noUncheckedIndexedAccess compliance
+  const value = parseInt(match[1] ?? '0', 10);
+  const unit = match[2] ?? 's';
 
   switch (unit) {
     case 'ms':

@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { ContractService } from './contract.service';
 import { TemplateService } from './template.service';
 import { PdfService } from './pdf.service';
 import { SignatureService } from './signature.service';
 import { ArchiveService, InMemoryStorageAdapter } from './archive.service';
-import { ContractStatus, ContractTemplateType, SignatureType } from '../interfaces/contract.interface';
+import { ContractStatus, ContractTemplateType } from '../interfaces/contract.interface';
 
 /**
  * @kgc/rental-contract - ContractService Unit Tests
