@@ -68,13 +68,13 @@ export function ProductDetailPage() {
 
   const isRentalEquipment = product.category === 'rental_equipment';
 
-  const tabs: { id: TabType; label: string; show: boolean }[] = [
-    { id: 'overview', label: 'Áttekintés', show: true },
-    { id: 'stock', label: 'Készlet', show: true },
-    { id: 'pricing', label: 'Árazás', show: true },
-    { id: 'rental', label: 'Bérlés', show: isRentalEquipment },
-    { id: 'history', label: 'Előzmények', show: true },
-  ].filter(t => t.show);
+  const tabs = ([
+    { id: 'overview' as const, label: 'Áttekintés', show: true },
+    { id: 'stock' as const, label: 'Készlet', show: true },
+    { id: 'pricing' as const, label: 'Árazás', show: true },
+    { id: 'rental' as const, label: 'Bérlés', show: isRentalEquipment },
+    { id: 'history' as const, label: 'Előzmények', show: true },
+  ] as const).filter(t => t.show);
 
   return (
     <div className="min-h-screen kgc-bg">
