@@ -3,6 +3,43 @@ import { cn } from '@/lib/utils';
 import { useDashboardStore } from '@/stores/dashboard-store';
 import type { Epic, Story } from '@/types/dashboard';
 import { useState } from 'react';
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+
+// Chart color palette (matching StatisticsView)
+const COLORS = {
+  primary: '#d946ef',
+  success: '#10b981',
+  warning: '#f59e0b',
+  danger: '#ef4444',
+  info: '#22d3ee',
+  muted: '#6b7280',
+  purple: '#a855f7',
+};
+
+const TOOLTIP_STYLE = {
+  contentStyle: {
+    backgroundColor: 'hsl(260, 45%, 10%)',
+    border: '1px solid rgba(217, 70, 239, 0.3)',
+    borderRadius: '8px',
+  },
+  labelStyle: { color: '#f3f4f6' },
+};
+
+const GRID_STYLE = { strokeDasharray: '3 3', stroke: 'rgba(139, 92, 246, 0.2)' };
+const AXIS_STYLE = { tick: { fill: '#9ca3af', fontSize: 11 } };
 
 type TabId = 'overview' | 'epics' | 'stories';
 type StatusFilter = 'all' | 'DONE' | 'IN_PROGRESS' | 'TODO';
@@ -100,73 +137,191 @@ function OverviewTab({ stats, epics }: { stats: ReturnType<typeof useStats>; epi
   );
   const backlogStories = stats.totalStories - doneStories - inProgressStories;
 
+  // Story status pie data
+  const storyPieData = [
+    { name: 'Kész', value: doneStories, color: COLORS.success },
+    { name: 'Folyamatban', value: inProgressStories, color: COLORS.warning },
+    { name: 'Backlog', value: backlogStories, color: COLORS.muted },
+  ].filter(d => d.value > 0);
+
+  // Epic progress data for bar chart
+  const epicProgressData = epics.slice(0, 12).map(epic => {
+    const done = epic.stories.filter(s => s.status === 'DONE').length;
+    const total = epic.stories.length;
+    return {
+      name: `E${epic.epic}`,
+      progress: total > 0 ? Math.round((done / total) * 100) : 0,
+      done,
+      total,
+    };
+  });
+
+  // Velocity/completion trend (simulated based on epic order)
+  const velocityData = epics
+    .filter(e => e.status === 'DONE')
+    .slice(-8)
+    .map((epic, idx) => ({
+      name: `E${epic.epic}`,
+      stories: epic.stories.length,
+      cumulative: epics
+        .filter(e => e.status === 'DONE')
+        .slice(0, idx + 1)
+        .reduce((sum, e) => sum + e.stories.length, 0),
+    }));
+
   return (
     <div className="space-y-6">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Epic Stats */}
-        <div className="card col-span-2 lg:col-span-1">
-          <h4 className="text-sm font-semibold text-foreground mb-3">Epics</h4>
-          <div className="space-y-2">
-            <StatBar label="Kész" value={doneEpics} total={epics.length} color="success" />
-            <StatBar
-              label="Folyamatban"
-              value={inProgressEpics}
-              total={epics.length}
-              color="warning"
-            />
-            <StatBar label="Backlog" value={backlogEpics} total={epics.length} color="muted" />
+      {/* Top Stats Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="glass-card p-4 text-center">
+          <span className="text-2xl">📦</span>
+          <p className="text-3xl font-bold text-foreground mt-1">{epics.length}</p>
+          <p className="text-xs text-muted-foreground">Összes Epic</p>
+        </div>
+        <div className="glass-card p-4 text-center">
+          <span className="text-2xl">📋</span>
+          <p className="text-3xl font-bold text-foreground mt-1">{stats.totalStories}</p>
+          <p className="text-xs text-muted-foreground">Összes Story</p>
+        </div>
+        <div className="glass-card p-4 text-center">
+          <span className="text-2xl">✅</span>
+          <p className="text-3xl font-bold text-success-500 mt-1">{doneStories}</p>
+          <p className="text-xs text-muted-foreground">Befejezett</p>
+        </div>
+        <div className="glass-card p-4 text-center">
+          <span className="text-2xl">🎯</span>
+          <p className="text-3xl font-bold text-primary mt-1">{stats.progressPercent}%</p>
+          <p className="text-xs text-muted-foreground">Haladás</p>
+        </div>
+      </div>
+
+      {/* Charts Row 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Story Status Donut */}
+        <div className="glass-card p-4">
+          <h4 className="text-sm font-semibold text-foreground mb-3">Story Státusz Eloszlás</h4>
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie
+                data={storyPieData}
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={80}
+                paddingAngle={3}
+                dataKey="value"
+                label={({ name, value }: { name: string; value: number }) => `${name}: ${value}`}
+                labelLine={false}
+              >
+                {storyPieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip {...TOOLTIP_STYLE} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="flex justify-center gap-4 mt-2">
+            {storyPieData.map(entry => (
+              <div key={entry.name} className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
+                <span className="text-xs text-muted-foreground">{entry.name}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Story Stats */}
-        <div className="card col-span-2 lg:col-span-1">
-          <h4 className="text-sm font-semibold text-foreground mb-3">Stories</h4>
-          <div className="space-y-2">
-            <StatBar label="Kész" value={doneStories} total={stats.totalStories} color="success" />
-            <StatBar
-              label="Folyamatban"
-              value={inProgressStories}
-              total={stats.totalStories}
-              color="warning"
-            />
-            <StatBar
-              label="Backlog"
-              value={backlogStories}
-              total={stats.totalStories}
-              color="muted"
-            />
-          </div>
+        {/* Epic Progress Bars */}
+        <div className="glass-card p-4">
+          <h4 className="text-sm font-semibold text-foreground mb-3">Epic Haladás (%)</h4>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={epicProgressData} layout="vertical">
+              <CartesianGrid {...GRID_STYLE} />
+              <XAxis type="number" domain={[0, 100]} tick={AXIS_STYLE.tick} />
+              <YAxis type="category" dataKey="name" tick={AXIS_STYLE.tick} width={40} />
+              <Tooltip
+                {...TOOLTIP_STYLE}
+                formatter={(
+                  value: number,
+                  _name: string,
+                  props: { payload: { done: number; total: number } }
+                ) => [`${value}% (${props.payload.done}/${props.payload.total})`, 'Haladás']}
+              />
+              <Bar dataKey="progress" radius={[0, 4, 4, 0]}>
+                {epicProgressData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={
+                      entry.progress === 100
+                        ? COLORS.success
+                        : entry.progress > 0
+                          ? COLORS.warning
+                          : COLORS.muted
+                    }
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
+      </div>
 
-        {/* Progress */}
-        <div className="card col-span-2 lg:col-span-1">
-          <h4 className="text-sm font-semibold text-foreground mb-3">Haladás</h4>
-          <div className="flex items-center justify-center h-24">
-            <div className="relative">
-              <svg className="w-20 h-20 transform -rotate-90">
-                <circle
-                  cx="40"
-                  cy="40"
-                  r="35"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  fill="none"
-                  className="text-muted"
+      {/* Charts Row 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Completion Trend */}
+        {velocityData.length > 0 && (
+          <div className="glass-card p-4">
+            <h4 className="text-sm font-semibold text-foreground mb-3">
+              Befejezési Trend (Kumulatív)
+            </h4>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={velocityData}>
+                <CartesianGrid {...GRID_STYLE} />
+                <XAxis dataKey="name" tick={AXIS_STYLE.tick} />
+                <YAxis tick={AXIS_STYLE.tick} />
+                <Tooltip {...TOOLTIP_STYLE} />
+                <Area
+                  type="monotone"
+                  dataKey="cumulative"
+                  stroke={COLORS.primary}
+                  fill={COLORS.primary}
+                  fillOpacity={0.3}
+                  name="Összes befejezett"
                 />
-                <circle
-                  cx="40"
-                  cy="40"
-                  r="35"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  fill="none"
-                  strokeDasharray={`${stats.progressPercent * 2.2} 220`}
-                  className="text-primary-500"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-lg font-bold text-foreground">{stats.progressPercent}%</span>
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Epic/Story Stats Bars */}
+        <div className="glass-card p-4">
+          <h4 className="text-sm font-semibold text-foreground mb-3">Epic & Story Összesítés</h4>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-muted-foreground">Epics</span>
+                <span className="text-foreground">
+                  {doneEpics}/{epics.length}
+                </span>
+              </div>
+              <StatBar label="" value={doneEpics} total={epics.length} color="success" />
+              <div className="flex gap-2 mt-1 text-xs">
+                <span className="text-success-400">{doneEpics} kész</span>
+                <span className="text-warning-400">{inProgressEpics} aktív</span>
+                <span className="text-muted-foreground">{backlogEpics} backlog</span>
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-muted-foreground">Stories</span>
+                <span className="text-foreground">
+                  {doneStories}/{stats.totalStories}
+                </span>
+              </div>
+              <StatBar label="" value={doneStories} total={stats.totalStories} color="success" />
+              <div className="flex gap-2 mt-1 text-xs">
+                <span className="text-success-400">{doneStories} kész</span>
+                <span className="text-warning-400">{inProgressStories} aktív</span>
+                <span className="text-muted-foreground">{backlogStories} backlog</span>
               </div>
             </div>
           </div>
@@ -174,10 +329,10 @@ function OverviewTab({ stats, epics }: { stats: ReturnType<typeof useStats>; epi
       </div>
 
       {/* Active Work */}
-      <div className="card">
+      <div className="glass-card p-4">
         <h4 className="text-sm font-semibold text-foreground mb-3">Folyamatban Lévő Epics</h4>
         {epics.filter(e => e.status === 'IN_PROGRESS').length > 0 ? (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {epics
               .filter(e => e.status === 'IN_PROGRESS')
               .map(epic => (

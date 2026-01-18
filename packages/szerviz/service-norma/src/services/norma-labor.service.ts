@@ -91,10 +91,14 @@ export class NormaLaborService {
       normaHours: normaItem.normaHours,
       hourlyRate: normaItem.hourlyRate,
       calculatedCost,
-      deviationPercent: validInput.deviationPercent,
-      deviationReason: validInput.deviationReason,
       finalCost,
     };
+    if (validInput.deviationPercent !== undefined) {
+      calculation.deviationPercent = validInput.deviationPercent;
+    }
+    if (validInput.deviationReason !== undefined) {
+      calculation.deviationReason = validInput.deviationReason;
+    }
 
     await this.auditService.log({
       action: 'norma_labor_calculated',

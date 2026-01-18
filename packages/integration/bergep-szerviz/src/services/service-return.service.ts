@@ -124,15 +124,18 @@ export class ServiceReturnService {
       },
     });
 
-    return {
+    const result: IServiceReturn = {
       dispatchId: validInput.dispatchId,
       worksheetId: dispatch.worksheetId,
       equipmentId: dispatch.equipmentId,
       newStatus,
       returnedAt: new Date(),
       returnedBy: userId,
-      serviceNotes: validInput.serviceNotes,
     };
+    if (validInput.serviceNotes) {
+      result.serviceNotes = validInput.serviceNotes;
+    }
+    return result;
   }
 
   async autoCompleteOnWorksheetDone(

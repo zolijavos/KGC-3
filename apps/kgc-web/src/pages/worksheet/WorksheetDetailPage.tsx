@@ -93,6 +93,12 @@ export function WorksheetDetailPage() {
               {worksheet.status === WorksheetStatus.FOLYAMATBAN && (
                 <Button variant="outline">Szerkesztés</Button>
               )}
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/quotations/new?worksheetId=${worksheet.id}`)}
+              >
+                📝 Árajánlat
+              </Button>
               <Button variant="outline">Nyomtatás</Button>
             </div>
           </div>

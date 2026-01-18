@@ -7,16 +7,16 @@
 export { TwentyCrmModule } from './twenty-crm.module';
 
 // Services
-export {
-  PartnerSyncService,
+export { PartnerSyncService } from './services/partner-sync.service';
+export type {
   IPartnerMappingRepository,
   IKgcPartnerService,
   ITwentyCrmClient,
   IAuditService as IPartnerSyncAuditService,
 } from './services/partner-sync.service';
 
-export {
-  DashboardEmbedService,
+export { DashboardEmbedService } from './services/dashboard-embed.service';
+export type {
   IDashboardConfigRepository,
   ITwentyCrmAuthClient,
   IConfigService,
@@ -25,10 +25,8 @@ export {
 } from './services/dashboard-embed.service';
 
 // Interfaces
-export {
-  SyncDirection,
-  SyncStatus,
-  EntityType,
+export { SyncDirection, SyncStatus, EntityType } from './interfaces/twenty-crm.interface';
+export type {
   ICrmPartner,
   ICrmAddress,
   ICrmContact,
@@ -54,6 +52,8 @@ export {
   UpdateDashboardConfigSchema,
   GenerateEmbedTokenSchema,
   WebhookPayloadSchema,
+} from './dto/twenty-crm.dto';
+export type {
   SyncPartnersDto,
   CreatePartnerMappingDto,
   UpdatePartnerMappingDto,

@@ -173,12 +173,15 @@ export class EmployeeSyncService {
         return;
       }
 
-      await this.userRepository.update(existingUser.id, {
+      const updateData: Partial<IKgcUser> = {
         firstName: employee.firstName,
         lastName: employee.lastName,
-        phone: employee.phone,
         isActive: employee.status === 'ACTIVE',
-      });
+      };
+      if (employee.phone) {
+        updateData.phone = employee.phone;
+      }
+      await this.userRepository.update(existingUser.id, updateData);
 
       await this.mappingRepository.update(mapping.id, {
         lastSyncAt: new Date(),
@@ -207,17 +210,22 @@ export class EmployeeSyncService {
         result.updated++;
       } else {
         // Create new user
-        const newUser = await this.userRepository.create({
+        const createData: Partial<IKgcUser> = {
           tenantId,
           email: employee.email,
           firstName: employee.firstName,
           lastName: employee.lastName,
-          phone: employee.phone,
           role: config.defaultRole || 'EMPLOYEE',
-          locationId: config.defaultLocationId,
           isActive: employee.status === 'ACTIVE',
           horillaEmployeeId: employee.employeeId,
-        });
+        };
+        if (employee.phone) {
+          createData.phone = employee.phone;
+        }
+        if (config.defaultLocationId) {
+          createData.locationId = config.defaultLocationId;
+        }
+        const newUser = await this.userRepository.create(createData);
 
         await this.mappingRepository.create({
           tenantId,

@@ -7,8 +7,8 @@
 export { HorillaHrModule } from './horilla-hr.module';
 
 // Services
-export {
-  EmployeeSyncService,
+export { EmployeeSyncService } from './services/employee-sync.service';
+export type {
   IHorillaApiClient,
   IUserRepository,
   IEmployeeMappingRepository,
@@ -17,23 +17,27 @@ export {
 } from './services/employee-sync.service';
 
 // Interfaces
-export {
+export type {
   IHorillaEmployee,
   IKgcUser,
   IEmployeeMapping,
   ISyncResult,
   IHorillaConfig,
+} from './interfaces/horilla-hr.interface';
+export {
   EmployeeStatus,
   SyncDirection,
   SyncStatus,
 } from './interfaces/horilla-hr.interface';
 
 // DTOs
-export {
+export type {
   HorillaConfigDto,
-  HorillaConfigSchema,
   SyncEmployeesDto,
-  SyncEmployeesSchema,
   CreateEmployeeMappingDto,
+} from './dto/horilla-hr.dto';
+export {
+  HorillaConfigSchema,
+  SyncEmployeesSchema,
   CreateEmployeeMappingSchema,
 } from './dto/horilla-hr.dto';

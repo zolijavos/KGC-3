@@ -99,15 +99,18 @@ export class NormaImportService {
       const hourlyRate = row.hourlyRate ?? validInput.defaultHourlyRate;
       const laborCost = Math.round(row.normaHours * hourlyRate);
 
-      validItems.push({
+      const itemData: Partial<INormaItem> = {
         tenantId,
         normaCode: row.normaCode.trim(),
         description: row.description.trim(),
         normaHours: row.normaHours,
         hourlyRate,
         laborCost,
-        category: row.category?.trim(),
-      });
+      };
+      if (row.category) {
+        itemData.category = row.category.trim();
+      }
+      validItems.push(itemData);
     }
 
     if (validItems.length === 0) {

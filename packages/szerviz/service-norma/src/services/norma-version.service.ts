@@ -56,7 +56,6 @@ export class NormaVersionService {
     const updatedVersion = await this.versionRepository.update(versionId, {
       status: NormaVersionStatus.ACTIVE,
       effectiveFrom: new Date(),
-      effectiveTo: undefined,
     });
 
     await this.auditService.log({

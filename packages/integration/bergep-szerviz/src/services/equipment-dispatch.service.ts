@@ -107,7 +107,7 @@ export class EquipmentDispatchService {
     });
 
     // Create dispatch record
-    const dispatch = await this.dispatchRepository.create({
+    const dispatchData: Partial<IServiceDispatch> = {
       tenantId,
       equipmentId: validInput.equipmentId,
       worksheetId: worksheet.id,
@@ -115,8 +115,11 @@ export class EquipmentDispatchService {
       previousStatus,
       dispatchedAt: new Date(),
       dispatchedBy: userId,
-      notes: validInput.notes,
-    });
+    };
+    if (validInput.notes) {
+      dispatchData.notes = validInput.notes;
+    }
+    const dispatch = await this.dispatchRepository.create(dispatchData);
 
     // Update equipment status
     await this.equipmentRepository.update(validInput.equipmentId, {

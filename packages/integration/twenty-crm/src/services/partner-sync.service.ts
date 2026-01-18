@@ -333,11 +333,19 @@ export class PartnerSyncService {
     const crmPartnerData: Partial<ICrmPartner> = {
       type: kgcPartner.type,
       name: kgcPartner.name,
-      email: kgcPartner.email,
-      phone: kgcPartner.phone,
-      taxNumber: kgcPartner.taxNumber,
-      address: kgcPartner.address,
     };
+    if (kgcPartner.email) {
+      crmPartnerData.email = kgcPartner.email;
+    }
+    if (kgcPartner.phone) {
+      crmPartnerData.phone = kgcPartner.phone;
+    }
+    if (kgcPartner.taxNumber) {
+      crmPartnerData.taxNumber = kgcPartner.taxNumber;
+    }
+    if (kgcPartner.address) {
+      crmPartnerData.address = kgcPartner.address;
+    }
 
     if (existingMapping) {
       // Update existing CRM partner
@@ -345,7 +353,6 @@ export class PartnerSyncService {
       await this.mappingRepository.update(existingMapping.id, {
         syncStatus: SyncStatus.COMPLETED,
         lastSyncedAt: new Date(),
-        syncError: undefined,
       });
     } else {
       // Create new CRM partner
@@ -377,7 +384,6 @@ export class PartnerSyncService {
     await this.mappingRepository.update(mapping.id, {
       syncStatus: SyncStatus.COMPLETED,
       lastSyncedAt: new Date(),
-      syncError: undefined,
     });
   }
 

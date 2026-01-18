@@ -7,34 +7,33 @@
 export { ServiceNormaModule } from './service-norma.module';
 
 // Interfaces
-export {
+export type {
   INormaVersion,
   INormaItem,
   INormaImportRow,
   INormaImportResult,
   INormaImportError,
   INormaLaborCalculation,
-  NormaVersionStatus,
 } from './interfaces/norma.interface';
+export { NormaVersionStatus } from './interfaces/norma.interface';
 
 // DTOs
-export {
+export type {
   ImportNormaListDto,
-  ImportNormaListSchema,
   NormaImportRowDto,
-  NormaImportRowSchema,
   CalculateLaborCostDto,
-  CalculateLaborCostSchema,
   UpdateNormaVersionDto,
+} from './dto/norma.dto';
+export {
+  ImportNormaListSchema,
+  NormaImportRowSchema,
+  CalculateLaborCostSchema,
   UpdateNormaVersionSchema,
 } from './dto/norma.dto';
 
 // Services
-export {
-  NormaImportService,
-  INormaVersionRepository,
-  INormaItemRepository,
-  IAuditService,
-} from './services/norma-import.service';
-export { NormaLaborService, IWorksheetRepository, IWorksheet } from './services/norma-labor.service';
+export { NormaImportService } from './services/norma-import.service';
+export type { INormaVersionRepository, INormaItemRepository, IAuditService } from './services/norma-import.service';
+export { NormaLaborService } from './services/norma-labor.service';
+export type { IWorksheetRepository, IWorksheet } from './services/norma-labor.service';
 export { NormaVersionService } from './services/norma-version.service';

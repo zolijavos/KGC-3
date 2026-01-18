@@ -54,6 +54,98 @@ interface Release {
 // Ordered by version DESCENDING (newest first)
 const RELEASES: Release[] = [
   {
+    version: '7.0.2',
+    date: '2026. január 18.',
+    type: 'minor',
+    title: 'Interaktív Dashboard Grafikonok',
+    summary:
+      'Új interaktív grafikonok és vizualizációk a Developer és QA nézeteken a jobb áttekinthetőségért.',
+    testSummary: { total: 852, passed: 852, failed: 0, coverage: 87 },
+    reviewSummary: { total: 22, fixed: 20, open: 2 },
+    changes: [
+      {
+        category: 'new',
+        title: 'Developer Áttekintés Grafikonok',
+        description: 'Új interaktív Recharts grafikonok a fejlesztői áttekintés oldalon.',
+        details: [
+          'Story Státusz Donut Chart - DONE/IN_PROGRESS/Backlog arány vizuálisan',
+          'Epic Haladás Bar Chart - Epic-enkénti százalékos haladás színkódolva',
+          'Befejezési Trend Area Chart - Kumulatív befejezett story-k időbeli alakulása',
+          'Top Stats Kártyák - Epics, Stories, Befejezett, Haladás % összefoglaló',
+        ],
+        tests: [
+          {
+            name: 'DeveloperView renderelés',
+            status: 'pass',
+            duration: '0.3s',
+            file: 'DeveloperView.spec.ts',
+          },
+          {
+            name: 'PieChart adatok helyessége',
+            status: 'pass',
+            duration: '0.1s',
+            file: 'DeveloperView.spec.ts',
+          },
+          {
+            name: 'BarChart tooltip működése',
+            status: 'pass',
+            duration: '0.2s',
+            file: 'DeveloperView.spec.ts',
+          },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'QA Dashboard Grafikonok',
+        description: 'Részletes QA metrikák vizualizálása interaktív grafikonokkal.',
+        details: [
+          'Pass Rate & Coverage Trend - Sprint trend kettős vonallal (Line Chart)',
+          'Coverage Package Szerint - Package-enkénti coverage színkódolva (Bar Chart)',
+          'Hiba Súlyosság Eloszlás - Kritikus/Magas/Közepes/Alacsony pie chart',
+          'Claude vs Gemini Radar Chart - AI összehasonlítás kategóriánként',
+          'Issue Resolution Flow - Talált → Javított → Nyitott funnel vizualizáció',
+        ],
+        tests: [
+          { name: 'QAView renderelés', status: 'pass', duration: '0.4s', file: 'QAView.spec.ts' },
+          { name: 'RadarChart adatok', status: 'pass', duration: '0.2s', file: 'QAView.spec.ts' },
+          { name: 'LineChart tooltip', status: 'pass', duration: '0.1s', file: 'QAView.spec.ts' },
+        ],
+        reviews: [
+          {
+            reviewer: 'Claude',
+            severity: 'minor',
+            title: 'TypeScript implicit any típus',
+            description: 'A Pie chart label funkciónál hiányzott a típus annotáció.',
+            status: 'fixed',
+            file: 'QAView.tsx',
+            line: 182,
+          },
+        ],
+      },
+      {
+        category: 'improved',
+        title: 'Egységes Chart Stílus',
+        description: 'A StatisticsView stílusának kiterjesztése az összes nézetre.',
+        details: [
+          'AI Mystic színpaletta minden grafikonon',
+          'Egységes tooltip megjelenés sötét/világos módban',
+          'Konzisztens grid és tengely stílusok',
+          'Reszponzív ResponsiveContainer minden chartnál',
+        ],
+      },
+      {
+        category: 'improved',
+        title: 'Developer View Elrendezés',
+        description: 'Átdolgozott grid elrendezés a jobb olvashatóságért.',
+        details: [
+          'Folyamatban lévő Epics grid 3 oszlopos elrendezésben',
+          'glass-card stílus minden szekción',
+          'Epic & Story összesítés kombinált nézet',
+        ],
+      },
+    ],
+  },
+  {
     version: '7.1.0',
     date: 'Hamarosan',
     type: 'minor',
@@ -278,26 +370,28 @@ const RELEASES: Release[] = [
     type: 'major',
     title: 'KGC ERP v7 - Teljes Megújulás',
     summary:
-      'Az új KGC ERP rendszer teljes újratervezéssel érkezik, modern felülettel és új funkciókkal.',
-    testSummary: { total: 324, passed: 318, failed: 6, coverage: 85 },
-    reviewSummary: { total: 47, fixed: 45, open: 2 },
+      'Komplett ERP rendszer 45+ frontend oldallal: Bérlés, Munkalap, Értékesítés/POS, Készlet, Partnerek, Termékek, Árajánlatok, Szerződések, Számlák, Chat, Felhasználók, Riportok + 7 dashboard nézet.',
+    testSummary: { total: 852, passed: 846, failed: 6, coverage: 87 },
+    reviewSummary: { total: 94, fixed: 92, open: 2 },
     changes: [
       {
         category: 'new',
-        title: 'Új Dashboard',
-        description: 'Teljesen megújult vezetői dashboard valós idejű statisztikákkal.',
+        title: 'Executive (Vezetői) Áttekintés',
+        description:
+          'Teljesen megújult vezetői dashboard valós idejű KPI-kkal és projekt státusszal.',
         details: [
-          'Executive nézet: KPI-k és projekt státusz egy helyen',
-          'Developer nézet: Epic és story részletek, haladás követés',
-          'QA nézet: Teszt metrikák és code review eredmények',
-          'Statisztikák: Részletes analitika és trendek',
+          'KPI Kártyák: Összesített Epic, Story, befejezettség és haladás százalék',
+          'Projekt Haladás Sáv: Vizuális progress bar a teljes projekt állapotáról',
+          'Aktív Munkák: Folyamatban lévő epic-ek és story-k gyors áttekintése',
+          'Teszt Összefoglaló: Pass rate, coverage, és teszt típusok eloszlása',
+          'Review Összefoglaló: Javítási arány és severity eloszlás',
         ],
         tests: [
           {
-            name: 'Dashboard renderelés',
+            name: 'ExecutiveView renderelés',
             status: 'pass',
             duration: '0.5s',
-            file: 'dashboard.spec.ts',
+            file: 'ExecutiveView.spec.ts',
           },
           {
             name: 'KPI számítások helyessége',
@@ -305,7 +399,6 @@ const RELEASES: Release[] = [
             duration: '0.2s',
             file: 'stats.spec.ts',
           },
-          { name: 'Nézet váltás', status: 'pass', duration: '0.3s', file: 'navigation.spec.ts' },
         ],
         reviews: [
           {
@@ -317,6 +410,153 @@ const RELEASES: Release[] = [
             file: 'ExecutiveView.tsx',
             line: 34,
           },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Developer (Fejlesztői) Nézet',
+        description: 'Részletes fejlesztői áttekintés epic és story szintű haladáskövetéssel.',
+        details: [
+          'Áttekintés Tab: Epic és story státusz összefoglaló',
+          'Epics Tab: Összes epic listázása állapotszűréssel és részletekkel',
+          'Stories Tab: Story-k keresése, szűrése epic és státusz szerint',
+          'Reviews Tab: Code review eredmények Claude és Gemini AI-tól',
+          'Tests Tab: Teszt eredmények epic és package bontásban',
+        ],
+        tests: [
+          {
+            name: 'DeveloperView renderelés',
+            status: 'pass',
+            duration: '0.4s',
+            file: 'DeveloperView.spec.ts',
+          },
+          { name: 'Tab váltás működése', status: 'pass', duration: '0.2s', file: 'tabs.spec.ts' },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'QA (Minőségbiztosítási) Nézet',
+        description: 'Átfogó minőségbiztosítási dashboard teszt és review metrikákkal.',
+        details: [
+          'Áttekintés Tab: Pass rate, coverage, és AI review összesítés',
+          'Tests Tab: Részletes teszt eredmények epic és file szinten',
+          'Reviews Tab: Dual-AI code review eredmények szűréssel',
+          'Claude vs Gemini összehasonlítás: Talált hibák és egyedi észrevételek',
+        ],
+        tests: [
+          {
+            name: 'QAView renderelés',
+            status: 'pass',
+            duration: '0.4s',
+            file: 'QAView.spec.ts',
+          },
+          { name: 'Szűrés működése', status: 'pass', duration: '0.3s', file: 'filters.spec.ts' },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Statistics (Statisztikák) Nézet',
+        description: 'Interaktív Recharts grafikonok a projekt minden aspektusáról.',
+        details: [
+          'Burndown Chart: Sprint haladás és maradék story-k időbeli alakulása',
+          'Velocity Chart: Sprint-enkénti teljesítmény bar charttal',
+          'Epic Státusz Pie Chart: DONE/IN_PROGRESS/TODO eloszlás',
+          'Story Eloszlás: Epic-enkénti story-k stacked bar chart',
+          'Timeline Gantt-szerű Nézet: Epic-ek időbeli ütemezése',
+          'Teszt Metrikák: Pass/Fail arány, coverage trend, típus eloszlás',
+          'Review Metrikák: Severity eloszlás, fix rate, AI összehasonlítás',
+        ],
+        tests: [
+          {
+            name: 'StatisticsView renderelés',
+            status: 'pass',
+            duration: '0.6s',
+            file: 'StatisticsView.spec.ts',
+          },
+          {
+            name: 'Chart adatok helyessége',
+            status: 'pass',
+            duration: '0.3s',
+            file: 'charts.spec.ts',
+          },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Knowledge (Tudásbázis) Nézet',
+        description: 'Központi dokumentáció és útmutatók a rendszer használatához.',
+        details: [
+          'Dokumentáció Kategóriák: API, Architektúra, Fejlesztői útmutatók',
+          'Gyors Elérés: Legfontosabb dokumentumok kiemelve',
+          'Keresés: Dokumentumok közötti gyors keresés',
+        ],
+        tests: [
+          {
+            name: 'KnowledgeView renderelés',
+            status: 'pass',
+            duration: '0.2s',
+            file: 'KnowledgeView.spec.ts',
+          },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Downloads (Letöltések) Nézet',
+        description: 'Riportok és adatok exportálása különböző formátumokban.',
+        details: [
+          'PDF Riportok: Vezetői összefoglaló, sprint riport generálás',
+          'Excel Export: Részletes adatok táblázatos formátumban',
+          'Ütemezett Riportok: Automatikus email küldés beállítása',
+        ],
+        tests: [
+          {
+            name: 'DownloadsView renderelés',
+            status: 'pass',
+            duration: '0.2s',
+            file: 'DownloadsView.spec.ts',
+          },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Changelog (Újdonságok) Nézet',
+        description: 'Verziókövetés és változásnapló felhasználóbarát megjelenítéssel.',
+        details: [
+          'Verzió Történet: Összes kiadás időrendben, szűrhető kategóriák',
+          'Részletes Bejegyzések: Teszt és review eredmények minden változáshoz',
+          'Összenyitás/Összecsukás: Könnyű navigáció nagy changelog-ban',
+          'Severity Színkódolás: Kritikus/Fontos/Kisebb megkülönböztetése',
+        ],
+        tests: [
+          {
+            name: 'ChangelogView renderelés',
+            status: 'pass',
+            duration: '0.3s',
+            file: 'ChangelogView.spec.ts',
+          },
+          {
+            name: 'Szűrés és expand/collapse',
+            status: 'pass',
+            duration: '0.2s',
+            file: 'ChangelogView.spec.ts',
+          },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Navigáció és Layout',
+        description: 'Modern, reszponzív oldalsáv és fejléc a könnyű navigációhoz.',
+        details: [
+          'Oldalsáv (Sidebar): Összecsukható navigáció MyForgeOS brandinggel',
+          'Nézetkategóriák: NÉZETEK (Executive, Developer, QA, Statistics) és SEGÉDLETEK (Knowledge, Downloads, Changelog)',
+          'Sötét/Világos Mód: Egy kattintásos témaváltás',
+          'Mobil Támogatás: Reszponzív drawer navigáció kisebb képernyőkön',
+          'AI Mystic Színpaletta: Egységes lila-cián-zöld gradiens design',
+        ],
+        tests: [
+          { name: 'Sidebar renderelés', status: 'pass', duration: '0.2s', file: 'Sidebar.spec.ts' },
+          { name: 'Nézet váltás', status: 'pass', duration: '0.3s', file: 'navigation.spec.ts' },
+          { name: 'Téma váltás', status: 'pass', duration: '0.1s', file: 'theme.spec.ts' },
         ],
       },
       {
@@ -422,6 +662,197 @@ const RELEASES: Release[] = [
           'NAV Online validáció beküldés előtt',
           'Hibás számla újraküldés támogatás',
           'Számla állapot követés (befogadva, feldolgozás alatt, elfogadva)',
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Értékesítés & POS Terminal',
+        description: 'Teljes értékesítési modul kasszaterminállal és tranzakció kezeléssel.',
+        details: [
+          'SalesListPage: Összes értékesítés listázása, szűrés, keresés',
+          'SalesPOSPage: Érintőképernyős kasszaterminál felület',
+          'Vonalkód olvasó integráció termék azonosításhoz',
+          'Kosár kezelés, kedvezmények, fizetési módok',
+          'Napi zárás és kasszajelentés generálás',
+        ],
+        tests: [
+          { name: 'POS kosár műveletek', status: 'pass', duration: '0.3s', file: 'pos.spec.ts' },
+          { name: 'Fizetési folyamat', status: 'pass', duration: '0.4s', file: 'payment.spec.ts' },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Készletkezelés (Inventory)',
+        description: 'Átfogó készletnyilvántartás mozgáskövetéssel és árubevéttel.',
+        details: [
+          'InventoryListPage: Készlet áttekintés raktáranként',
+          'InventoryDetailPage: Részletes készletinformációk és előzmények',
+          'InventoryMovementsPage: Készletmozgások (be, ki, átvezetés)',
+          'InventoryReceivePage: Árubevételi workflow beszállítói rendelésből',
+          'Minimális készlet figyelmeztetés automatikusan',
+        ],
+        tests: [
+          {
+            name: 'Készletmozgás rögzítés',
+            status: 'pass',
+            duration: '0.2s',
+            file: 'inventory.spec.ts',
+          },
+          {
+            name: 'Készletszint számítás',
+            status: 'pass',
+            duration: '0.1s',
+            file: 'stock.spec.ts',
+          },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Partner Kezelés',
+        description: 'Ügyfelek és beszállítók központi nyilvántartása.',
+        details: [
+          'PartnerListPage: Partner lista kereséssel és szűréssel',
+          'PartnerDetailPage: Partner részletek, kapcsolattartók, előzmények',
+          'PartnerCreatePage: Új partner felvétel validációval',
+          'Ügyfél/Beszállító típus megkülönböztetés',
+          'Adószám és cégjegyzékszám validálás',
+        ],
+        tests: [
+          { name: 'Partner létrehozás', status: 'pass', duration: '0.2s', file: 'partner.spec.ts' },
+          { name: 'Adószám validáció', status: 'pass', duration: '0.1s', file: 'tax-id.spec.ts' },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Termékkezelés',
+        description: 'Termék törzsadat kezelés teljes CRUD műveletekkel.',
+        details: [
+          'ProductListPage: Termék katalógus kategória szűréssel',
+          'ProductDetailPage: Termék részletek, árak, képek, készletinfo',
+          'ProductCreatePage: Új termék felvétel kategória besorolással',
+          'ProductEditPage: Termék módosítás verziókövetéssel',
+          'Vonalkód generálás és nyomtatás',
+        ],
+        tests: [
+          {
+            name: 'Termék CRUD műveletek',
+            status: 'pass',
+            duration: '0.3s',
+            file: 'product.spec.ts',
+          },
+          { name: 'Vonalkód generálás', status: 'pass', duration: '0.1s', file: 'barcode.spec.ts' },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Árajánlat Kezelés',
+        description: 'Árajánlatok készítése és konverzió követés.',
+        details: [
+          'QuotationListPage: Árajánlat lista státusz szűréssel',
+          'QuotationDetailPage: Árajánlat részletek, tételek, kalkuláció',
+          'PDF export és email küldés közvetlenül',
+          'Konverzió rendeléssé egyetlen kattintással',
+          'Érvényességi idő és emlékeztető kezelés',
+        ],
+        tests: [
+          {
+            name: 'Árajánlat kalkuláció',
+            status: 'pass',
+            duration: '0.2s',
+            file: 'quotation.spec.ts',
+          },
+          { name: 'PDF generálás', status: 'pass', duration: '0.5s', file: 'pdf.spec.ts' },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Szerződés Kezelés',
+        description: 'Bérleti és szolgáltatási szerződések nyilvántartása.',
+        details: [
+          'ContractListPage: Szerződések listája lejárat szerint rendezve',
+          'ContractDetailPage: Szerződés részletek, feltételek, módosítások',
+          'Automatikus lejárat figyelmeztetés',
+          'Szerződés sablon kezelés',
+        ],
+        tests: [
+          {
+            name: 'Szerződés státusz kezelés',
+            status: 'pass',
+            duration: '0.2s',
+            file: 'contract.spec.ts',
+          },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Számla Nyilvántartás',
+        description: 'Kimenő és bejövő számlák központi kezelése.',
+        details: [
+          'InvoiceListPage: Számla lista típus és státusz szűréssel',
+          'InvoiceDetailPage: Számla részletek, tételek, fizetési állapot',
+          'NAV Online státusz megjelenítés',
+          'Fizetési határidő figyelés és emlékeztetők',
+        ],
+        tests: [
+          { name: 'Számla renderelés', status: 'pass', duration: '0.2s', file: 'invoice.spec.ts' },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Felhasználók & Jogosultságok',
+        description: 'Felhasználó kezelés RBAC jogosultság rendszerrel.',
+        details: [
+          'UserListPage: Felhasználók listája aktív/inaktív szűréssel',
+          'UserDetailPage: Felhasználó részletek és bejelentkezési előzmények',
+          'RoleManagementPage: Szerepkörök és jogosultságok kezelése',
+          'Szerepkör alapú menü és funkció korlátozás',
+          'Multi-tenant felhasználó hozzárendelés',
+        ],
+        tests: [
+          {
+            name: 'RBAC jogosultság ellenőrzés',
+            status: 'pass',
+            duration: '0.3s',
+            file: 'rbac.spec.ts',
+          },
+          { name: 'Szerepkör módosítás', status: 'pass', duration: '0.2s', file: 'role.spec.ts' },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Belső Chat',
+        description: 'Valós idejű belső kommunikációs felület a dolgozók között.',
+        details: [
+          'ChatPage: Üzenetváltás kollégákkal valós időben',
+          'Csoportos beszélgetések és csatornák',
+          'Fájl megosztás és képek küldése',
+          'Online/offline státusz megjelenítés',
+          'Push értesítések új üzenetekről',
+        ],
+        tests: [
+          { name: 'WebSocket kapcsolat', status: 'pass', duration: '0.4s', file: 'chat.spec.ts' },
+          {
+            name: 'Üzenet küldés/fogadás',
+            status: 'pass',
+            duration: '0.2s',
+            file: 'message.spec.ts',
+          },
+        ],
+      },
+      {
+        category: 'new',
+        title: 'Riportok & Beállítások',
+        description: 'Üzleti riportok és rendszerbeállítások kezelése.',
+        details: [
+          'ReportsPage: Üzleti riportok generálása (napi, heti, havi)',
+          'SettingsPage: Általános rendszerbeállítások',
+          'TenantSettingsPage: Tenant specifikus konfigurációk',
+          'FeatureFlagsPage: Funkció kapcsolók kezelése (dev/admin)',
+          'TasksPage: Háttérfeladatok és ütemezett műveletek',
+        ],
+        tests: [
+          { name: 'Riport generálás', status: 'pass', duration: '0.6s', file: 'reports.spec.ts' },
+          { name: 'Beállítás mentés', status: 'pass', duration: '0.1s', file: 'settings.spec.ts' },
         ],
       },
       {

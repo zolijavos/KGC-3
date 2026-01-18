@@ -48,7 +48,7 @@ export interface IKgcUser {
   role: string;
   locationId?: string;
   isActive: boolean;
-  horillaEmployeeId?: string;
+  horillaEmployeeId?: string | undefined;
   createdAt: Date;
   updatedAt: Date;
 }

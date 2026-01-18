@@ -61,7 +61,7 @@ export class DashboardEmbedService {
   constructor(
     private readonly configRepository: IDashboardConfigRepository,
     private readonly crmAuthClient: ITwentyCrmAuthClient,
-    private readonly configService: IConfigService,
+    _configService: IConfigService, // Reserved for future configuration needs
     private readonly userService: IUserService,
     private readonly auditService: IAuditService,
   ) {}
@@ -84,17 +84,20 @@ export class DashboardEmbedService {
       throw new Error('CRM dashboard not found or not accessible');
     }
 
-    const config = await this.configRepository.create({
+    const configData: Partial<IDashboardConfig> = {
       tenantId,
       name: validInput.name,
       crmDashboardId: validInput.crmDashboardId,
       embedUrl: validInput.embedUrl,
       width: validInput.width || '100%',
       height: validInput.height || '600px',
-      refreshInterval: validInput.refreshInterval,
       permissions: validInput.permissions,
       isActive: validInput.isActive,
-    });
+    };
+    if (validInput.refreshInterval !== undefined) {
+      configData.refreshInterval = validInput.refreshInterval;
+    }
+    const config = await this.configRepository.create(configData);
 
     await this.auditService.log({
       action: 'dashboard_config_created',

@@ -1,14 +1,26 @@
 import { AppLayout } from '@/components/layout';
 import {
+  ChatPage,
+  ContractDetailPage,
+  ContractListPage,
   DashboardPage,
+  FeatureFlagsPage,
   InventoryDetailPage,
   InventoryListPage,
   InventoryMovementsPage,
   InventoryReceivePage,
+  InvoiceDetailPage,
+  InvoiceListPage,
   LoginPage,
   PartnerCreatePage,
   PartnerDetailPage,
   PartnerListPage,
+  ProductCreatePage,
+  ProductDetailPage,
+  ProductEditPage,
+  ProductListPage,
+  QuotationDetailPage,
+  QuotationListPage,
   RentalDetailPage,
   RentalListPage,
   RentalReturnPage,
@@ -19,6 +31,7 @@ import {
   SalesPOSPage,
   SettingsPage,
   TasksPage,
+  TenantSettingsPage,
   UserDetailPage,
   UserListPage,
   WorksheetDetailPage,
@@ -107,6 +120,24 @@ function App() {
             <Route path="/inventory/receive" element={<InventoryReceivePage />} />
             <Route path="/inventory/:id" element={<InventoryDetailPage />} />
 
+            {/* Product routes */}
+            <Route path="/products" element={<ProductListPage />} />
+            <Route path="/products/new" element={<ProductCreatePage />} />
+            <Route path="/products/:id" element={<ProductDetailPage />} />
+            <Route path="/products/:id/edit" element={<ProductEditPage />} />
+
+            {/* Quotation routes */}
+            <Route path="/quotations" element={<QuotationListPage />} />
+            <Route path="/quotations/:id" element={<QuotationDetailPage />} />
+
+            {/* Contract routes */}
+            <Route path="/contracts" element={<ContractListPage />} />
+            <Route path="/contracts/:id" element={<ContractDetailPage />} />
+
+            {/* Invoice routes */}
+            <Route path="/invoices" element={<InvoiceListPage />} />
+            <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
+
             {/* User routes */}
             <Route path="/users" element={<UserListPage />} />
             <Route path="/users/roles" element={<RoleManagementPage />} />
@@ -120,6 +151,15 @@ function App() {
 
             {/* Tasks route */}
             <Route path="/tasks" element={<TasksPage />} />
+
+            {/* Chat route */}
+            <Route path="/chat" element={<ChatPage />} />
+
+            {/* Tenant Admin route */}
+            <Route path="/tenant" element={<TenantSettingsPage />} />
+
+            {/* Feature Flags route */}
+            <Route path="/feature-flags" element={<FeatureFlagsPage />} />
           </Route>
 
           {/* Default redirect */}
