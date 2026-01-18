@@ -9,18 +9,15 @@
  * TDD Red-Green-Refactor approach
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Role } from '../interfaces/user.interface';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ScopeRequirementMetadata } from '../decorators/require-scope.decorator';
+import { AuditAction, IAuditService } from '../interfaces/audit.interface';
 import { RoleScope } from '../interfaces/permission.interface';
+import { Role } from '../interfaces/user.interface';
 import { ScopedPermissionService } from '../services/scoped-permission.service';
 import { ScopedPermissionGuard } from './scoped-permission.guard';
-import {
-  SCOPE_REQUIREMENT_KEY,
-  ScopeRequirementMetadata,
-} from '../decorators/require-scope.decorator';
-import { AuditAction, IAuditService, AUDIT_SERVICE } from '../interfaces/audit.interface';
 
 // Mock types
 interface MockRequest {
@@ -47,16 +44,14 @@ function createMockExecutionContext(request: MockRequest): ExecutionContext {
     getClass: () => ({}),
     getArgs: () => [],
     getArgByIndex: () => undefined,
-    switchToRpc: () => ({} as any),
-    switchToWs: () => ({} as any),
+    switchToRpc: () => ({}) as any,
+    switchToWs: () => ({}) as any,
     getType: () => 'http' as const,
   } as ExecutionContext;
 }
 
 // Helper to create mock Reflector
-function createMockReflector(
-  metadata: ScopeRequirementMetadata | undefined
-): Reflector {
+function createMockReflector(metadata: ScopeRequirementMetadata | undefined): Reflector {
   return {
     get: vi.fn().mockReturnValue(metadata),
     getAll: vi.fn(),
@@ -83,11 +78,7 @@ describe('ScopedPermissionGuard', () => {
     describe('no decorator metadata', () => {
       it('should allow access when no @RequireScope decorator', async () => {
         const reflector = createMockReflector(undefined);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: { id: 'user-1', role: Role.OPERATOR, tenantId: 'tenant-1' },
@@ -104,11 +95,7 @@ describe('ScopedPermissionGuard', () => {
           minimumScope: RoleScope.LOCATION,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({ user: null });
 
@@ -123,11 +110,7 @@ describe('ScopedPermissionGuard', () => {
           minimumScope: RoleScope.LOCATION,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({});
 
@@ -139,11 +122,7 @@ describe('ScopedPermissionGuard', () => {
           minimumScope: RoleScope.LOCATION,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: { id: 'user-1', role: '', tenantId: 'tenant-1' },
@@ -159,11 +138,7 @@ describe('ScopedPermissionGuard', () => {
           minimumScope: RoleScope.LOCATION,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: {
@@ -187,11 +162,7 @@ describe('ScopedPermissionGuard', () => {
           minimumScope: RoleScope.LOCATION,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: {
@@ -219,11 +190,7 @@ describe('ScopedPermissionGuard', () => {
           minimumScope: RoleScope.TENANT,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: {
@@ -246,11 +213,7 @@ describe('ScopedPermissionGuard', () => {
           minimumScope: RoleScope.TENANT,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: {
@@ -272,11 +235,7 @@ describe('ScopedPermissionGuard', () => {
           minimumScope: RoleScope.TENANT,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: {
@@ -302,11 +261,7 @@ describe('ScopedPermissionGuard', () => {
           minimumScope: RoleScope.GLOBAL,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: {
@@ -330,11 +285,7 @@ describe('ScopedPermissionGuard', () => {
           allowGlobalWrite: false,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: {
@@ -360,11 +311,7 @@ describe('ScopedPermissionGuard', () => {
           allowGlobalWrite: true,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: {
@@ -388,11 +335,7 @@ describe('ScopedPermissionGuard', () => {
           allowGlobalWrite: false,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: {
@@ -417,11 +360,7 @@ describe('ScopedPermissionGuard', () => {
           minimumScope: RoleScope.TENANT,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: {
@@ -444,11 +383,7 @@ describe('ScopedPermissionGuard', () => {
           minimumScope: RoleScope.TENANT,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         // Header tenant (tenant-1) overrides URL param (tenant-wrong)
         const context = createMockExecutionContext({
@@ -472,11 +407,7 @@ describe('ScopedPermissionGuard', () => {
           minimumScope: RoleScope.TENANT,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: {
@@ -499,11 +430,7 @@ describe('ScopedPermissionGuard', () => {
           minimumScope: RoleScope.LOCATION,
         };
         const reflector = createMockReflector(metadata);
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          null
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
         const context = createMockExecutionContext({
           user: {
@@ -530,11 +457,7 @@ describe('ScopedPermissionGuard', () => {
         };
         const reflector = createMockReflector(metadata);
         const auditService = createMockAuditService();
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          auditService
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, auditService);
 
         const context = createMockExecutionContext({
           user: {
@@ -566,11 +489,7 @@ describe('ScopedPermissionGuard', () => {
         };
         const reflector = createMockReflector(metadata);
         const auditService = createMockAuditService();
-        const guard = new ScopedPermissionGuard(
-          reflector,
-          scopedPermissionService,
-          auditService
-        );
+        const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, auditService);
 
         const context = createMockExecutionContext({
           user: {
@@ -648,11 +567,7 @@ describe('ScopedPermissionGuard', () => {
             allowGlobalWrite: false,
           };
           const reflector = createMockReflector(metadata);
-          const guard = new ScopedPermissionGuard(
-            reflector,
-            scopedPermissionService,
-            null
-          );
+          const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
           const context = createMockExecutionContext({
             user: {

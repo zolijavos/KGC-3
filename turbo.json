@@ -31,7 +31,6 @@
       "outputs": ["playwright-report/**", "test-results/**"]
     },
     "lint": {
-      "dependsOn": ["^build"],
       "outputs": []
     },
     "lint:fix": {

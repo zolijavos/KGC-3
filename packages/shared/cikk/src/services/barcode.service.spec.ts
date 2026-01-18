@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BarcodeService } from './barcode.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BarcodeType } from '../interfaces/barcode.interface';
+import { BarcodeService } from './barcode.service';
 
 /**
  * TDD Tests for BarcodeService
@@ -38,8 +38,8 @@ const VALID_BARCODES = [
   '0012345678905', // US/Canada UPC-A compatible
 ];
 
-// Invalid EAN-13 barcodes
-const INVALID_BARCODES = [
+// Invalid EAN-13 barcodes - reserved for negative test cases
+const _INVALID_BARCODES = [
   '5901234123456', // Wrong check digit (should be 7)
   '1234567890123', // Wrong check digit
   '590123412345', // Only 12 digits
@@ -107,9 +107,7 @@ describe('BarcodeService', () => {
     });
 
     it('should throw error for input shorter than 12 digits', () => {
-      expect(() => barcodeService.calculateCheckDigit('12345')).toThrow(
-        'First 12 digits required'
-      );
+      expect(() => barcodeService.calculateCheckDigit('12345')).toThrow('First 12 digits required');
     });
 
     it('should throw error for input longer than 12 digits', () => {
@@ -132,10 +130,7 @@ describe('BarcodeService', () => {
       expect(mockPrismaService.item.findFirst).toHaveBeenCalledWith({
         where: {
           tenantId: TENANT_ID,
-          OR: [
-            { barcode: '5901234123457' },
-            { alternativeBarcodes: { has: '5901234123457' } },
-          ],
+          OR: [{ barcode: '5901234123457' }, { alternativeBarcodes: { has: '5901234123457' } }],
         },
       });
     });
@@ -157,10 +152,7 @@ describe('BarcodeService', () => {
         where: {
           tenantId: TENANT_ID,
           id: { not: ITEM_ID },
-          OR: [
-            { barcode: '5901234123457' },
-            { alternativeBarcodes: { has: '5901234123457' } },
-          ],
+          OR: [{ barcode: '5901234123457' }, { alternativeBarcodes: { has: '5901234123457' } }],
         },
       });
     });

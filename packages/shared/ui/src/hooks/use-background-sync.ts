@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { SyncQueue } from '../lib/sync';
-import { resolveConflict, createConflictInfo } from '../lib/sync/conflict-resolution';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
-  SyncOperation,
-  SyncQueueConfig,
-  SyncResult,
-  SyncProgress,
-  SyncExecutor,
   ConflictInfo,
   ConflictResolver,
+  SyncExecutor,
+  SyncOperation,
+  SyncProgress,
+  SyncQueueConfig,
+  SyncResult,
 } from '../lib/sync';
+import { SyncQueue } from '../lib/sync';
+import { resolveConflict } from '../lib/sync/conflict-resolution';
 
 export interface UseBackgroundSyncOptions extends SyncQueueConfig {
   /** Function to execute sync operations */
@@ -105,9 +105,7 @@ const DEFAULT_SYNC_INTERVAL = 30000; // 30 seconds
  * }
  * ```
  */
-export function useBackgroundSync(
-  options: UseBackgroundSyncOptions
-): UseBackgroundSyncReturn {
+export function useBackgroundSync(options: UseBackgroundSyncOptions): UseBackgroundSyncReturn {
   const {
     executor,
     conflictResolver,
@@ -195,85 +193,79 @@ export function useBackgroundSync(
   }, []);
 
   // Sync single operation
-  const syncOperation = useCallback(
-    async (operation: SyncOperation): Promise<SyncResult> => {
-      if (!queueRef.current) {
-        return {
-          success: false,
-          operation,
-          error: new Error('Queue not initialized'),
-        };
-      }
+  const syncOperation = useCallback(async (operation: SyncOperation): Promise<SyncResult> => {
+    if (!queueRef.current) {
+      return {
+        success: false,
+        operation,
+        error: new Error('Queue not initialized'),
+      };
+    }
 
-      // Mark as syncing
-      await queueRef.current.updateStatus(operation.id, 'syncing');
+    // Mark as syncing
+    await queueRef.current.updateStatus(operation.id, 'syncing');
 
-      try {
-        const result = await executorRef.current(operation);
+    try {
+      const result = await executorRef.current(operation);
 
-        if (result.success) {
-          await queueRef.current.updateStatus(operation.id, 'completed');
-          onSyncCompleteRef.current?.(result);
-        } else if (result.conflict) {
-          // Handle conflict
-          await queueRef.current.setConflict(operation.id, result.conflict.serverData);
-          onConflictRef.current?.(result.conflict);
+      if (result.success) {
+        await queueRef.current.updateStatus(operation.id, 'completed');
+        onSyncCompleteRef.current?.(result);
+      } else if (result.conflict) {
+        // Handle conflict
+        await queueRef.current.setConflict(operation.id, result.conflict.serverData);
+        onConflictRef.current?.(result.conflict);
 
-          // Auto-resolve using Last-Write-Wins
-          const resolution = await resolveConflict(
-            result.conflict,
-            conflictResolverRef.current
-          );
+        // Auto-resolve using Last-Write-Wins
+        const resolution = await resolveConflict(result.conflict, conflictResolverRef.current);
 
-          if (resolution.shouldSync && resolution.data !== undefined) {
-            // Retry with resolved data
-            const retryOp = {
-              ...operation,
-              payload: resolution.data,
-              status: 'pending' as const,
-            };
-            return syncOperation(retryOp);
-          }
-
-          return result;
-        } else {
-          // Check if can retry
-          const canRetry = await queueRef.current.canRetry(operation.id);
-          if (canRetry) {
-            await queueRef.current.incrementRetry(operation.id);
-            await queueRef.current.updateStatus(operation.id, 'pending');
-          } else {
-            await queueRef.current.setFailed(
-              operation.id,
-              result.error?.message ?? 'Max retries exceeded'
-            );
-            onSyncErrorRef.current?.(operation, result.error ?? new Error('Sync failed'));
-          }
+        if (resolution.shouldSync && resolution.data !== undefined) {
+          // Retry with resolved data
+          const retryOp = {
+            ...operation,
+            payload: resolution.data,
+            status: 'pending' as const,
+          };
+          return syncOperation(retryOp);
         }
 
         return result;
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error('Unknown error');
-
+      } else {
         // Check if can retry
         const canRetry = await queueRef.current.canRetry(operation.id);
         if (canRetry) {
           await queueRef.current.incrementRetry(operation.id);
           await queueRef.current.updateStatus(operation.id, 'pending');
         } else {
-          await queueRef.current.setFailed(operation.id, error.message);
-          onSyncErrorRef.current?.(operation, error);
+          await queueRef.current.setFailed(
+            operation.id,
+            result.error?.message ?? 'Max retries exceeded'
+          );
+          onSyncErrorRef.current?.(operation, result.error ?? new Error('Sync failed'));
         }
-
-        return {
-          success: false,
-          operation,
-          error,
-        };
       }
-    },
-    []
-  );
+
+      return result;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error');
+
+      // Check if can retry
+      const canRetry = await queueRef.current.canRetry(operation.id);
+      if (canRetry) {
+        await queueRef.current.incrementRetry(operation.id);
+        await queueRef.current.updateStatus(operation.id, 'pending');
+      } else {
+        await queueRef.current.setFailed(operation.id, error.message);
+        onSyncErrorRef.current?.(operation, error);
+      }
+
+      return {
+        success: false,
+        operation,
+        error,
+      };
+    }
+  }, []);
 
   // Sync all pending
   const syncNow = useCallback(async (): Promise<void> => {
@@ -327,7 +319,7 @@ export function useBackgroundSync(
       // Remove completed operations
       await queueRef.current.removeCompleted();
 
-      setProgress((prev) => ({ ...prev, isSyncing: false }));
+      setProgress(prev => ({ ...prev, isSyncing: false }));
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Sync failed'));
     } finally {

@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { DataDeletionService, DELETION_REQUEST_REPOSITORY } from './data-deletion.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  IDeletionRequestRepository,
-  DeletionRequest,
   CreateDeletionRequestInput,
+  DeletionRequest,
   EntityDeletionConfig,
+  IDeletionRequestRepository,
 } from '../interfaces/data-deletion.interface';
 import { AuditService } from './audit.service';
+import { DataDeletionService } from './data-deletion.service';
 
 describe('DataDeletionService', () => {
   let deletionService: DataDeletionService;
@@ -43,10 +43,7 @@ describe('DataDeletionService', () => {
       log: vi.fn(),
     };
 
-    deletionService = new DataDeletionService(
-      mockRepository,
-      mockAuditService as AuditService
-    );
+    deletionService = new DataDeletionService(mockRepository, mockAuditService as AuditService);
   });
 
   describe('registerEntity()', () => {
@@ -273,12 +270,8 @@ describe('DataDeletionService', () => {
 
       // Returns the configured dependent entity types
       expect(result).toHaveLength(2);
-      expect(result).toContainEqual(
-        expect.objectContaining({ entityType: 'RENTAL' })
-      );
-      expect(result).toContainEqual(
-        expect.objectContaining({ entityType: 'INVOICE' })
-      );
+      expect(result).toContainEqual(expect.objectContaining({ entityType: 'RENTAL' }));
+      expect(result).toContainEqual(expect.objectContaining({ entityType: 'INVOICE' }));
     });
 
     it('should return empty array for entity without dependencies', async () => {
@@ -318,18 +311,18 @@ describe('DataDeletionService', () => {
     it('should throw error when request not found', async () => {
       vi.mocked(mockRepository.findById).mockResolvedValue(null);
 
-      await expect(
-        deletionService.processRequest('non-existent', mockTenantId)
-      ).rejects.toThrow('Deletion request not found');
+      await expect(deletionService.processRequest('non-existent', mockTenantId)).rejects.toThrow(
+        'Deletion request not found'
+      );
     });
 
     it('should throw error for already processed request', async () => {
       const request = createMockRequest({ status: 'COMPLETED' });
       vi.mocked(mockRepository.findById).mockResolvedValue(request);
 
-      await expect(
-        deletionService.processRequest('deletion-001', mockTenantId)
-      ).rejects.toThrow('Request already processed');
+      await expect(deletionService.processRequest('deletion-001', mockTenantId)).rejects.toThrow(
+        'Request already processed'
+      );
     });
   });
 
@@ -341,11 +334,7 @@ describe('DataDeletionService', () => {
         anonymizeFields: ['email', 'phone', 'address'],
       });
 
-      const result = await deletionService.anonymizeEntity(
-        'PARTNER',
-        'partner-001',
-        mockTenantId
-      );
+      const result = await deletionService.anonymizeEntity('PARTNER', 'partner-001', mockTenantId);
 
       expect(result.action).toBe('ANONYMIZED');
       expect(result.entityType).toBe('PARTNER');

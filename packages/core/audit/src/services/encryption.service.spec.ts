@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { EncryptionService } from './encryption.service';
-import { EncryptedValue } from '../interfaces/encryption.interface';
 
 describe('EncryptionService', () => {
   let encryptionService: EncryptionService;
@@ -9,7 +8,6 @@ describe('EncryptionService', () => {
   // Using pseudo-random hex to pass entropy validation
   const testEncryptionKey = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
   const testHmacKey = 'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210';
-  const testPreviousKey = 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789';
 
   beforeEach(() => {
     encryptionService = new EncryptionService({
@@ -231,9 +229,7 @@ describe('EncryptionService', () => {
         associatedData: 'correct',
       });
 
-      expect(() =>
-        encryptionService.decrypt(encrypted, { associatedData: 'wrong' })
-      ).toThrow();
+      expect(() => encryptionService.decrypt(encrypted, { associatedData: 'wrong' })).toThrow();
     });
   });
 
@@ -272,9 +268,7 @@ describe('EncryptionService', () => {
     });
 
     it('should reject weak key during rotation', () => {
-      expect(() => encryptionService.rotateKey('b'.repeat(64))).toThrow(
-        'insufficient entropy'
-      );
+      expect(() => encryptionService.rotateKey('b'.repeat(64))).toThrow('insufficient entropy');
     });
   });
 });

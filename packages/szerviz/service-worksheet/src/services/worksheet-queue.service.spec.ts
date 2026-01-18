@@ -5,9 +5,13 @@
  * TDD approach - RED PHASE: Tests first
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { WorksheetQueueService, IQueuedWorksheet } from './worksheet-queue.service';
-import { WorksheetStatus, WorksheetType, WorksheetPriority } from '../interfaces/worksheet.interface';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  WorksheetPriority,
+  WorksheetStatus,
+  WorksheetType,
+} from '../interfaces/worksheet.interface';
+import { WorksheetQueueService } from './worksheet-queue.service';
 
 // Mocks
 const mockWorksheetRepository = {
@@ -34,7 +38,9 @@ describe('WorksheetQueueService', () => {
   const createMockWorksheet = (overrides = {}) => ({
     id: `ws-${Math.random().toString(36).slice(2)}`,
     tenantId: mockTenantId,
-    worksheetNumber: `ML-2026-${Math.floor(Math.random() * 9999).toString().padStart(4, '0')}`,
+    worksheetNumber: `ML-2026-${Math.floor(Math.random() * 9999)
+      .toString()
+      .padStart(4, '0')}`,
     type: WorksheetType.FIZETOS,
     status: WorksheetStatus.FELVEVE,
     priority: WorksheetPriority.NORMAL,
@@ -50,10 +56,7 @@ describe('WorksheetQueueService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new WorksheetQueueService(
-      mockWorksheetRepository as any,
-      mockAuditService as any,
-    );
+    service = new WorksheetQueueService(mockWorksheetRepository as any, mockAuditService as any);
   });
 
   describe('Priority ranking', () => {
@@ -82,9 +85,21 @@ describe('WorksheetQueueService', () => {
     it('should calculate queue position based on priority and time', async () => {
       // Arrange
       const worksheets = [
-        createMockWorksheet({ id: 'ws-1', priority: WorksheetPriority.NORMAL, receivedAt: new Date('2026-01-15') }),
-        createMockWorksheet({ id: 'ws-2', priority: WorksheetPriority.SURGOS, receivedAt: new Date('2026-01-16') }),
-        createMockWorksheet({ id: 'ws-3', priority: WorksheetPriority.NORMAL, receivedAt: new Date('2026-01-14') }),
+        createMockWorksheet({
+          id: 'ws-1',
+          priority: WorksheetPriority.NORMAL,
+          receivedAt: new Date('2026-01-15'),
+        }),
+        createMockWorksheet({
+          id: 'ws-2',
+          priority: WorksheetPriority.SURGOS,
+          receivedAt: new Date('2026-01-16'),
+        }),
+        createMockWorksheet({
+          id: 'ws-3',
+          priority: WorksheetPriority.NORMAL,
+          receivedAt: new Date('2026-01-14'),
+        }),
       ];
       mockWorksheetRepository.findByStatus.mockResolvedValue(worksheets);
       mockWorksheetRepository.findById.mockResolvedValue(worksheets[0]);
@@ -99,8 +114,16 @@ describe('WorksheetQueueService', () => {
     it('should return 1 for highest priority earliest worksheet', async () => {
       // Arrange
       const worksheets = [
-        createMockWorksheet({ id: 'ws-1', priority: WorksheetPriority.SURGOS, receivedAt: new Date('2026-01-14') }),
-        createMockWorksheet({ id: 'ws-2', priority: WorksheetPriority.NORMAL, receivedAt: new Date('2026-01-15') }),
+        createMockWorksheet({
+          id: 'ws-1',
+          priority: WorksheetPriority.SURGOS,
+          receivedAt: new Date('2026-01-14'),
+        }),
+        createMockWorksheet({
+          id: 'ws-2',
+          priority: WorksheetPriority.NORMAL,
+          receivedAt: new Date('2026-01-15'),
+        }),
       ];
       mockWorksheetRepository.findByStatus.mockResolvedValue(worksheets);
       mockWorksheetRepository.findById.mockResolvedValue(worksheets[0]);
@@ -117,9 +140,9 @@ describe('WorksheetQueueService', () => {
       mockWorksheetRepository.findById.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.getQueuePosition('non-existent', mockTenantId),
-      ).rejects.toThrow('Munkalap nem talalhato');
+      await expect(service.getQueuePosition('non-existent', mockTenantId)).rejects.toThrow(
+        'Munkalap nem talalhato'
+      );
     });
   });
 
@@ -127,10 +150,26 @@ describe('WorksheetQueueService', () => {
     it('should return worksheets sorted by priority then receivedAt', async () => {
       // Arrange
       const worksheets = [
-        createMockWorksheet({ id: 'ws-1', priority: WorksheetPriority.NORMAL, receivedAt: new Date('2026-01-15') }),
-        createMockWorksheet({ id: 'ws-2', priority: WorksheetPriority.SURGOS, receivedAt: new Date('2026-01-16') }),
-        createMockWorksheet({ id: 'ws-3', priority: WorksheetPriority.NORMAL, receivedAt: new Date('2026-01-14') }),
-        createMockWorksheet({ id: 'ws-4', priority: WorksheetPriority.FRANCHISE, receivedAt: new Date('2026-01-13') }),
+        createMockWorksheet({
+          id: 'ws-1',
+          priority: WorksheetPriority.NORMAL,
+          receivedAt: new Date('2026-01-15'),
+        }),
+        createMockWorksheet({
+          id: 'ws-2',
+          priority: WorksheetPriority.SURGOS,
+          receivedAt: new Date('2026-01-16'),
+        }),
+        createMockWorksheet({
+          id: 'ws-3',
+          priority: WorksheetPriority.NORMAL,
+          receivedAt: new Date('2026-01-14'),
+        }),
+        createMockWorksheet({
+          id: 'ws-4',
+          priority: WorksheetPriority.FRANCHISE,
+          receivedAt: new Date('2026-01-13'),
+        }),
       ];
       mockWorksheetRepository.findByStatus.mockResolvedValue(worksheets);
 
@@ -171,7 +210,7 @@ describe('WorksheetQueueService', () => {
       // Assert
       expect(mockWorksheetRepository.findByStatus).toHaveBeenCalledWith(
         [WorksheetStatus.FELVEVE, WorksheetStatus.VARHATO],
-        mockTenantId,
+        mockTenantId
       );
     });
 
@@ -185,7 +224,7 @@ describe('WorksheetQueueService', () => {
       // Assert
       expect(mockWorksheetRepository.findByStatus).toHaveBeenCalledWith(
         [WorksheetStatus.FOLYAMATBAN],
-        mockTenantId,
+        mockTenantId
       );
     });
   });
@@ -221,9 +260,21 @@ describe('WorksheetQueueService', () => {
       // Arrange
       const assigneeId = 'mechanic-1';
       const worksheets = [
-        createMockWorksheet({ id: 'ws-1', priority: WorksheetPriority.SURGOS, assignedToId: assigneeId }),
-        createMockWorksheet({ id: 'ws-2', priority: WorksheetPriority.SURGOS, assignedToId: 'other' }),
-        createMockWorksheet({ id: 'ws-3', priority: WorksheetPriority.NORMAL, assignedToId: assigneeId }),
+        createMockWorksheet({
+          id: 'ws-1',
+          priority: WorksheetPriority.SURGOS,
+          assignedToId: assigneeId,
+        }),
+        createMockWorksheet({
+          id: 'ws-2',
+          priority: WorksheetPriority.SURGOS,
+          assignedToId: 'other',
+        }),
+        createMockWorksheet({
+          id: 'ws-3',
+          priority: WorksheetPriority.NORMAL,
+          assignedToId: assigneeId,
+        }),
       ];
       mockWorksheetRepository.findByStatus.mockResolvedValue(worksheets);
 
@@ -238,9 +289,7 @@ describe('WorksheetQueueService', () => {
   describe('getWorksheetsByPriority()', () => {
     it('should return worksheets filtered by priority', async () => {
       // Arrange
-      const worksheets = [
-        createMockWorksheet({ id: 'ws-1', priority: WorksheetPriority.SURGOS }),
-      ];
+      const worksheets = [createMockWorksheet({ id: 'ws-1', priority: WorksheetPriority.SURGOS })];
       mockWorksheetRepository.findByStatus.mockResolvedValue(worksheets);
 
       // Act
@@ -253,9 +302,7 @@ describe('WorksheetQueueService', () => {
 
     it('should return empty array if no worksheets match', async () => {
       // Arrange
-      const worksheets = [
-        createMockWorksheet({ id: 'ws-1', priority: WorksheetPriority.NORMAL }),
-      ];
+      const worksheets = [createMockWorksheet({ id: 'ws-1', priority: WorksheetPriority.NORMAL })];
       mockWorksheetRepository.findByStatus.mockResolvedValue(worksheets);
 
       // Act
@@ -330,8 +377,12 @@ describe('WorksheetQueueService', () => {
     });
 
     it('should throw error for invalid position', () => {
-      expect(() => service.calculateEstimatedWaitTime(0, 60)).toThrow('Pozicio pozitiv kell legyen');
-      expect(() => service.calculateEstimatedWaitTime(-1, 60)).toThrow('Pozicio pozitiv kell legyen');
+      expect(() => service.calculateEstimatedWaitTime(0, 60)).toThrow(
+        'Pozicio pozitiv kell legyen'
+      );
+      expect(() => service.calculateEstimatedWaitTime(-1, 60)).toThrow(
+        'Pozicio pozitiv kell legyen'
+      );
     });
   });
 
@@ -339,13 +390,13 @@ describe('WorksheetQueueService', () => {
     it('should throw error if worksheet belongs to different tenant', async () => {
       // Arrange
       mockWorksheetRepository.findById.mockResolvedValue(
-        createMockWorksheet({ tenantId: 'different-tenant' }),
+        createMockWorksheet({ tenantId: 'different-tenant' })
       );
 
       // Act & Assert
-      await expect(
-        service.getQueuePosition('ws-1', mockTenantId),
-      ).rejects.toThrow('Hozzaferes megtagadva');
+      await expect(service.getQueuePosition('ws-1', mockTenantId)).rejects.toThrow(
+        'Hozzaferes megtagadva'
+      );
     });
   });
 });

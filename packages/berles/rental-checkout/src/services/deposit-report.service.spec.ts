@@ -5,9 +5,9 @@
  * Tradicionális tesztelés (implementáció után)
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DepositPaymentMethod, DepositStatus, IDeposit } from '../interfaces/deposit.interface';
 import { DepositReportService } from './deposit-report.service';
-import { DepositStatus, DepositPaymentMethod, IDeposit } from '../interfaces/deposit.interface';
 
 // Mock repository
 const mockReportRepository = {
@@ -25,7 +25,7 @@ describe('DepositReportService', () => {
   const createMockDeposit = (
     status: DepositStatus,
     amount: number,
-    id: string = crypto.randomUUID(),
+    id: string = crypto.randomUUID()
   ): IDeposit => ({
     id,
     tenantId: mockTenantId,
@@ -169,7 +169,7 @@ describe('DepositReportService', () => {
 
       // Assert
       expect(result).toHaveLength(2);
-      expect(result.map((d) => d.id)).toEqual(['deposit-1', 'deposit-2']);
+      expect(result.map(d => d.id)).toEqual(['deposit-1', 'deposit-2']);
     });
 
     it('should return empty array when no active deposits', async () => {
@@ -218,7 +218,7 @@ describe('DepositReportService', () => {
       mockReportRepository.findByDateRange.mockResolvedValue([]);
 
       // Act
-      const result = await service.exportToJson(mockTenantId, from, to);
+      await service.exportToJson(mockTenantId, from, to);
 
       // Assert
       expect(mockReportRepository.findByTenant).toHaveBeenCalledWith(mockTenantId);

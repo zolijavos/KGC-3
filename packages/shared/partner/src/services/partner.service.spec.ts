@@ -1,14 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PartnerService } from './partner.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  CreatePartnerInput,
   IPartnerRepository,
   Partner,
-  PartnerType,
-  CreatePartnerInput,
-  UpdatePartnerInput,
-  PartnerQueryOptions,
   PartnerQueryResult,
+  UpdatePartnerInput,
 } from '../interfaces/partner.interface';
+import { PartnerService } from './partner.service';
 
 describe('PartnerService', () => {
   let service: PartnerService;

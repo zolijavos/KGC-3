@@ -1,15 +1,15 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { PrismaClient, Prisma } from '@prisma/client';
-import { v4 as uuidv4, validate as isValidUuid } from 'uuid';
-import {
-  Tenant,
-  TenantStatus,
-  TenantListResponse,
-  DEFAULT_TENANT_SETTINGS,
-} from '../interfaces/tenant.interface';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+import { validate as isValidUuid, v4 as uuidv4 } from 'uuid';
 import { CreateTenantDto, validateCreateTenantDto } from '../dto/create-tenant.dto';
-import { UpdateTenantDto, validateUpdateTenantDto } from '../dto/update-tenant.dto';
 import { TenantFilterDto } from '../dto/tenant-filter.dto';
+import { UpdateTenantDto, validateUpdateTenantDto } from '../dto/update-tenant.dto';
+import {
+  DEFAULT_TENANT_SETTINGS,
+  Tenant,
+  TenantListResponse,
+  TenantStatus,
+} from '../interfaces/tenant.interface';
 import { SchemaService } from './schema.service';
 
 /**
@@ -66,7 +66,10 @@ export class TenantService {
       schemaCreated = true;
     } catch (schemaError) {
       // Schema creation failed - no cleanup needed
-      throw new BadRequestException('Séma létrehozás sikertelen: ' + (schemaError instanceof Error ? schemaError.message : 'Ismeretlen hiba'));
+      throw new BadRequestException(
+        'Séma létrehozás sikertelen: ' +
+          (schemaError instanceof Error ? schemaError.message : 'Ismeretlen hiba')
+      );
     }
 
     // Step 2: Create tenant record in transaction
@@ -90,7 +93,10 @@ export class TenantService {
           await this.schemaService.dropTenantSchema(tenantId, schemaName);
         } catch (rollbackError) {
           // Log rollback failure - orphaned schema requires manual cleanup
-          console.error(`CRITICAL: Failed to rollback schema ${schemaName} after tenant creation failure:`, rollbackError);
+          console.error(
+            `CRITICAL: Failed to rollback schema ${schemaName} after tenant creation failure:`,
+            rollbackError
+          );
         }
       }
       throw tenantError;
@@ -180,9 +186,10 @@ export class TenantService {
     });
 
     // Audit log - különösen státusz változásnál (non-blocking)
-    const action = validatedDto.status && validatedDto.status !== existingTenant.status
-      ? 'STATUS_CHANGE'
-      : 'UPDATE';
+    const action =
+      validatedDto.status && validatedDto.status !== existingTenant.status
+        ? 'STATUS_CHANGE'
+        : 'UPDATE';
 
     try {
       await this.createAuditLog(id, action, {

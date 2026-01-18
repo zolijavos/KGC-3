@@ -157,7 +157,8 @@ export const BARCODE_PREFIX_ROUTING: Record<string, string> = {
  */
 export const BARCODE_PATTERNS = {
   EAN13: /^\d{13}$/,
-  CODE128: /^[\x00-\x7F]{1,128}$/, // ASCII printable characters
+  // eslint-disable-next-line no-control-regex
+  CODE128: /^[\x00-\x7F]{1,128}$/, // ASCII characters (0-127)
   KPD_LOCATION: /^K\d+-P\d+-D\d+$/i, // K2-P5-D3 format
   ITEM_CODE: /^(PRD|PRT|SVC)-\d{8}-\d{4}$/, // PRD-20260116-0001 format
 };

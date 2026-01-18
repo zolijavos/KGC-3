@@ -14,7 +14,7 @@
  * Minimum 15 tests required per story.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock @kgc/auth before importing service
 vi.mock('@kgc/auth', () => ({
@@ -26,7 +26,7 @@ vi.mock('@kgc/auth', () => ({
 // Mock bcrypt for PIN tests - Story 2.6
 const mockBcryptCompare = vi.fn();
 const mockBcryptHash = vi.fn();
-vi.mock('bcrypt', async (importOriginal) => {
+vi.mock('bcrypt', async importOriginal => {
   const actual = await importOriginal<typeof import('bcrypt')>();
   return {
     ...actual,
@@ -35,14 +35,14 @@ vi.mock('bcrypt', async (importOriginal) => {
   };
 });
 
-import { UsersService } from './users.service';
-import { RoleService } from './services/role.service';
-import { PermissionService } from './services/permission.service';
-import { Role, UserStatus } from './interfaces/user.interface';
-import { Permission } from './interfaces/permission.interface';
 import type { CreateUserDto } from './dto/create-user.dto';
 import type { UpdateUserDto } from './dto/update-user.dto';
 import type { UserQueryDto } from './dto/user-query.dto';
+import { Permission } from './interfaces/permission.interface';
+import { Role, UserStatus } from './interfaces/user.interface';
+import { PermissionService } from './services/permission.service';
+import { RoleService } from './services/role.service';
+import { UsersService } from './users.service';
 
 // Mock PrismaClient
 const createMockPrisma = () => {
@@ -76,7 +76,7 @@ const createMockAuditService = () => ({
 });
 
 // Mock PermissionService - C1 FIX: Now injected via DI
-const createMockPermissionService = () => ({
+const _createMockPermissionService = () => ({
   getAllPermissions: vi.fn().mockReturnValue([Permission.USER_VIEW, Permission.USER_CREATE]),
   getDirectPermissions: vi.fn().mockReturnValue([Permission.USER_VIEW]),
   hasPermission: vi.fn().mockReturnValue(true),
@@ -149,7 +149,11 @@ describe('UsersService', () => {
       mockPrisma.user.findFirst.mockResolvedValue(null); // Email not exists
       mockPrisma.user.create.mockResolvedValue(createdUser);
 
-      const result = await usersService.createUser(validCreateDto, testCreatorId, Role.PARTNER_OWNER);
+      const result = await usersService.createUser(
+        validCreateDto,
+        testCreatorId,
+        Role.PARTNER_OWNER
+      );
 
       expect(result).toBeDefined();
       expect(result.email).toBe(validCreateDto.email);
@@ -187,7 +191,11 @@ describe('UsersService', () => {
         updatedAt: new Date(),
       });
 
-      const result = await usersService.createUser(validCreateDto, testCreatorId, Role.PARTNER_OWNER);
+      const result = await usersService.createUser(
+        validCreateDto,
+        testCreatorId,
+        Role.PARTNER_OWNER
+      );
 
       expect(result).toBeDefined();
       // Check that password was hashed (bcrypt creates 60-char hash)
@@ -231,8 +239,26 @@ describe('UsersService', () => {
 
     it('should return paginated user list', async () => {
       const users = [
-        { id: '1', email: 'a@test.com', name: 'User A', role: Role.OPERATOR, tenantId: testTenantId, status: UserStatus.ACTIVE, createdAt: new Date(), updatedAt: new Date() },
-        { id: '2', email: 'b@test.com', name: 'User B', role: Role.TECHNIKUS, tenantId: testTenantId, status: UserStatus.ACTIVE, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: '1',
+          email: 'a@test.com',
+          name: 'User A',
+          role: Role.OPERATOR,
+          tenantId: testTenantId,
+          status: UserStatus.ACTIVE,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: '2',
+          email: 'b@test.com',
+          name: 'User B',
+          role: Role.TECHNIKUS,
+          tenantId: testTenantId,
+          status: UserStatus.ACTIVE,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ];
       mockPrisma.user.findMany.mockResolvedValue(users);
       mockPrisma.user.count.mockResolvedValue(2);
@@ -382,7 +408,13 @@ describe('UsersService', () => {
       const higherRoleDto: UpdateUserDto = { role: Role.SUPER_ADMIN };
 
       await expect(
-        usersService.updateUser(testUserId, higherRoleDto, testCreatorId, Role.PARTNER_OWNER, testTenantId)
+        usersService.updateUser(
+          testUserId,
+          higherRoleDto,
+          testCreatorId,
+          Role.PARTNER_OWNER,
+          testTenantId
+        )
       ).rejects.toThrow('Csak egyenlő vagy alacsonyabb szintű szerepkört rendelhet hozzá');
     });
 
@@ -417,7 +449,13 @@ describe('UsersService', () => {
       mockPrisma.user.findFirst.mockResolvedValue(null);
 
       await expect(
-        usersService.updateUser(testUserId, updateDto, testCreatorId, Role.PARTNER_OWNER, testTenantId)
+        usersService.updateUser(
+          testUserId,
+          updateDto,
+          testCreatorId,
+          Role.PARTNER_OWNER,
+          testTenantId
+        )
       ).rejects.toThrow('Felhasználó nem található');
     });
   });
@@ -845,9 +883,9 @@ describe('UsersService', () => {
     it('should throw error for non-existent user', async () => {
       mockPrisma.user.findFirst.mockResolvedValue(null);
 
-      await expect(
-        usersService.getUserPermissions(targetUserId, testTenantId)
-      ).rejects.toThrow('Felhasználó nem található');
+      await expect(usersService.getUserPermissions(targetUserId, testTenantId)).rejects.toThrow(
+        'Felhasználó nem található'
+      );
     });
 
     it('should respect tenant isolation', async () => {
@@ -980,7 +1018,11 @@ describe('UsersService', () => {
         updatedAt: new Date(),
       });
 
-      const result = await usersServiceWithAudit.updateProfile(testUserId, { name: 'New Name' }, testTenantId);
+      const result = await usersServiceWithAudit.updateProfile(
+        testUserId,
+        { name: 'New Name' },
+        testTenantId
+      );
 
       expect(result.name).toBe('New Name');
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
@@ -997,7 +1039,11 @@ describe('UsersService', () => {
         updatedAt: new Date(),
       });
 
-      const result = await usersServiceWithAudit.updateProfile(testUserId, { phone: '+36 30 987 6543' }, testTenantId);
+      const result = await usersServiceWithAudit.updateProfile(
+        testUserId,
+        { phone: '+36 30 987 6543' },
+        testTenantId
+      );
 
       expect(result.phone).toBe('+36 30 987 6543');
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
@@ -1014,9 +1060,13 @@ describe('UsersService', () => {
         updatedAt: new Date(),
       });
 
-      const result = await usersServiceWithAudit.updateProfile(testUserId, {
-        avatarUrl: 'https://cdn.example.com/new-avatar.jpg',
-      }, testTenantId);
+      const result = await usersServiceWithAudit.updateProfile(
+        testUserId,
+        {
+          avatarUrl: 'https://cdn.example.com/new-avatar.jpg',
+        },
+        testTenantId
+      );
 
       expect(result.avatarUrl).toBe('https://cdn.example.com/new-avatar.jpg');
     });
@@ -1031,11 +1081,15 @@ describe('UsersService', () => {
         updatedAt: new Date(),
       });
 
-      const result = await usersServiceWithAudit.updateProfile(testUserId, {
-        name: 'Updated Name',
-        phone: '+36 70 111 2222',
-        avatarUrl: 'https://example.com/avatar2.png',
-      }, testTenantId);
+      const result = await usersServiceWithAudit.updateProfile(
+        testUserId,
+        {
+          name: 'Updated Name',
+          phone: '+36 70 111 2222',
+          avatarUrl: 'https://example.com/avatar2.png',
+        },
+        testTenantId
+      );
 
       expect(result.name).toBe('Updated Name');
       expect(result.phone).toBe('+36 70 111 2222');
@@ -1126,7 +1180,12 @@ describe('UsersService', () => {
       mockPrisma.user.update.mockResolvedValue({ ...mockUserWithPin });
       mockBcryptCompare.mockResolvedValue(true);
 
-      const result = await usersServiceWithAudit.updatePin(testUserId, '1234', '5678', testTenantId);
+      const result = await usersServiceWithAudit.updatePin(
+        testUserId,
+        '1234',
+        '5678',
+        testTenantId
+      );
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('PIN sikeresen módosítva');
@@ -1201,9 +1260,9 @@ describe('UsersService', () => {
       mockPrisma.user.findFirst.mockResolvedValue(userWithoutPin);
 
       // Without password - should fail
-      await expect(
-        usersService.updatePin(testUserId, '', '1234', testTenantId)
-      ).rejects.toThrow('A jelszó megadása kötelező az első PIN beállításához');
+      await expect(usersService.updatePin(testUserId, '', '1234', testTenantId)).rejects.toThrow(
+        'A jelszó megadása kötelező az első PIN beállításához'
+      );
     });
 
     it('should allow first PIN setup with valid password', async () => {
@@ -1217,7 +1276,13 @@ describe('UsersService', () => {
       mockPrisma.user.update.mockResolvedValue({ ...userWithoutPin, pinHash: 'newhash' });
       mockBcryptCompare.mockResolvedValue(true); // Password verification
 
-      const result = await usersService.updatePin(testUserId, '', '1234', testTenantId, 'validpassword');
+      const result = await usersService.updatePin(
+        testUserId,
+        '',
+        '1234',
+        testTenantId,
+        'validpassword'
+      );
 
       expect(result.success).toBe(true);
       expect(mockPrisma.user.update).toHaveBeenCalled();
@@ -1275,7 +1340,9 @@ describe('UsersService', () => {
   describe('generateTemporaryPassword()', () => {
     // L2 FIX: Access private method via type assertion for testing
     const callGeneratePassword = () =>
-      (usersService as unknown as { generateTemporaryPassword: () => string }).generateTemporaryPassword();
+      (
+        usersService as unknown as { generateTemporaryPassword: () => string }
+      ).generateTemporaryPassword();
 
     it('should generate password of correct length (H4 FIX: 32 hex chars = 128 bits entropy)', () => {
       const password = callGeneratePassword();
@@ -1300,7 +1367,7 @@ describe('UsersService', () => {
       // 16 bytes = 32 hex chars = 128 bits of entropy
       const passwords = Array.from({ length: 10 }, () => callGeneratePassword());
       // All passwords should be valid hex and 32 chars
-      expect(passwords.every((p) => p.length === 32 && /^[0-9a-f]+$/.test(p))).toBe(true);
+      expect(passwords.every(p => p.length === 32 && /^[0-9a-f]+$/.test(p))).toBe(true);
     });
   });
 });

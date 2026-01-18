@@ -7,15 +7,15 @@
  * @kgc/cikk
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PriceRuleService } from './price-rule.service';
+import { Decimal } from '@prisma/client/runtime/library';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  PriceRuleType,
+  DEFAULT_PRIORITY,
   PriceCalculationType,
   PriceRuleStatus,
-  DEFAULT_PRIORITY,
+  PriceRuleType,
 } from '../interfaces/price-rule.interface';
-import { Decimal } from '@prisma/client/runtime/library';
+import { PriceRuleService } from './price-rule.service';
 
 // Mock Prisma client
 const mockPrismaPriceRule = {
@@ -462,7 +462,7 @@ describe('PriceRuleService', () => {
         value: new Decimal(25),
       });
 
-      const result = await service.updatePriceRule('rule-123', tenantId, { value: 25 }, userId);
+      await service.updatePriceRule('rule-123', tenantId, { value: 25 }, userId);
 
       expect(mockPrismaPriceRule.update).toHaveBeenCalled();
     });

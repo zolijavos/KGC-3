@@ -3,17 +3,17 @@
  */
 
 import { Inject } from '@nestjs/common';
+import { GenerateMarginReportSchema } from '../dto/margin.dto';
 import type {
-  IMarginService,
-  IMarginCalculation,
-  IProductMarginSummary,
   ICategoryMarginSummary,
+  IMarginCalculation,
   IMarginReport,
   IMarginReportInput,
+  IMarginService,
   IMarginTrendPoint,
+  IProductMarginSummary,
 } from '../interfaces/margin.interface';
 import type { IProductPurchasePrice } from '../interfaces/purchase-price.interface';
-import { GenerateMarginReportSchema } from '../dto/margin.dto';
 
 /**
  * Product Repository interfész
@@ -80,7 +80,12 @@ export interface IMarginReportRepository {
  * Audit szolgáltatás interfész
  */
 export interface IAuditService {
-  log(event: string, entityType: string, entityId: string, data: Record<string, unknown>): Promise<void>;
+  log(
+    event: string,
+    entityType: string,
+    entityId: string,
+    data: Record<string, unknown>
+  ): Promise<void>;
 }
 
 /**
@@ -115,12 +120,8 @@ export class MarginService implements IMarginService {
     const avgPurchasePrice = purchasePrice?.weightedAveragePrice ?? 0;
 
     const marginAmount = product.sellingPrice - avgPurchasePrice;
-    const marginPercent = avgPurchasePrice > 0
-      ? (marginAmount / product.sellingPrice) * 100
-      : 100;
-    const markupPercent = avgPurchasePrice > 0
-      ? (marginAmount / avgPurchasePrice) * 100
-      : 0;
+    const marginPercent = avgPurchasePrice > 0 ? (marginAmount / product.sellingPrice) * 100 : 100;
+    const markupPercent = avgPurchasePrice > 0 ? (marginAmount / avgPurchasePrice) * 100 : 0;
 
     return {
       productId,
@@ -152,12 +153,9 @@ export class MarginService implements IMarginService {
       const avgPurchasePrice = purchasePrice?.weightedAveragePrice ?? 0;
 
       const marginAmount = product.sellingPrice - avgPurchasePrice;
-      const marginPercent = avgPurchasePrice > 0
-        ? (marginAmount / product.sellingPrice) * 100
-        : 100;
-      const markupPercent = avgPurchasePrice > 0
-        ? (marginAmount / avgPurchasePrice) * 100
-        : 0;
+      const marginPercent =
+        avgPurchasePrice > 0 ? (marginAmount / product.sellingPrice) * 100 : 100;
+      const markupPercent = avgPurchasePrice > 0 ? (marginAmount / avgPurchasePrice) * 100 : 0;
 
       result.set(product.id, {
         productId: product.id,
@@ -192,9 +190,7 @@ export class MarginService implements IMarginService {
     const sales = await this.salesRepository.getSalesByProduct(productId, periodStart, periodEnd);
 
     const marginAmount = product.sellingPrice - avgPurchasePrice;
-    const marginPercent = avgPurchasePrice > 0
-      ? (marginAmount / product.sellingPrice) * 100
-      : 100;
+    const marginPercent = avgPurchasePrice > 0 ? (marginAmount / product.sellingPrice) * 100 : 100;
 
     const totalMargin = marginAmount * sales.quantitySold;
 
@@ -226,7 +222,7 @@ export class MarginService implements IMarginService {
     }
 
     const products = await this.productRepository.findByCategoryId(categoryId);
-    const productIds = products.map((p) => p.id);
+    const productIds = products.map(p => p.id);
 
     const purchasePrices = await this.purchasePriceRepository.findByProductIds(productIds);
     const purchasePriceMap = new Map<string, IProductPurchasePrice>();
@@ -245,7 +241,7 @@ export class MarginService implements IMarginService {
     let totalCost = 0;
 
     for (const sale of categorySales) {
-      const product = products.find((p) => p.id === sale.productId);
+      const product = products.find(p => p.id === sale.productId);
       const purchasePrice = purchasePriceMap.get(sale.productId);
 
       if (product && purchasePrice) {
@@ -258,9 +254,7 @@ export class MarginService implements IMarginService {
       }
     }
 
-    const averageMarginPercent = totalRevenue > 0
-      ? (totalMargin / totalRevenue) * 100
-      : 0;
+    const averageMarginPercent = totalRevenue > 0 ? (totalMargin / totalRevenue) * 100 : 0;
 
     return {
       categoryId,
@@ -295,9 +289,7 @@ export class MarginService implements IMarginService {
       totalCost += summary.averagePurchasePrice * summary.quantitySold;
     }
 
-    const averageMarginPercent = totalRevenue > 0
-      ? (totalMargin / totalRevenue) * 100
-      : 0;
+    const averageMarginPercent = totalRevenue > 0 ? (totalMargin / totalRevenue) * 100 : 0;
 
     const report: IMarginReport = {
       id: crypto.randomUUID(),
@@ -315,12 +307,10 @@ export class MarginService implements IMarginService {
 
     const created = await this.reportRepository.create(report);
 
-    await this.auditService.log(
-      'MARGIN_REPORT_GENERATED',
-      'MarginReport',
-      created.id,
-      { periodStart: validated.periodStart, periodEnd: validated.periodEnd }
-    );
+    await this.auditService.log('MARGIN_REPORT_GENERATED', 'MarginReport', created.id, {
+      periodStart: validated.periodStart,
+      periodEnd: validated.periodEnd,
+    });
 
     return created;
   }
@@ -328,10 +318,7 @@ export class MarginService implements IMarginService {
   /**
    * Árrés riport exportálása
    */
-  async exportMarginReport(
-    reportId: string,
-    format: 'CSV' | 'XLSX' | 'PDF'
-  ): Promise<Buffer> {
+  async exportMarginReport(reportId: string, format: 'CSV' | 'XLSX' | 'PDF'): Promise<Buffer> {
     const report = await this.reportRepository.findById(reportId);
     if (!report) {
       throw new Error('Riport nem található');
@@ -360,9 +347,9 @@ export class MarginService implements IMarginService {
    * Top N legjövedelmezőbb cikk
    */
   async getTopProfitableProducts(
-    limit: number,
-    periodStart: Date,
-    periodEnd: Date
+    _limit: number,
+    _periodStart: Date,
+    _periodEnd: Date
   ): Promise<IProductMarginSummary[]> {
     // TODO: Implement with proper database query
     // For now, return empty array
@@ -373,9 +360,9 @@ export class MarginService implements IMarginService {
    * Legalacsonyabb árrésű cikkek
    */
   async getLowMarginProducts(
-    thresholdPercent: number,
-    periodStart: Date,
-    periodEnd: Date
+    _thresholdPercent: number,
+    _periodStart: Date,
+    _periodEnd: Date
   ): Promise<IProductMarginSummary[]> {
     // TODO: Implement with proper database query
     // For now, return empty array
@@ -406,12 +393,10 @@ export class MarginService implements IMarginService {
       granularity
     );
 
-    return salesTrend.map((point) => {
+    return salesTrend.map(point => {
       const cost = avgPurchasePrice * point.quantitySold;
       const marginAmount = point.revenue - cost;
-      const marginPercent = point.revenue > 0
-        ? (marginAmount / point.revenue) * 100
-        : 0;
+      const marginPercent = point.revenue > 0 ? (marginAmount / point.revenue) * 100 : 0;
 
       return {
         date: point.date,

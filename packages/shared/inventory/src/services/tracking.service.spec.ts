@@ -3,16 +3,10 @@
  * Story 9-5: Serial number és batch tracking
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CreateBatchInput, CreateSerialNumberInput } from '../dto/tracking.dto';
+import { Batch, ITrackingRepository, SerialNumber } from '../interfaces/tracking.interface';
 import { TrackingService } from './tracking.service';
-import {
-  SerialNumber,
-  Batch,
-  ITrackingRepository,
-  SerialNumberStatus,
-  BatchStatus,
-} from '../interfaces/tracking.interface';
-import { CreateSerialNumberInput, CreateBatchInput } from '../dto/tracking.dto';
 
 // ============================================
 // TEST DATA - Valid UUIDs
@@ -60,9 +54,7 @@ const createMockRepository = (): ITrackingRepository => ({
 // TEST DATA FACTORIES
 // ============================================
 
-const createTestSerialNumber = (
-  overrides: Partial<SerialNumber> = {},
-): SerialNumber => ({
+const createTestSerialNumber = (overrides: Partial<SerialNumber> = {}): SerialNumber => ({
   id: TEST_IDS.SERIAL_1,
   tenantId: TEST_IDS.TENANT,
   serialNumber: 'SN-2026-001',
@@ -142,16 +134,16 @@ describe('TrackingService', () => {
             serialNumber: 'SN-2026-001',
             productId: TEST_IDS.PRODUCT,
             status: 'AVAILABLE',
-          }),
+          })
         );
       });
 
       it('duplikált serial number esetén hiba', async () => {
         vi.mocked(mockRepository.serialNumberExists).mockResolvedValue(true);
 
-        await expect(
-          service.createSerialNumber(TEST_IDS.TENANT, validInput),
-        ).rejects.toThrow('A serial number már létezik');
+        await expect(service.createSerialNumber(TEST_IDS.TENANT, validInput)).rejects.toThrow(
+          'A serial number már létezik'
+        );
       });
 
       it('érvénytelen serial number formátum', async () => {
@@ -161,7 +153,7 @@ describe('TrackingService', () => {
         };
 
         await expect(
-          service.createSerialNumber(TEST_IDS.TENANT, invalidInput as CreateSerialNumberInput),
+          service.createSerialNumber(TEST_IDS.TENANT, invalidInput as CreateSerialNumberInput)
         ).rejects.toThrow();
       });
 
@@ -172,7 +164,7 @@ describe('TrackingService', () => {
         };
 
         await expect(
-          service.createSerialNumber(TEST_IDS.TENANT, invalidInput as CreateSerialNumberInput),
+          service.createSerialNumber(TEST_IDS.TENANT, invalidInput as CreateSerialNumberInput)
         ).rejects.toThrow('A serial number kötelező');
       });
 
@@ -185,7 +177,7 @@ describe('TrackingService', () => {
         };
         vi.mocked(mockRepository.serialNumberExists).mockResolvedValue(false);
         vi.mocked(mockRepository.createSerialNumber).mockResolvedValue(
-          createTestSerialNumber({ warrantyExpiryDate: new Date('2027-01-01') }),
+          createTestSerialNumber({ warrantyExpiryDate: new Date('2027-01-01') })
         );
 
         const result = await service.createSerialNumber(TEST_IDS.TENANT, inputWithWarranty);
@@ -195,7 +187,7 @@ describe('TrackingService', () => {
           expect.objectContaining({
             warrantyExpiryDate: expect.any(Date),
             purchasePrice: 50000,
-          }),
+          })
         );
       });
     });
@@ -235,11 +227,9 @@ describe('TrackingService', () => {
         vi.mocked(mockRepository.findSerialNumberById).mockResolvedValue(existingSerial);
         vi.mocked(mockRepository.updateSerialNumber).mockResolvedValue(updatedSerial);
 
-        const result = await service.updateSerialNumber(
-          TEST_IDS.SERIAL_1,
-          TEST_IDS.TENANT,
-          { status: 'RENTED' },
-        );
+        const result = await service.updateSerialNumber(TEST_IDS.SERIAL_1, TEST_IDS.TENANT, {
+          status: 'RENTED',
+        });
 
         expect(result.status).toBe('RENTED');
       });
@@ -250,11 +240,9 @@ describe('TrackingService', () => {
         vi.mocked(mockRepository.findSerialNumberById).mockResolvedValue(existingSerial);
         vi.mocked(mockRepository.updateSerialNumber).mockResolvedValue(updatedSerial);
 
-        const result = await service.updateSerialNumber(
-          TEST_IDS.SERIAL_1,
-          TEST_IDS.TENANT,
-          { locationCode: 'B-02-03' },
-        );
+        const result = await service.updateSerialNumber(TEST_IDS.SERIAL_1, TEST_IDS.TENANT, {
+          locationCode: 'B-02-03',
+        });
 
         expect(result.locationCode).toBe('B-02-03');
       });
@@ -263,7 +251,7 @@ describe('TrackingService', () => {
         vi.mocked(mockRepository.findSerialNumberById).mockResolvedValue(null);
 
         await expect(
-          service.updateSerialNumber(TEST_IDS.SERIAL_1, TEST_IDS.TENANT, { status: 'RENTED' }),
+          service.updateSerialNumber(TEST_IDS.SERIAL_1, TEST_IDS.TENANT, { status: 'RENTED' })
         ).rejects.toThrow('Serial number nem található');
       });
     });
@@ -303,7 +291,7 @@ describe('TrackingService', () => {
         });
 
         expect(mockRepository.querySerialNumbers).toHaveBeenCalledWith(
-          expect.objectContaining({ status: 'RENTED' }),
+          expect.objectContaining({ status: 'RENTED' })
         );
       });
     });
@@ -320,10 +308,7 @@ describe('TrackingService', () => {
         ];
         vi.mocked(mockRepository.getExpiringWarranties).mockResolvedValue(expiringItems);
 
-        const result = await service.getExpiringWarranties(
-          TEST_IDS.TENANT,
-          new Date('2026-03-01'),
-        );
+        const result = await service.getExpiringWarranties(TEST_IDS.TENANT, new Date('2026-03-01'));
 
         expect(result).toHaveLength(2);
       });
@@ -386,16 +371,16 @@ describe('TrackingService', () => {
             batchNumber: 'BATCH-2026-001',
             originalQuantity: 100,
             currentQuantity: 100, // Alapértelmezetten = originalQuantity
-          }),
+          })
         );
       });
 
       it('duplikált batch number esetén hiba', async () => {
         vi.mocked(mockRepository.batchExists).mockResolvedValue(true);
 
-        await expect(
-          service.createBatch(TEST_IDS.TENANT, validInput),
-        ).rejects.toThrow('A batch number már létezik');
+        await expect(service.createBatch(TEST_IDS.TENANT, validInput)).rejects.toThrow(
+          'A batch number már létezik'
+        );
       });
 
       it('lejárati dátummal létrehozás', async () => {
@@ -406,7 +391,7 @@ describe('TrackingService', () => {
         };
         vi.mocked(mockRepository.batchExists).mockResolvedValue(false);
         vi.mocked(mockRepository.createBatch).mockResolvedValue(
-          createTestBatch({ expiryDate: new Date('2027-12-01') }),
+          createTestBatch({ expiryDate: new Date('2027-12-01') })
         );
 
         const result = await service.createBatch(TEST_IDS.TENANT, inputWithExpiry);
@@ -421,7 +406,7 @@ describe('TrackingService', () => {
         };
 
         await expect(
-          service.createBatch(TEST_IDS.TENANT, invalidInput as CreateBatchInput),
+          service.createBatch(TEST_IDS.TENANT, invalidInput as CreateBatchInput)
         ).rejects.toThrow();
       });
 
@@ -432,7 +417,7 @@ describe('TrackingService', () => {
         };
 
         await expect(
-          service.createBatch(TEST_IDS.TENANT, invalidInput as CreateBatchInput),
+          service.createBatch(TEST_IDS.TENANT, invalidInput as CreateBatchInput)
         ).rejects.toThrow();
       });
     });
@@ -472,11 +457,7 @@ describe('TrackingService', () => {
         vi.mocked(mockRepository.findBatchById).mockResolvedValue(existingBatch);
         vi.mocked(mockRepository.adjustBatchQuantity).mockResolvedValue(adjustedBatch);
 
-        const result = await service.adjustBatchQuantity(
-          TEST_IDS.BATCH_1,
-          TEST_IDS.TENANT,
-          -10,
-        );
+        const result = await service.adjustBatchQuantity(TEST_IDS.BATCH_1, TEST_IDS.TENANT, -10);
 
         expect(result.currentQuantity).toBe(70);
       });
@@ -487,11 +468,7 @@ describe('TrackingService', () => {
         vi.mocked(mockRepository.findBatchById).mockResolvedValue(existingBatch);
         vi.mocked(mockRepository.adjustBatchQuantity).mockResolvedValue(adjustedBatch);
 
-        const result = await service.adjustBatchQuantity(
-          TEST_IDS.BATCH_1,
-          TEST_IDS.TENANT,
-          20,
-        );
+        const result = await service.adjustBatchQuantity(TEST_IDS.BATCH_1, TEST_IDS.TENANT, 20);
 
         expect(result.currentQuantity).toBe(100);
       });
@@ -501,7 +478,7 @@ describe('TrackingService', () => {
         vi.mocked(mockRepository.findBatchById).mockResolvedValue(existingBatch);
 
         await expect(
-          service.adjustBatchQuantity(TEST_IDS.BATCH_1, TEST_IDS.TENANT, -10),
+          service.adjustBatchQuantity(TEST_IDS.BATCH_1, TEST_IDS.TENANT, -10)
         ).rejects.toThrow('A csökkentés túl nagy');
       });
 
@@ -509,7 +486,7 @@ describe('TrackingService', () => {
         vi.mocked(mockRepository.findBatchById).mockResolvedValue(null);
 
         await expect(
-          service.adjustBatchQuantity(TEST_IDS.BATCH_1, TEST_IDS.TENANT, -10),
+          service.adjustBatchQuantity(TEST_IDS.BATCH_1, TEST_IDS.TENANT, -10)
         ).rejects.toThrow('Batch nem található');
       });
 
@@ -519,11 +496,7 @@ describe('TrackingService', () => {
         vi.mocked(mockRepository.findBatchById).mockResolvedValue(existingBatch);
         vi.mocked(mockRepository.adjustBatchQuantity).mockResolvedValue(depletedBatch);
 
-        const result = await service.adjustBatchQuantity(
-          TEST_IDS.BATCH_1,
-          TEST_IDS.TENANT,
-          -10,
-        );
+        const result = await service.adjustBatchQuantity(TEST_IDS.BATCH_1, TEST_IDS.TENANT, -10);
 
         expect(result.currentQuantity).toBe(0);
         expect(result.status).toBe('DEPLETED');
@@ -566,7 +539,7 @@ describe('TrackingService', () => {
         });
 
         expect(mockRepository.queryBatches).toHaveBeenCalledWith(
-          expect.objectContaining({ expiringBefore: expiringDate }),
+          expect.objectContaining({ expiringBefore: expiringDate })
         );
       });
     });
@@ -583,10 +556,7 @@ describe('TrackingService', () => {
         ];
         vi.mocked(mockRepository.getExpiringBatches).mockResolvedValue(expiringBatches);
 
-        const result = await service.getExpiringBatches(
-          TEST_IDS.TENANT,
-          new Date('2026-03-01'),
-        );
+        const result = await service.getExpiringBatches(TEST_IDS.TENANT, new Date('2026-03-01'));
 
         expect(result).toHaveLength(2);
       });
@@ -610,7 +580,7 @@ describe('TrackingService', () => {
         expect(mockRepository.getLowStockBatches).toHaveBeenCalledWith(
           TEST_IDS.TENANT,
           10,
-          undefined,
+          undefined
         );
       });
     });

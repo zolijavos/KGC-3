@@ -5,15 +5,15 @@
  * TDD RED PHASE - Tesztek implementáció előtt
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { WorksheetService } from './worksheet.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CreateWorksheetDto } from '../dto/worksheet.dto';
 import {
+  IWorksheet,
+  WorksheetPriority,
   WorksheetStatus,
   WorksheetType,
-  WorksheetPriority,
-  IWorksheet,
 } from '../interfaces/worksheet.interface';
-import { CreateWorksheetDto } from '../dto/worksheet.dto';
+import { WorksheetService } from './worksheet.service';
 
 // Mock repository
 const mockWorksheetRepository = {
@@ -74,7 +74,7 @@ describe('WorksheetService', () => {
     service = new WorksheetService(
       mockWorksheetRepository as any,
       mockPartnerService as any,
-      mockAuditService as any,
+      mockAuditService as any
     );
   });
 
@@ -99,7 +99,7 @@ describe('WorksheetService', () => {
         expect.objectContaining({
           action: 'worksheet_created',
           entityType: 'worksheet',
-        }),
+        })
       );
     });
 
@@ -128,7 +128,7 @@ describe('WorksheetService', () => {
 
       // Act & Assert
       await expect(service.create(validCreateDto, mockTenantId, mockUserId)).rejects.toThrow(
-        'Partner nem található',
+        'Partner nem található'
       );
     });
 
@@ -141,7 +141,7 @@ describe('WorksheetService', () => {
 
       // Act & Assert
       await expect(service.create(validCreateDto, mockTenantId, mockUserId)).rejects.toThrow(
-        'Hozzáférés megtagadva',
+        'Hozzáférés megtagadva'
       );
     });
 
@@ -156,7 +156,7 @@ describe('WorksheetService', () => {
 
       // Act & Assert
       await expect(
-        service.create(invalidDto as CreateWorksheetDto, mockTenantId, mockUserId),
+        service.create(invalidDto as CreateWorksheetDto, mockTenantId, mockUserId)
       ).rejects.toThrow('Gép megnevezés minimum 2 karakter');
     });
 
@@ -168,7 +168,7 @@ describe('WorksheetService', () => {
       });
       mockPartnerService.isContractedPartner.mockResolvedValue(true);
       mockWorksheetRepository.getNextSequence.mockResolvedValue(1);
-      mockWorksheetRepository.create.mockImplementation((data) => ({
+      mockWorksheetRepository.create.mockImplementation(data => ({
         ...mockWorksheet,
         ...data,
       }));
@@ -193,7 +193,7 @@ describe('WorksheetService', () => {
       });
       mockPartnerService.isContractedPartner.mockResolvedValue(true);
       mockWorksheetRepository.getNextSequence.mockResolvedValue(1);
-      mockWorksheetRepository.create.mockImplementation((data) => ({
+      mockWorksheetRepository.create.mockImplementation(data => ({
         ...mockWorksheet,
         ...data,
       }));
@@ -269,7 +269,7 @@ describe('WorksheetService', () => {
       expect(result.total).toBe(1);
       expect(mockWorksheetRepository.findAll).toHaveBeenCalledWith(
         mockTenantId,
-        expect.objectContaining({ status: WorksheetStatus.FELVEVE }),
+        expect.objectContaining({ status: WorksheetStatus.FELVEVE })
       );
     });
 
@@ -284,7 +284,7 @@ describe('WorksheetService', () => {
       // Assert
       expect(mockWorksheetRepository.findAll).toHaveBeenCalledWith(
         mockTenantId,
-        expect.objectContaining({ status: WorksheetStatus.FOLYAMATBAN }),
+        expect.objectContaining({ status: WorksheetStatus.FOLYAMATBAN })
       );
     });
 
@@ -299,7 +299,7 @@ describe('WorksheetService', () => {
       // Assert
       expect(mockWorksheetRepository.findAll).toHaveBeenCalledWith(
         mockTenantId,
-        expect.objectContaining({ type: WorksheetType.GARANCIALIS }),
+        expect.objectContaining({ type: WorksheetType.GARANCIALIS })
       );
     });
 
@@ -316,7 +316,7 @@ describe('WorksheetService', () => {
       // Assert
       expect(mockWorksheetRepository.findAll).toHaveBeenCalledWith(
         mockTenantId,
-        expect.objectContaining({ dateFrom, dateTo }),
+        expect.objectContaining({ dateFrom, dateTo })
       );
     });
 
@@ -326,12 +326,12 @@ describe('WorksheetService', () => {
       mockWorksheetRepository.countByTenant.mockResolvedValue(1);
 
       // Act
-      const result = await service.findAll(mockTenantId, { search: 'ML-2026-0001' });
+      await service.findAll(mockTenantId, { search: 'ML-2026-0001' });
 
       // Assert
       expect(mockWorksheetRepository.findAll).toHaveBeenCalledWith(
         mockTenantId,
-        expect.objectContaining({ search: 'ML-2026-0001' }),
+        expect.objectContaining({ search: 'ML-2026-0001' })
       );
     });
   });
@@ -350,7 +350,7 @@ describe('WorksheetService', () => {
         mockWorksheet.id,
         { diagnosis: 'Szénkefe elhasználódott' },
         mockTenantId,
-        mockUserId,
+        mockUserId
       );
 
       // Assert
@@ -358,7 +358,7 @@ describe('WorksheetService', () => {
       expect(mockAuditService.log).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'worksheet_updated',
-        }),
+        })
       );
     });
 
@@ -368,7 +368,7 @@ describe('WorksheetService', () => {
 
       // Act & Assert
       await expect(
-        service.update('non-existent', { diagnosis: 'test' }, mockTenantId, mockUserId),
+        service.update('non-existent', { diagnosis: 'test' }, mockTenantId, mockUserId)
       ).rejects.toThrow('Munkalap nem található');
     });
 
@@ -381,7 +381,7 @@ describe('WorksheetService', () => {
 
       // Act & Assert
       await expect(
-        service.update(mockWorksheet.id, { diagnosis: 'test' }, mockTenantId, mockUserId),
+        service.update(mockWorksheet.id, { diagnosis: 'test' }, mockTenantId, mockUserId)
       ).rejects.toThrow('Hozzáférés megtagadva');
     });
 
@@ -394,7 +394,7 @@ describe('WorksheetService', () => {
 
       // Act & Assert
       await expect(
-        service.update(mockWorksheet.id, { diagnosis: 'test' }, mockTenantId, mockUserId),
+        service.update(mockWorksheet.id, { diagnosis: 'test' }, mockTenantId, mockUserId)
       ).rejects.toThrow('Lezárt munkalap nem módosítható');
     });
   });
@@ -416,7 +416,7 @@ describe('WorksheetService', () => {
       expect(mockAuditService.log).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'worksheet_deleted',
-        }),
+        })
       );
     });
 
@@ -429,7 +429,7 @@ describe('WorksheetService', () => {
 
       // Act & Assert
       await expect(service.delete(mockWorksheet.id, mockTenantId, mockUserId)).rejects.toThrow(
-        'Csak felvett munkalap törölhető',
+        'Csak felvett munkalap törölhető'
       );
     });
 
@@ -439,7 +439,7 @@ describe('WorksheetService', () => {
 
       // Act & Assert
       await expect(service.delete('non-existent', mockTenantId, mockUserId)).rejects.toThrow(
-        'Munkalap nem található',
+        'Munkalap nem található'
       );
     });
   });

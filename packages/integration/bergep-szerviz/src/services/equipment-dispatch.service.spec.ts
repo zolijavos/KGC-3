@@ -1,19 +1,19 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  EquipmentStatus,
+  IEquipment,
+  IServiceDispatch,
+  IWorksheet,
+  ServiceDispatchReason,
+  WorksheetStatus,
+} from '../interfaces/bergep-szerviz.interface';
 import {
   EquipmentDispatchService,
-  IEquipmentRepository,
-  IWorksheetRepository,
-  IServiceDispatchRepository,
   IAuditService,
+  IEquipmentRepository,
+  IServiceDispatchRepository,
+  IWorksheetRepository,
 } from './equipment-dispatch.service';
-import {
-  IEquipment,
-  IWorksheet,
-  IServiceDispatch,
-  EquipmentStatus,
-  WorksheetStatus,
-  ServiceDispatchReason,
-} from '../interfaces/bergep-szerviz.interface';
 
 const mockEquipmentRepository: IEquipmentRepository = {
   findById: vi.fn(),
@@ -86,14 +86,18 @@ describe('EquipmentDispatchService', () => {
       mockEquipmentRepository,
       mockWorksheetRepository,
       mockDispatchRepository,
-      mockAuditService,
+      mockAuditService
     );
   });
 
   it('should dispatch equipment to service', async () => {
     (mockEquipmentRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(mockEquipment);
-    (mockDispatchRepository.findActiveByEquipmentId as ReturnType<typeof vi.fn>).mockResolvedValue(null);
-    (mockWorksheetRepository.getNextNumber as ReturnType<typeof vi.fn>).mockResolvedValue('ML-2026-0001');
+    (mockDispatchRepository.findActiveByEquipmentId as ReturnType<typeof vi.fn>).mockResolvedValue(
+      null
+    );
+    (mockWorksheetRepository.getNextNumber as ReturnType<typeof vi.fn>).mockResolvedValue(
+      'ML-2026-0001'
+    );
     (mockWorksheetRepository.create as ReturnType<typeof vi.fn>).mockResolvedValue(mockWorksheet);
     (mockDispatchRepository.create as ReturnType<typeof vi.fn>).mockResolvedValue(mockDispatch);
     (mockEquipmentRepository.update as ReturnType<typeof vi.fn>).mockResolvedValue({
@@ -108,69 +112,77 @@ describe('EquipmentDispatchService', () => {
         notes: 'Motor nem működik',
       },
       mockTenantId,
-      mockUserId,
+      mockUserId
     );
 
     expect(result.dispatch).toBeDefined();
     expect(result.worksheet).toBeDefined();
     expect(mockEquipmentRepository.update).toHaveBeenCalledWith(
       mockEquipmentId,
-      expect.objectContaining({ status: EquipmentStatus.IN_SERVICE }),
+      expect.objectContaining({ status: EquipmentStatus.IN_SERVICE })
     );
     expect(mockAuditService.log).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'equipment_dispatched_to_service' }),
+      expect.objectContaining({ action: 'equipment_dispatched_to_service' })
     );
   });
 
   it('should not dispatch rented equipment', async () => {
     const rentedEquipment = { ...mockEquipment, status: EquipmentStatus.RENTED };
-    (mockEquipmentRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(rentedEquipment);
+    (mockEquipmentRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
+      rentedEquipment
+    );
 
     await expect(
       service.dispatchToService(
         { equipmentId: mockEquipmentId, reason: 'REPAIR' },
         mockTenantId,
-        mockUserId,
-      ),
+        mockUserId
+      )
     ).rejects.toThrow('Cannot dispatch rented equipment to service');
   });
 
   it('should not dispatch equipment already in service', async () => {
     const inServiceEquipment = { ...mockEquipment, status: EquipmentStatus.IN_SERVICE };
-    (mockEquipmentRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(inServiceEquipment);
+    (mockEquipmentRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
+      inServiceEquipment
+    );
 
     await expect(
       service.dispatchToService(
         { equipmentId: mockEquipmentId, reason: 'MAINTENANCE' },
         mockTenantId,
-        mockUserId,
-      ),
+        mockUserId
+      )
     ).rejects.toThrow('Equipment is already in service');
   });
 
   it('should not dispatch retired equipment', async () => {
     const retiredEquipment = { ...mockEquipment, status: EquipmentStatus.RETIRED };
-    (mockEquipmentRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(retiredEquipment);
+    (mockEquipmentRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
+      retiredEquipment
+    );
 
     await expect(
       service.dispatchToService(
         { equipmentId: mockEquipmentId, reason: 'INSPECTION' },
         mockTenantId,
-        mockUserId,
-      ),
+        mockUserId
+      )
     ).rejects.toThrow('Cannot dispatch retired equipment');
   });
 
   it('should not dispatch equipment with active dispatch', async () => {
     (mockEquipmentRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(mockEquipment);
-    (mockDispatchRepository.findActiveByEquipmentId as ReturnType<typeof vi.fn>).mockResolvedValue(mockDispatch);
+    (mockDispatchRepository.findActiveByEquipmentId as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockDispatch
+    );
 
     await expect(
       service.dispatchToService(
         { equipmentId: mockEquipmentId, reason: 'REPAIR' },
         mockTenantId,
-        mockUserId,
-      ),
+        mockUserId
+      )
     ).rejects.toThrow('Equipment has an active service dispatch');
   });
 
@@ -181,8 +193,8 @@ describe('EquipmentDispatchService', () => {
       service.dispatchToService(
         { equipmentId: mockEquipmentId, reason: 'REPAIR' },
         'other-tenant',
-        mockUserId,
-      ),
+        mockUserId
+      )
     ).rejects.toThrow('Access denied');
   });
 
@@ -193,14 +205,16 @@ describe('EquipmentDispatchService', () => {
       service.dispatchToService(
         { equipmentId: mockEquipmentId, reason: 'REPAIR' },
         mockTenantId,
-        mockUserId,
-      ),
+        mockUserId
+      )
     ).rejects.toThrow('Equipment not found');
   });
 
   it('should get dispatch history', async () => {
     (mockEquipmentRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(mockEquipment);
-    (mockDispatchRepository.findByEquipmentId as ReturnType<typeof vi.fn>).mockResolvedValue([mockDispatch]);
+    (mockDispatchRepository.findByEquipmentId as ReturnType<typeof vi.fn>).mockResolvedValue([
+      mockDispatch,
+    ]);
 
     const result = await service.getDispatchHistory(mockEquipmentId, mockTenantId);
 
@@ -210,8 +224,12 @@ describe('EquipmentDispatchService', () => {
 
   it('should create warranty worksheet when isWarranty is true', async () => {
     (mockEquipmentRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(mockEquipment);
-    (mockDispatchRepository.findActiveByEquipmentId as ReturnType<typeof vi.fn>).mockResolvedValue(null);
-    (mockWorksheetRepository.getNextNumber as ReturnType<typeof vi.fn>).mockResolvedValue('ML-2026-0002');
+    (mockDispatchRepository.findActiveByEquipmentId as ReturnType<typeof vi.fn>).mockResolvedValue(
+      null
+    );
+    (mockWorksheetRepository.getNextNumber as ReturnType<typeof vi.fn>).mockResolvedValue(
+      'ML-2026-0002'
+    );
     (mockWorksheetRepository.create as ReturnType<typeof vi.fn>).mockResolvedValue({
       ...mockWorksheet,
       isWarranty: true,
@@ -219,18 +237,18 @@ describe('EquipmentDispatchService', () => {
     (mockDispatchRepository.create as ReturnType<typeof vi.fn>).mockResolvedValue(mockDispatch);
     (mockEquipmentRepository.update as ReturnType<typeof vi.fn>).mockResolvedValue(mockEquipment);
 
-    const result = await service.dispatchToService(
+    await service.dispatchToService(
       {
         equipmentId: mockEquipmentId,
         reason: 'WARRANTY',
         isWarranty: true,
       },
       mockTenantId,
-      mockUserId,
+      mockUserId
     );
 
     expect(mockWorksheetRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ isWarranty: true }),
+      expect.objectContaining({ isWarranty: true })
     );
   });
 });

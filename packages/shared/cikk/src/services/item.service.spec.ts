@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ItemService } from './item.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  ItemType,
-  ItemStatus,
   CreateItemInput,
-  UpdateItemInput,
-  ItemFilterOptions,
-  DEFAULT_VAT_RATE,
   DEFAULT_UNIT_OF_MEASURE,
+  DEFAULT_VAT_RATE,
+  ItemFilterOptions,
+  ItemStatus,
+  ItemType,
+  UpdateItemInput,
 } from '../interfaces/item.interface';
+import { ItemService } from './item.service';
 
 /**
  * TDD Tests for ItemService
@@ -21,7 +21,7 @@ import {
 // Valid UUIDs for testing
 const TENANT_ID = 'a1b2c3d4-e5f6-4890-abcd-ef1234567890';
 const ITEM_ID = 'b2c3d4e5-f6a7-4901-8cde-f12345678901';
-const CATEGORY_ID = 'c3d4e5f6-a7b8-4012-9def-123456789012';
+const _CATEGORY_ID = 'c3d4e5f6-a7b8-4012-9def-123456789012'; // reserved for category tests
 const USER_ID = 'd4e5f6a7-b8c9-4123-aef0-234567890123';
 
 // Mock PrismaService
@@ -324,9 +324,9 @@ describe('ItemService', () => {
         mockBarcodeService.validateEAN13.mockReturnValue(true);
         mockBarcodeService.isUnique.mockResolvedValue(false);
 
-        await expect(
-          itemService.createItem(TENANT_ID, inputWithBarcode, USER_ID)
-        ).rejects.toThrow('A vonalkód már létezik');
+        await expect(itemService.createItem(TENANT_ID, inputWithBarcode, USER_ID)).rejects.toThrow(
+          'A vonalkód már létezik'
+        );
       });
 
       it('should throw error if name exceeds 255 characters', async () => {
@@ -742,10 +742,7 @@ describe('ItemService', () => {
       expect(mockPrismaService.item.findFirst).toHaveBeenCalledWith({
         where: {
           tenantId: TENANT_ID,
-          OR: [
-            { barcode: '5901234123457' },
-            { alternativeBarcodes: { has: '5901234123457' } },
-          ],
+          OR: [{ barcode: '5901234123457' }, { alternativeBarcodes: { has: '5901234123457' } }],
         },
       });
     });

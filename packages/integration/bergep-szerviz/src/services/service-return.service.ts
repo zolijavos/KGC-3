@@ -4,20 +4,17 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import {
-  IEquipment,
-  IWorksheet,
-  IServiceDispatch,
-  IServiceReturn,
-  EquipmentStatus,
-  WorksheetStatus,
-} from '../interfaces/bergep-szerviz.interface';
 import { ReturnFromServiceDto, ReturnFromServiceSchema } from '../dto/bergep-szerviz.dto';
 import {
-  IEquipmentRepository,
-  IWorksheetRepository,
-  IServiceDispatchRepository,
+  EquipmentStatus,
+  IServiceReturn,
+  WorksheetStatus,
+} from '../interfaces/bergep-szerviz.interface';
+import {
   IAuditService,
+  IEquipmentRepository,
+  IServiceDispatchRepository,
+  IWorksheetRepository,
 } from './equipment-dispatch.service';
 
 export interface INotificationService {
@@ -37,13 +34,13 @@ export class ServiceReturnService {
     private readonly worksheetRepository: IWorksheetRepository,
     private readonly dispatchRepository: IServiceDispatchRepository,
     private readonly notificationService: INotificationService,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
   async returnFromService(
     input: ReturnFromServiceDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IServiceReturn> {
     const validationResult = ReturnFromServiceSchema.safeParse(input);
     if (!validationResult.success) {
@@ -141,7 +138,7 @@ export class ServiceReturnService {
   async autoCompleteOnWorksheetDone(
     worksheetId: string,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IServiceReturn | null> {
     // Get worksheet
     const worksheet = await this.worksheetRepository.findById(worksheetId);
@@ -159,7 +156,7 @@ export class ServiceReturnService {
 
     // Find active dispatch for this worksheet's equipment
     const activeDispatch = await this.dispatchRepository.findActiveByEquipmentId(
-      worksheet.equipmentId,
+      worksheet.equipmentId
     );
     if (!activeDispatch || activeDispatch.worksheetId !== worksheetId) {
       return null;
@@ -173,7 +170,7 @@ export class ServiceReturnService {
         serviceNotes: 'Automatikus visszavétel munkalap lezárásakor',
       },
       tenantId,
-      userId,
+      userId
     );
   }
 }

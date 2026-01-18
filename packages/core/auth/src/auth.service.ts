@@ -40,9 +40,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { AUDIT_SERVICE, AuditAction, type IAuditService } from './interfaces/audit.interface';
-import { FORGOT_PASSWORD_MESSAGE } from './dto/forgot-password-response.dto';
 import type { ForgotPasswordResponse } from './dto/forgot-password-response.dto';
+import { FORGOT_PASSWORD_MESSAGE } from './dto/forgot-password-response.dto';
 import {
   LOGOUT_ERROR_MESSAGES,
   LOGOUT_MESSAGES,
@@ -51,18 +50,17 @@ import {
 } from './dto/logout-response.dto';
 import type { PinLoginResponse } from './dto/pin-login-response.dto';
 import type { RefreshResponse } from './dto/refresh-response.dto';
-import { RESET_PASSWORD_MESSAGES } from './dto/reset-password-response.dto';
 import type { ResetPasswordResponse } from './dto/reset-password-response.dto';
-import { VERIFY_PASSWORD_MESSAGES } from './dto/verify-password-response.dto';
+import { RESET_PASSWORD_MESSAGES } from './dto/reset-password-response.dto';
 import type { VerifyPasswordResponse } from './dto/verify-password-response.dto';
-import type {
-  IElevatedAccessService,
-} from './interfaces/elevated-access.interface';
+import { VERIFY_PASSWORD_MESSAGES } from './dto/verify-password-response.dto';
+import { AUDIT_SERVICE, type IAuditService } from './interfaces/audit.interface';
+import type { IElevatedAccessService } from './interfaces/elevated-access.interface';
 import { ELEVATED_ACCESS_SERVICE } from './interfaces/elevated-access.interface';
 import type { LoginResponse, UserForToken } from './interfaces/jwt-payload.interface';
 import type { IEmailService } from './services/email.service';
-import { PasswordService } from './services/password.service';
 import { PasswordResetService } from './services/password-reset.service';
+import { PasswordService } from './services/password.service';
 import {
   LOCKOUT_DURATION_MS,
   MAX_FAILED_ATTEMPTS,
@@ -89,7 +87,9 @@ export class AuthService {
     @Optional() private readonly passwordResetService?: PasswordResetService | null,
     @Inject('EMAIL_SERVICE') @Optional() private readonly emailService?: IEmailService | null,
     // Story 2.4: Elevated Access service (optional for backward compatibility)
-    @Inject(ELEVATED_ACCESS_SERVICE) @Optional() private readonly elevatedAccessService?: IElevatedAccessService | null,
+    @Inject(ELEVATED_ACCESS_SERVICE)
+    @Optional()
+    private readonly elevatedAccessService?: IElevatedAccessService | null,
     // Story 2.4: Audit service for logging elevated access events
     @Inject(AUDIT_SERVICE) @Optional() private readonly auditService?: IAuditService | null
   ) {}
@@ -1024,7 +1024,7 @@ export class AuthService {
 
         // Step 2: Add random delay to match typical email sending time (50-150ms)
         const randomDelay = 50 + Math.floor(Math.random() * 100);
-        await new Promise((resolve) => setTimeout(resolve, randomDelay));
+        await new Promise(resolve => setTimeout(resolve, randomDelay));
       } catch {
         // Ignore errors in dummy operations - they're just for timing normalization
       }

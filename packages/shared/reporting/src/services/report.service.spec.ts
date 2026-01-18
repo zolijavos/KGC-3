@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ReportType } from '../interfaces/reporting.interface';
 import {
-  ReportService,
-  IReportRepository,
+  IAuditService,
   IReportDataProvider,
   IReportExporter,
-  IAuditService,
+  IReportRepository,
+  ReportService,
 } from './report.service';
-import { ReportType, ReportFormat } from '../interfaces/reporting.interface';
 
 const mockReportRepository: IReportRepository = {
   findById: vi.fn(),
@@ -42,7 +42,7 @@ describe('ReportService', () => {
       mockReportRepository,
       mockDataProvider,
       mockExporter,
-      mockAuditService,
+      mockAuditService
     );
   });
 
@@ -66,13 +66,13 @@ describe('ReportService', () => {
           dateRange: 'THIS_MONTH',
         },
         mockTenantId,
-        mockUserId,
+        mockUserId
       );
 
       expect(result).toBeDefined();
       expect('data' in result && result.data).toHaveLength(2);
       expect(mockAuditService.log).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'report_generated' }),
+        expect.objectContaining({ action: 'report_generated' })
       );
     });
 
@@ -92,7 +92,7 @@ describe('ReportService', () => {
           dateRange: 'THIS_WEEK',
         },
         mockTenantId,
-        mockUserId,
+        mockUserId
       );
 
       expect(result).toBeDefined();
@@ -115,7 +115,7 @@ describe('ReportService', () => {
           format: 'CSV',
         },
         mockTenantId,
-        mockUserId,
+        mockUserId
       );
 
       expect(Buffer.isBuffer(result)).toBe(true);
@@ -138,7 +138,7 @@ describe('ReportService', () => {
           format: 'PDF',
         },
         mockTenantId,
-        mockUserId,
+        mockUserId
       );
 
       expect(Buffer.isBuffer(result)).toBe(true);
@@ -161,7 +161,7 @@ describe('ReportService', () => {
           format: 'EXCEL',
         },
         mockTenantId,
-        mockUserId,
+        mockUserId
       );
 
       expect(Buffer.isBuffer(result)).toBe(true);
@@ -183,7 +183,7 @@ describe('ReportService', () => {
           endDate: new Date('2026-01-15'),
         },
         mockTenantId,
-        mockUserId,
+        mockUserId
       );
 
       expect(result).toBeDefined();
@@ -198,8 +198,8 @@ describe('ReportService', () => {
             dateRange: 'CUSTOM',
           },
           mockTenantId,
-          mockUserId,
-        ),
+          mockUserId
+        )
       ).rejects.toThrow('Custom date range requires startDate and endDate');
     });
 
@@ -218,7 +218,7 @@ describe('ReportService', () => {
           offset: 10,
         },
         mockTenantId,
-        mockUserId,
+        mockUserId
       );
 
       expect(mockDataProvider.executeQuery).toHaveBeenCalledWith(
@@ -228,7 +228,7 @@ describe('ReportService', () => {
         expect.any(Date),
         expect.any(Date),
         50,
-        10,
+        10
       );
     });
   });

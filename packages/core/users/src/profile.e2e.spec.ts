@@ -9,8 +9,8 @@
  * - PUT /users/me/pin - PIN módosítás
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock @kgc/auth before importing controller
 vi.mock('@kgc/auth', () => ({
@@ -27,7 +27,7 @@ vi.mock('@kgc/auth', () => ({
 // Mock bcrypt at file level
 const mockBcryptCompare = vi.fn();
 const mockBcryptHash = vi.fn();
-vi.mock('bcrypt', async (importOriginal) => {
+vi.mock('bcrypt', async importOriginal => {
   const actual = await importOriginal<typeof import('bcrypt')>();
   return {
     ...actual,
@@ -36,12 +36,13 @@ vi.mock('bcrypt', async (importOriginal) => {
   };
 });
 
+import { Role, UserStatus } from './interfaces/user.interface';
+import { PermissionService } from './services/permission.service';
+import { RoleService } from './services/role.service';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { RoleService } from './services/role.service';
-import { PermissionService } from './services/permission.service';
-import { Role, UserStatus } from './interfaces/user.interface';
-import { PROFILE_MESSAGES } from './dto/profile-response.dto';
+// Profile messages exported for future tests
+// import { PROFILE_MESSAGES } from './dto/profile-response.dto';
 
 // Valid UUIDs for testing
 const testUserId = '00000000-0000-0000-0000-000000000001';
@@ -49,10 +50,12 @@ const testTenantId = '00000000-0000-0000-0000-000000000002';
 const testLocationId = '00000000-0000-0000-0000-000000000003';
 
 // Mock Express Request/Response
-const createMockRequest = (overrides: Partial<{
-  body: unknown;
-  user: { id: string; email: string; role: Role; tenantId: string };
-}> = {}) => ({
+const createMockRequest = (
+  overrides: Partial<{
+    body: unknown;
+    user: { id: string; email: string; role: Role; tenantId: string };
+  }> = {}
+) => ({
   body: overrides.body ?? {},
   query: {},
   params: {},
@@ -127,11 +130,15 @@ describe('Profile E2E Tests - Story 2.6', () => {
     const roleService = new RoleService();
     const permissionService = new PermissionService(roleService);
     usersService = new UsersService(
-      mockPrisma as unknown as Parameters<typeof UsersService['prototype']['constructor']>[0],
+      mockPrisma as unknown as Parameters<(typeof UsersService)['prototype']['constructor']>[0],
       roleService,
       permissionService,
-      mockAuthService as unknown as Parameters<typeof UsersService['prototype']['constructor']>[3],
-      mockAuditService as unknown as Parameters<typeof UsersService['prototype']['constructor']>[4],
+      mockAuthService as unknown as Parameters<
+        (typeof UsersService)['prototype']['constructor']
+      >[3],
+      mockAuditService as unknown as Parameters<
+        (typeof UsersService)['prototype']['constructor']
+      >[4]
     );
     controller = new UsersController(usersService);
 
@@ -219,7 +226,9 @@ describe('Profile E2E Tests - Story 2.6', () => {
       const req = createMockRequest({ body });
 
       // Act & Assert - H1v2 FIX: Controller throws NotFoundException
-      await expect(controller.updateMyProfile(body as never, req as never)).rejects.toThrow(NotFoundException);
+      await expect(controller.updateMyProfile(body as never, req as never)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should clear phone when empty string provided', async () => {
@@ -292,7 +301,9 @@ describe('Profile E2E Tests - Story 2.6', () => {
       const req = createMockRequest({ body });
 
       // Act & Assert - H1v2 FIX: Controller throws BadRequestException
-      await expect(controller.updateMyPin(body as never, req as never)).rejects.toThrow(BadRequestException);
+      await expect(controller.updateMyPin(body as never, req as never)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should return 404 when updating PIN for non-existent user', async () => {
@@ -306,7 +317,9 @@ describe('Profile E2E Tests - Story 2.6', () => {
       const req = createMockRequest({ body });
 
       // Act & Assert - H1v2 FIX: Controller throws NotFoundException
-      await expect(controller.updateMyPin(body as never, req as never)).rejects.toThrow(NotFoundException);
+      await expect(controller.updateMyPin(body as never, req as never)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should allow setting PIN when user has no existing PIN (with password)', async () => {

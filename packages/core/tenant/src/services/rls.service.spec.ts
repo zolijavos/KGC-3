@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RlsService } from './rls.service';
-import { RlsPolicyType } from '../interfaces/rls.interface';
 
 /**
  * TDD Tests for RlsService
@@ -10,7 +9,7 @@ import { RlsPolicyType } from '../interfaces/rls.interface';
 
 // Valid UUID v4 format
 const VALID_TENANT_ID = 'a1b2c3d4-e5f6-4890-abcd-ef1234567890';
-const VALID_TENANT_ID_2 = 'b2c3d4e5-f6a7-4901-8cde-f12345678901';
+const _VALID_TENANT_ID_2 = 'b2c3d4e5-f6a7-4901-8cde-f12345678901';
 
 // Mock PrismaService
 const mockPrismaService = {
@@ -43,13 +42,15 @@ describe('RlsService', () => {
     });
 
     it('should validate schema name before enabling RLS', async () => {
-      await expect(rlsService.enableRls('invalid schema!', 'partner'))
-        .rejects.toThrow('Érvénytelen séma név');
+      await expect(rlsService.enableRls('invalid schema!', 'partner')).rejects.toThrow(
+        'Érvénytelen séma név'
+      );
     });
 
     it('should validate table name before enabling RLS', async () => {
-      await expect(rlsService.enableRls('tenant_kgc_szeged', 'invalid table!'))
-        .rejects.toThrow('Érvénytelen tábla név');
+      await expect(rlsService.enableRls('tenant_kgc_szeged', 'invalid table!')).rejects.toThrow(
+        'Érvénytelen tábla név'
+      );
     });
   });
 
@@ -102,7 +103,7 @@ describe('RlsService', () => {
 
       // UPDATE needs both USING and WITH CHECK
       const calls = mockPrismaService.$executeRawUnsafe.mock.calls
-        .map((call) => call[0])
+        .map(call => call[0])
         .filter((sql: string) => sql.includes('FOR UPDATE'));
 
       expect(calls.length).toBeGreaterThan(0);
@@ -140,8 +141,9 @@ describe('RlsService', () => {
     });
 
     it('should validate schema and table names before dropping', async () => {
-      await expect(rlsService.dropRlsPolicy('invalid!', 'partner'))
-        .rejects.toThrow('Érvénytelen séma név');
+      await expect(rlsService.dropRlsPolicy('invalid!', 'partner')).rejects.toThrow(
+        'Érvénytelen séma név'
+      );
     });
   });
 
@@ -160,8 +162,9 @@ describe('RlsService', () => {
     });
 
     it('should validate tenant ID format (UUID)', async () => {
-      await expect(rlsService.setTenantContext('invalid-uuid'))
-        .rejects.toThrow('Érvénytelen tenant ID');
+      await expect(rlsService.setTenantContext('invalid-uuid')).rejects.toThrow(
+        'Érvénytelen tenant ID'
+      );
     });
 
     it('should set super admin flag when specified', async () => {
@@ -227,9 +230,9 @@ describe('RlsService', () => {
   // =========================================
   describe('SQL Injection Protection', () => {
     it('should reject SQL injection in schema name', async () => {
-      await expect(
-        rlsService.enableRls("tenant'; DROP TABLE users;--", 'partner')
-      ).rejects.toThrow('Érvénytelen séma név');
+      await expect(rlsService.enableRls("tenant'; DROP TABLE users;--", 'partner')).rejects.toThrow(
+        'Érvénytelen séma név'
+      );
     });
 
     it('should reject SQL injection in table name', async () => {
@@ -272,10 +275,7 @@ describe('RlsService', () => {
     it('should create super admin bypass policy', async () => {
       mockPrismaService.$executeRawUnsafe.mockResolvedValue(1);
 
-      const result = await rlsService.createSuperAdminBypassPolicy(
-        'tenant_kgc_szeged',
-        'partner'
-      );
+      const result = await rlsService.createSuperAdminBypassPolicy('tenant_kgc_szeged', 'partner');
 
       expect(result).toBe(true);
       expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalledWith(

@@ -1,14 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { LoyaltyCardService } from './loyalty-card.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  ILoyaltyCardRepository,
-  LoyaltyCard,
-  LoyaltyCardStatus,
-  IssueLoyaltyCardInput,
   AdjustPointsInput,
+  ILoyaltyCardRepository,
+  IssueLoyaltyCardInput,
+  LoyaltyCard,
   ReplaceCardInput,
 } from '../interfaces/loyalty-card.interface';
 import { IPartnerRepository, Partner } from '../interfaces/partner.interface';
+import { LoyaltyCardService } from './loyalty-card.service';
 
 describe('LoyaltyCardService', () => {
   let service: LoyaltyCardService;

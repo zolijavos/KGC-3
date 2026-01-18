@@ -5,21 +5,21 @@
 
 import { Injectable } from '@nestjs/common';
 import {
-  IQuotaUsage,
-  IQuotaConfig,
-  IRateLimitStatus,
-  QuotaTier,
-} from '../interfaces/koko.interface';
-import {
   CheckQuotaDto,
   CheckQuotaSchema,
   GetQuotaUsageDto,
   GetQuotaUsageSchema,
-  UpdateQuotaTierDto,
-  UpdateQuotaTierSchema,
   RecordUsageDto,
   RecordUsageSchema,
+  UpdateQuotaTierDto,
+  UpdateQuotaTierSchema,
 } from '../dto/koko.dto';
+import {
+  IQuotaConfig,
+  IQuotaUsage,
+  IRateLimitStatus,
+  QuotaTier,
+} from '../interfaces/koko.interface';
 
 export interface IQuotaUsageRepository {
   findByTenantAndPeriod(tenantId: string, period: string): Promise<IQuotaUsage | null>;
@@ -28,7 +28,7 @@ export interface IQuotaUsageRepository {
     tenantId: string,
     period: string,
     requestCount: number,
-    tokenCount: number,
+    tokenCount: number
   ): Promise<IQuotaUsage>;
 }
 
@@ -98,13 +98,10 @@ export class QuotaService {
     private readonly quotaUsageRepository: IQuotaUsageRepository,
     private readonly tenantConfigRepository: ITenantConfigRepository,
     private readonly rateLimitCache: IRateLimitCache,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
-  async checkQuota(
-    input: CheckQuotaDto,
-    userId: string,
-  ): Promise<IRateLimitStatus> {
+  async checkQuota(input: CheckQuotaDto, _userId: string): Promise<IRateLimitStatus> {
     const validationResult = CheckQuotaSchema.safeParse(input);
     if (!validationResult.success) {
       throw new Error(`Validation failed: ${validationResult.error.message}`);
@@ -174,10 +171,7 @@ export class QuotaService {
     };
   }
 
-  async recordUsage(
-    input: RecordUsageDto,
-    userId: string,
-  ): Promise<IQuotaUsage> {
+  async recordUsage(input: RecordUsageDto, userId: string): Promise<IQuotaUsage> {
     const validationResult = RecordUsageSchema.safeParse(input);
     if (!validationResult.success) {
       throw new Error(`Validation failed: ${validationResult.error.message}`);
@@ -196,7 +190,7 @@ export class QuotaService {
       tenantId,
       period,
       1,
-      validInput.tokenCount,
+      validInput.tokenCount
     );
 
     // Check if limit reached
@@ -228,7 +222,7 @@ export class QuotaService {
 
   async getQuotaUsage(
     input: GetQuotaUsageDto,
-    userId: string,
+    _userId: string
   ): Promise<{
     usage: IQuotaUsage | null;
     config: IQuotaConfig;
@@ -248,12 +242,8 @@ export class QuotaService {
     const usage = await this.quotaUsageRepository.findByTenantAndPeriod(tenantId, period);
 
     const percentUsed = {
-      requests: usage
-        ? Math.min((usage.requestCount / config.monthlyRequestLimit) * 100, 100)
-        : 0,
-      tokens: usage
-        ? Math.min((usage.tokenCount / config.monthlyTokenLimit) * 100, 100)
-        : 0,
+      requests: usage ? Math.min((usage.requestCount / config.monthlyRequestLimit) * 100, 100) : 0,
+      tokens: usage ? Math.min((usage.tokenCount / config.monthlyTokenLimit) * 100, 100) : 0,
     };
 
     return { usage, config, percentUsed };
@@ -261,7 +251,7 @@ export class QuotaService {
 
   async updateQuotaTier(
     input: UpdateQuotaTierDto,
-    userId: string,
+    userId: string
   ): Promise<{ tier: QuotaTier; config: IQuotaConfig }> {
     const validationResult = UpdateQuotaTierSchema.safeParse(input);
     if (!validationResult.success) {

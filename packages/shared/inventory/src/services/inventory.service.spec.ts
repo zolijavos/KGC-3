@@ -4,20 +4,19 @@
  * FR4-FR10 lefedés
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { InventoryService } from './inventory.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  InventoryItem,
-  InventoryQuery,
-  IInventoryRepository,
-  INVENTORY_REPOSITORY,
-  StockSummary,
-} from '../interfaces/inventory.interface';
-import {
+  AdjustQuantityInput,
   CreateInventoryItemInput,
   UpdateInventoryItemInput,
-  AdjustQuantityInput,
 } from '../dto/inventory.dto';
+import {
+  IInventoryRepository,
+  InventoryItem,
+  InventoryQuery,
+  StockSummary,
+} from '../interfaces/inventory.interface';
+import { InventoryService } from './inventory.service';
 
 // ============================================
 // MOCK REPOSITORY
@@ -145,7 +144,7 @@ describe('InventoryService', () => {
           createdBy: TEST_IDS.USER,
           updatedBy: TEST_IDS.USER,
           isDeleted: false,
-        }),
+        })
       );
     });
 
@@ -157,9 +156,9 @@ describe('InventoryService', () => {
       const existingItem = createTestItem({ serialNumber: 'SN-12345' });
       vi.mocked(mockRepository.findBySerialNumber).mockResolvedValue(existingItem);
 
-      await expect(
-        service.create(TEST_IDS.TENANT, inputWithSerial, TEST_IDS.USER),
-      ).rejects.toThrow('Serial number már létezik');
+      await expect(service.create(TEST_IDS.TENANT, inputWithSerial, TEST_IDS.USER)).rejects.toThrow(
+        'Serial number már létezik'
+      );
     });
 
     it('hibás warehouseId esetén validációs hiba', async () => {
@@ -169,7 +168,7 @@ describe('InventoryService', () => {
       };
 
       await expect(
-        service.create(TEST_IDS.TENANT, invalidInput as CreateInventoryItemInput, TEST_IDS.USER),
+        service.create(TEST_IDS.TENANT, invalidInput as CreateInventoryItemInput, TEST_IDS.USER)
       ).rejects.toThrow();
     });
 
@@ -180,7 +179,7 @@ describe('InventoryService', () => {
       };
 
       await expect(
-        service.create(TEST_IDS.TENANT, invalidInput as CreateInventoryItemInput, TEST_IDS.USER),
+        service.create(TEST_IDS.TENANT, invalidInput as CreateInventoryItemInput, TEST_IDS.USER)
       ).rejects.toThrow();
     });
 
@@ -191,7 +190,7 @@ describe('InventoryService', () => {
       };
 
       await expect(
-        service.create(TEST_IDS.TENANT, invalidInput as CreateInventoryItemInput, TEST_IDS.USER),
+        service.create(TEST_IDS.TENANT, invalidInput as CreateInventoryItemInput, TEST_IDS.USER)
       ).rejects.toThrow('Érvénytelen helykód formátum');
     });
 
@@ -202,9 +201,9 @@ describe('InventoryService', () => {
         serialNumber: undefined,
       };
 
-      await expect(
-        service.create(TEST_IDS.TENANT, rentalInput, TEST_IDS.USER),
-      ).rejects.toThrow('Bérgéphez serial number kötelező');
+      await expect(service.create(TEST_IDS.TENANT, rentalInput, TEST_IDS.USER)).rejects.toThrow(
+        'Bérgéphez serial number kötelező'
+      );
     });
   });
 
@@ -284,7 +283,7 @@ describe('InventoryService', () => {
         TEST_IDS.ITEM_1,
         TEST_IDS.TENANT,
         updateInput,
-        TEST_IDS.USER,
+        TEST_IDS.USER
       );
 
       expect(result).toEqual(updatedItem);
@@ -295,7 +294,7 @@ describe('InventoryService', () => {
           status: 'RESERVED',
           locationCode: 'K2-P3-D4',
           updatedBy: TEST_IDS.USER,
-        }),
+        })
       );
     });
 
@@ -303,7 +302,7 @@ describe('InventoryService', () => {
       vi.mocked(mockRepository.findById).mockResolvedValue(null);
 
       await expect(
-        service.update('nonexistent-id', TEST_IDS.TENANT, updateInput, TEST_IDS.USER),
+        service.update('nonexistent-id', TEST_IDS.TENANT, updateInput, TEST_IDS.USER)
       ).rejects.toThrow('Készlet tétel nem található');
     });
 
@@ -312,12 +311,7 @@ describe('InventoryService', () => {
       vi.mocked(mockRepository.findById).mockResolvedValue(soldItem);
 
       await expect(
-        service.update(
-          TEST_IDS.ITEM_1,
-          TEST_IDS.TENANT,
-          { status: 'AVAILABLE' },
-          TEST_IDS.USER,
-        ),
+        service.update(TEST_IDS.ITEM_1, TEST_IDS.TENANT, { status: 'AVAILABLE' }, TEST_IDS.USER)
       ).rejects.toThrow('Érvénytelen státusz átmenet: SOLD -> AVAILABLE');
     });
 
@@ -326,7 +320,7 @@ describe('InventoryService', () => {
       vi.mocked(mockRepository.findById).mockResolvedValue(existingItem);
 
       await expect(
-        service.update(TEST_IDS.ITEM_1, TEST_IDS.TENANT, {} as UpdateInventoryItemInput, 'user-123'),
+        service.update(TEST_IDS.ITEM_1, TEST_IDS.TENANT, {} as UpdateInventoryItemInput, 'user-123')
       ).rejects.toThrow();
     });
   });
@@ -345,7 +339,7 @@ describe('InventoryService', () => {
       expect(mockRepository.delete).toHaveBeenCalledWith(
         TEST_IDS.ITEM_1,
         TEST_IDS.TENANT,
-        TEST_IDS.USER,
+        TEST_IDS.USER
       );
     });
 
@@ -353,7 +347,7 @@ describe('InventoryService', () => {
       vi.mocked(mockRepository.findById).mockResolvedValue(null);
 
       await expect(
-        service.delete('nonexistent-id', TEST_IDS.TENANT, TEST_IDS.USER),
+        service.delete('nonexistent-id', TEST_IDS.TENANT, TEST_IDS.USER)
       ).rejects.toThrow('Készlet tétel nem található');
     });
 
@@ -361,36 +355,36 @@ describe('InventoryService', () => {
       const rentedItem = createTestItem({ status: 'RENTED', quantity: 0 });
       vi.mocked(mockRepository.findById).mockResolvedValue(rentedItem);
 
-      await expect(
-        service.delete(TEST_IDS.ITEM_1, TEST_IDS.TENANT, TEST_IDS.USER),
-      ).rejects.toThrow('Kiadott (RENTED) tétel nem törölhető');
+      await expect(service.delete(TEST_IDS.ITEM_1, TEST_IDS.TENANT, TEST_IDS.USER)).rejects.toThrow(
+        'Kiadott (RENTED) tétel nem törölhető'
+      );
     });
 
     it('RESERVED státuszú tétel nem törölhető', async () => {
       const reservedItem = createTestItem({ status: 'RESERVED', quantity: 0 });
       vi.mocked(mockRepository.findById).mockResolvedValue(reservedItem);
 
-      await expect(
-        service.delete(TEST_IDS.ITEM_1, TEST_IDS.TENANT, TEST_IDS.USER),
-      ).rejects.toThrow('Foglalt (RESERVED) tétel nem törölhető');
+      await expect(service.delete(TEST_IDS.ITEM_1, TEST_IDS.TENANT, TEST_IDS.USER)).rejects.toThrow(
+        'Foglalt (RESERVED) tétel nem törölhető'
+      );
     });
 
     it('IN_TRANSIT státuszú tétel nem törölhető', async () => {
       const inTransitItem = createTestItem({ status: 'IN_TRANSIT', quantity: 0 });
       vi.mocked(mockRepository.findById).mockResolvedValue(inTransitItem);
 
-      await expect(
-        service.delete(TEST_IDS.ITEM_1, TEST_IDS.TENANT, TEST_IDS.USER),
-      ).rejects.toThrow('Szállítás alatt lévő (IN_TRANSIT) tétel nem törölhető');
+      await expect(service.delete(TEST_IDS.ITEM_1, TEST_IDS.TENANT, TEST_IDS.USER)).rejects.toThrow(
+        'Szállítás alatt lévő (IN_TRANSIT) tétel nem törölhető'
+      );
     });
 
     it('pozitív mennyiségű tétel nem törölhető', async () => {
       const itemWithStock = createTestItem({ quantity: 10 });
       vi.mocked(mockRepository.findById).mockResolvedValue(itemWithStock);
 
-      await expect(
-        service.delete(TEST_IDS.ITEM_1, TEST_IDS.TENANT, TEST_IDS.USER),
-      ).rejects.toThrow('Pozitív mennyiségű tétel nem törölhető');
+      await expect(service.delete(TEST_IDS.ITEM_1, TEST_IDS.TENANT, TEST_IDS.USER)).rejects.toThrow(
+        'Pozitív mennyiségű tétel nem törölhető'
+      );
     });
   });
 
@@ -412,9 +406,9 @@ describe('InventoryService', () => {
       const activeItem = createTestItem({ isDeleted: false });
       vi.mocked(mockRepository.findById).mockResolvedValue(activeItem);
 
-      await expect(
-        service.hardDelete(TEST_IDS.ITEM_1, TEST_IDS.TENANT),
-      ).rejects.toThrow('Csak soft deleted tétel törölhető véglegesen');
+      await expect(service.hardDelete(TEST_IDS.ITEM_1, TEST_IDS.TENANT)).rejects.toThrow(
+        'Csak soft deleted tétel törölhető véglegesen'
+      );
     });
   });
 
@@ -478,7 +472,7 @@ describe('InventoryService', () => {
       expect(mockRepository.query).toHaveBeenCalledWith(
         expect.objectContaining({
           status: ['AVAILABLE', 'RESERVED'],
-        }),
+        })
       );
     });
   });
@@ -498,7 +492,7 @@ describe('InventoryService', () => {
         TEST_IDS.ITEM_1,
         TEST_IDS.TENANT,
         { adjustment: 5 },
-        TEST_IDS.USER,
+        TEST_IDS.USER
       );
 
       expect(result.quantity).toBe(15);
@@ -506,7 +500,7 @@ describe('InventoryService', () => {
         TEST_IDS.ITEM_1,
         TEST_IDS.TENANT,
         5,
-        TEST_IDS.USER,
+        TEST_IDS.USER
       );
     });
 
@@ -520,7 +514,7 @@ describe('InventoryService', () => {
         TEST_IDS.ITEM_1,
         TEST_IDS.TENANT,
         { adjustment: -3 },
-        TEST_IDS.USER,
+        TEST_IDS.USER
       );
 
       expect(result.quantity).toBe(7);
@@ -531,12 +525,7 @@ describe('InventoryService', () => {
       vi.mocked(mockRepository.findById).mockResolvedValue(existingItem);
 
       await expect(
-        service.adjustQuantity(
-          TEST_IDS.ITEM_1,
-          TEST_IDS.TENANT,
-          { adjustment: -10 },
-          TEST_IDS.USER,
-        ),
+        service.adjustQuantity(TEST_IDS.ITEM_1, TEST_IDS.TENANT, { adjustment: -10 }, TEST_IDS.USER)
       ).rejects.toThrow('A mennyiség nem lehet negatív');
     });
 
@@ -549,8 +538,8 @@ describe('InventoryService', () => {
           TEST_IDS.ITEM_1,
           TEST_IDS.TENANT,
           { adjustment: 0 } as AdjustQuantityInput,
-          TEST_IDS.USER,
-        ),
+          TEST_IDS.USER
+        )
       ).rejects.toThrow();
     });
   });
@@ -567,7 +556,7 @@ describe('InventoryService', () => {
       const result = await service.getStockSummary(
         TEST_IDS.TENANT,
         'product-uuid-abc',
-        TEST_IDS.WAREHOUSE,
+        TEST_IDS.WAREHOUSE
       );
 
       expect(result).toEqual(summary);
@@ -668,7 +657,7 @@ describe('InventoryService', () => {
 
       expect(mockRepository.findBelowMinStock).toHaveBeenCalledWith(
         TEST_IDS.TENANT,
-        TEST_IDS.WAREHOUSE,
+        TEST_IDS.WAREHOUSE
       );
     });
   });
@@ -696,7 +685,7 @@ describe('InventoryService', () => {
           ],
           reason: 'Leltár korrekció',
         },
-        TEST_IDS.USER,
+        TEST_IDS.USER
       );
 
       expect(mockRepository.bulkAdjustQuantity).toHaveBeenCalledWith(
@@ -704,7 +693,7 @@ describe('InventoryService', () => {
           { id: TEST_IDS.ITEM_1, tenantId: TEST_IDS.TENANT, adjustment: 5 },
           { id: TEST_IDS.ITEM_2, tenantId: TEST_IDS.TENANT, adjustment: -3 },
         ],
-        TEST_IDS.USER,
+        TEST_IDS.USER
       );
     });
 
@@ -727,8 +716,8 @@ describe('InventoryService', () => {
             ],
             reason: 'Leltár korrekció',
           },
-          TEST_IDS.USER,
-        ),
+          TEST_IDS.USER
+        )
       ).rejects.toThrow(`Tétel ${TEST_IDS.ITEM_2} mennyisége negatívba menne`);
     });
 
@@ -740,11 +729,7 @@ describe('InventoryService', () => {
       }));
 
       await expect(
-        service.bulkAdjustQuantity(
-          TEST_IDS.TENANT,
-          { adjustments, reason: 'Test' },
-          TEST_IDS.USER,
-        ),
+        service.bulkAdjustQuantity(TEST_IDS.TENANT, { adjustments, reason: 'Test' }, TEST_IDS.USER)
       ).rejects.toThrow();
     });
   });

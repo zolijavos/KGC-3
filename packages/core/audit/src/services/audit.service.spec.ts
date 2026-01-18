@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { AuditService, AUDIT_REPOSITORY } from './audit.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  IAuditRepository,
   AuditEntry,
-  CreateAuditEntryInput,
   AuditQueryOptions,
   AuditQueryResult,
+  CreateAuditEntryInput,
+  IAuditRepository,
 } from '../interfaces/audit.interface';
+import { AuditService } from './audit.service';
 
 describe('AuditService', () => {
   let auditService: AuditService;
@@ -309,7 +309,11 @@ describe('AuditService', () => {
       const result = await auditService.getEntityHistory('RENTAL', 'rental-001', mockTenantId);
 
       expect(result).toHaveLength(2);
-      expect(mockRepository.findByEntity).toHaveBeenCalledWith('RENTAL', 'rental-001', mockTenantId);
+      expect(mockRepository.findByEntity).toHaveBeenCalledWith(
+        'RENTAL',
+        'rental-001',
+        mockTenantId
+      );
     });
 
     it('should return empty array when no history exists', async () => {

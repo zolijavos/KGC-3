@@ -2,10 +2,16 @@
  * POS Transaction Service Tests
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PosTransactionService } from './pos-transaction.service';
-import type { IPosTransactionRepository, IProductService, IInventoryService, IAuditService, IProductInfo } from './pos-transaction.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IPosTransaction } from '../interfaces/pos-transaction.interface';
+import type {
+  IAuditService,
+  IInventoryService,
+  IPosTransactionRepository,
+  IProductInfo,
+  IProductService,
+} from './pos-transaction.service';
+import { PosTransactionService } from './pos-transaction.service';
 
 // Valid UUIDs for testing
 const TENANT_ID = '550e8400-e29b-41d4-a716-446655440001';
@@ -15,7 +21,7 @@ const USER_ID = '550e8400-e29b-41d4-a716-446655440004';
 const PRODUCT_ID = '550e8400-e29b-41d4-a716-446655440005';
 const TRANSACTION_ID = '550e8400-e29b-41d4-a716-446655440006';
 const ITEM_ID = '550e8400-e29b-41d4-a716-446655440007';
-const PAYMENT_ID = '550e8400-e29b-41d4-a716-446655440008';
+const _PAYMENT_ID = '550e8400-e29b-41d4-a716-446655440008';
 
 describe('PosTransactionService', () => {
   let service: PosTransactionService;
@@ -57,7 +63,9 @@ describe('PosTransactionService', () => {
     mockRepository = {
       create: vi.fn().mockResolvedValue(mockTransaction),
       findById: vi.fn().mockResolvedValue(mockTransaction),
-      update: vi.fn().mockImplementation((id, data) => Promise.resolve({ ...mockTransaction, ...data })),
+      update: vi
+        .fn()
+        .mockImplementation((id, data) => Promise.resolve({ ...mockTransaction, ...data })),
       findByRegisterAndDate: vi.fn().mockResolvedValue([]),
       generateTransactionNumber: vi.fn().mockResolvedValue('TX-2026-0001'),
     };
@@ -68,7 +76,9 @@ describe('PosTransactionService', () => {
     };
 
     mockInventoryService = {
-      checkAvailability: vi.fn().mockResolvedValue({ success: true, reserved: [], unavailable: [] }),
+      checkAvailability: vi
+        .fn()
+        .mockResolvedValue({ success: true, reserved: [], unavailable: [] }),
       reserveStock: vi.fn().mockResolvedValue(undefined),
       commitStock: vi.fn().mockResolvedValue(undefined),
       releaseStock: vi.fn().mockResolvedValue(undefined),
@@ -178,19 +188,21 @@ describe('PosTransactionService', () => {
     it('should remove item from cart', async () => {
       const transactionWithItem = {
         ...mockTransaction,
-        items: [{
-          id: ITEM_ID,
-          productId: PRODUCT_ID,
-          productName: 'Test',
-          sku: 'SKU-001',
-          quantity: 1,
-          unitPrice: 1000,
-          vatRate: 27,
-          discountPercent: 0,
-          netAmount: 1000,
-          vatAmount: 270,
-          grossAmount: 1270,
-        }],
+        items: [
+          {
+            id: ITEM_ID,
+            productId: PRODUCT_ID,
+            productName: 'Test',
+            sku: 'SKU-001',
+            quantity: 1,
+            unitPrice: 1000,
+            vatRate: 27,
+            discountPercent: 0,
+            netAmount: 1000,
+            vatAmount: 270,
+            grossAmount: 1270,
+          },
+        ],
       };
       mockRepository.findById = vi.fn().mockResolvedValue(transactionWithItem);
 
@@ -210,19 +222,21 @@ describe('PosTransactionService', () => {
     it('should update item quantity', async () => {
       const transactionWithItem = {
         ...mockTransaction,
-        items: [{
-          id: ITEM_ID,
-          productId: PRODUCT_ID,
-          productName: 'Test',
-          sku: 'SKU-001',
-          quantity: 1,
-          unitPrice: 1000,
-          vatRate: 27,
-          discountPercent: 0,
-          netAmount: 1000,
-          vatAmount: 270,
-          grossAmount: 1270,
-        }],
+        items: [
+          {
+            id: ITEM_ID,
+            productId: PRODUCT_ID,
+            productName: 'Test',
+            sku: 'SKU-001',
+            quantity: 1,
+            unitPrice: 1000,
+            vatRate: 27,
+            discountPercent: 0,
+            netAmount: 1000,
+            vatAmount: 270,
+            grossAmount: 1270,
+          },
+        ],
       };
       mockRepository.findById = vi.fn().mockResolvedValue(transactionWithItem);
 
@@ -242,19 +256,21 @@ describe('PosTransactionService', () => {
     it('should apply discount to item', async () => {
       const transactionWithItem = {
         ...mockTransaction,
-        items: [{
-          id: ITEM_ID,
-          productId: PRODUCT_ID,
-          productName: 'Test',
-          sku: 'SKU-001',
-          quantity: 1,
-          unitPrice: 1000,
-          vatRate: 27,
-          discountPercent: 0,
-          netAmount: 1000,
-          vatAmount: 270,
-          grossAmount: 1270,
-        }],
+        items: [
+          {
+            id: ITEM_ID,
+            productId: PRODUCT_ID,
+            productName: 'Test',
+            sku: 'SKU-001',
+            quantity: 1,
+            unitPrice: 1000,
+            vatRate: 27,
+            discountPercent: 0,
+            netAmount: 1000,
+            vatAmount: 270,
+            grossAmount: 1270,
+          },
+        ],
       };
       mockRepository.findById = vi.fn().mockResolvedValue(transactionWithItem);
 
@@ -265,9 +281,9 @@ describe('PosTransactionService', () => {
     });
 
     it('should throw error for invalid discount', async () => {
-      await expect(
-        service.applyItemDiscount(TRANSACTION_ID, ITEM_ID, 150)
-      ).rejects.toThrow('Kedvezmény 0-100% között lehet');
+      await expect(service.applyItemDiscount(TRANSACTION_ID, ITEM_ID, 150)).rejects.toThrow(
+        'Kedvezmény 0-100% között lehet'
+      );
     });
   });
 
@@ -312,19 +328,21 @@ describe('PosTransactionService', () => {
         status: 'PROCESSING',
         grossTotal: 1000,
         paidAmount: 1000,
-        items: [{
-          id: ITEM_ID,
-          productId: PRODUCT_ID,
-          productName: 'Test',
-          sku: 'SKU-001',
-          quantity: 1,
-          unitPrice: 1000,
-          vatRate: 27,
-          discountPercent: 0,
-          netAmount: 1000,
-          vatAmount: 270,
-          grossAmount: 1270,
-        }],
+        items: [
+          {
+            id: ITEM_ID,
+            productId: PRODUCT_ID,
+            productName: 'Test',
+            sku: 'SKU-001',
+            quantity: 1,
+            unitPrice: 1000,
+            vatRate: 27,
+            discountPercent: 0,
+            netAmount: 1000,
+            vatAmount: 270,
+            grossAmount: 1270,
+          },
+        ],
       };
       mockRepository.findById = vi.fn().mockResolvedValue(paidTransaction);
 
@@ -346,7 +364,9 @@ describe('PosTransactionService', () => {
       };
       mockRepository.findById = vi.fn().mockResolvedValue(underpaidTransaction);
 
-      await expect(service.completeTransaction(TRANSACTION_ID)).rejects.toThrow('Fizetés nem elegendő');
+      await expect(service.completeTransaction(TRANSACTION_ID)).rejects.toThrow(
+        'Fizetés nem elegendő'
+      );
     });
 
     it('should throw error for empty cart', async () => {
@@ -359,7 +379,9 @@ describe('PosTransactionService', () => {
       };
       mockRepository.findById = vi.fn().mockResolvedValue(emptyTransaction);
 
-      await expect(service.completeTransaction(TRANSACTION_ID)).rejects.toThrow('Üres kosár nem zárható le');
+      await expect(service.completeTransaction(TRANSACTION_ID)).rejects.toThrow(
+        'Üres kosár nem zárható le'
+      );
     });
   });
 
@@ -396,9 +418,9 @@ describe('PosTransactionService', () => {
       };
       mockRepository.findById = vi.fn().mockResolvedValue(completedTransaction);
 
-      await expect(
-        service.cancelTransaction(TRANSACTION_ID, 'Reason')
-      ).rejects.toThrow('Lezárt vagy visszáruzott tranzakció nem vonható vissza');
+      await expect(service.cancelTransaction(TRANSACTION_ID, 'Reason')).rejects.toThrow(
+        'Lezárt vagy visszáruzott tranzakció nem vonható vissza'
+      );
     });
   });
 

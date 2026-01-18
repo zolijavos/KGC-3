@@ -4,18 +4,14 @@
  * FR8, FR10, FR32 lefedés
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { LocationService } from './location.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CreateLocationStructureInput, GenerateLocationsInput } from '../dto/location.dto';
 import {
+  ILocationRepository,
   LocationCode,
   LocationStructure,
-  ILocationRepository,
-  LocationValidationResult,
 } from '../interfaces/location.interface';
-import {
-  CreateLocationStructureInput,
-  GenerateLocationsInput,
-} from '../dto/location.dto';
+import { LocationService } from './location.service';
 
 // ============================================
 // TEST DATA - Valid UUIDs
@@ -52,9 +48,7 @@ const createMockRepository = (): ILocationRepository => ({
 // TEST DATA FACTORY
 // ============================================
 
-const createTestStructure = (
-  overrides: Partial<LocationStructure> = {},
-): LocationStructure => ({
+const createTestStructure = (overrides: Partial<LocationStructure> = {}): LocationStructure => ({
   id: TEST_IDS.STRUCTURE,
   tenantId: TEST_IDS.TENANT,
   warehouseId: TEST_IDS.WAREHOUSE,
@@ -133,7 +127,7 @@ describe('LocationService', () => {
           polcPrefix: 'P',
           dobozPrefix: 'D',
           separator: '-',
-        }),
+        })
       );
     });
 
@@ -142,7 +136,7 @@ describe('LocationService', () => {
       vi.mocked(mockRepository.getStructure).mockResolvedValue(existingStructure);
 
       await expect(service.createStructure(TEST_IDS.TENANT, validInput)).rejects.toThrow(
-        'A raktárhoz már létezik helykód struktúra',
+        'A raktárhoz már létezik helykód struktúra'
       );
     });
 
@@ -153,7 +147,7 @@ describe('LocationService', () => {
       };
 
       await expect(
-        service.createStructure(TEST_IDS.TENANT, invalidInput as CreateLocationStructureInput),
+        service.createStructure(TEST_IDS.TENANT, invalidInput as CreateLocationStructureInput)
       ).rejects.toThrow();
     });
 
@@ -164,7 +158,7 @@ describe('LocationService', () => {
       };
 
       await expect(
-        service.createStructure(TEST_IDS.TENANT, invalidInput as CreateLocationStructureInput),
+        service.createStructure(TEST_IDS.TENANT, invalidInput as CreateLocationStructureInput)
       ).rejects.toThrow();
     });
   });
@@ -198,11 +192,7 @@ describe('LocationService', () => {
       vi.mocked(mockRepository.getStructure).mockResolvedValue(structure);
       vi.mocked(mockRepository.findByCode).mockResolvedValue(createTestLocation());
 
-      const result = await service.validateCode(
-        TEST_IDS.TENANT,
-        TEST_IDS.WAREHOUSE,
-        'K1-P2-D3',
-      );
+      const result = await service.validateCode(TEST_IDS.TENANT, TEST_IDS.WAREHOUSE, 'K1-P2-D3');
 
       expect(result.isValid).toBe(true);
       expect(result.parsed).toEqual({
@@ -217,11 +207,7 @@ describe('LocationService', () => {
       const structure = createTestStructure();
       vi.mocked(mockRepository.getStructure).mockResolvedValue(structure);
 
-      const result = await service.validateCode(
-        TEST_IDS.TENANT,
-        TEST_IDS.WAREHOUSE,
-        'INVALID',
-      );
+      const result = await service.validateCode(TEST_IDS.TENANT, TEST_IDS.WAREHOUSE, 'INVALID');
 
       expect(result.isValid).toBe(false);
       expect(result.errorCode).toBe('INVALID_FORMAT');
@@ -234,7 +220,7 @@ describe('LocationService', () => {
       const result = await service.validateCode(
         TEST_IDS.TENANT,
         TEST_IDS.WAREHOUSE,
-        'K10-P2-D3', // K10 > maxKommando(5)
+        'K10-P2-D3' // K10 > maxKommando(5)
       );
 
       expect(result.isValid).toBe(false);
@@ -246,11 +232,7 @@ describe('LocationService', () => {
       vi.mocked(mockRepository.getStructure).mockResolvedValue(structure);
       vi.mocked(mockRepository.findByCode).mockResolvedValue(null);
 
-      const result = await service.validateCode(
-        TEST_IDS.TENANT,
-        TEST_IDS.WAREHOUSE,
-        'K1-P2-D3',
-      );
+      const result = await service.validateCode(TEST_IDS.TENANT, TEST_IDS.WAREHOUSE, 'K1-P2-D3');
 
       expect(result.isValid).toBe(false);
       expect(result.errorCode).toBe('NOT_EXISTS');
@@ -262,11 +244,7 @@ describe('LocationService', () => {
       vi.mocked(mockRepository.getStructure).mockResolvedValue(structure);
       vi.mocked(mockRepository.findByCode).mockResolvedValue(inactiveLocation);
 
-      const result = await service.validateCode(
-        TEST_IDS.TENANT,
-        TEST_IDS.WAREHOUSE,
-        'K1-P2-D3',
-      );
+      const result = await service.validateCode(TEST_IDS.TENANT, TEST_IDS.WAREHOUSE, 'K1-P2-D3');
 
       expect(result.isValid).toBe(false);
       expect(result.errorCode).toBe('INACTIVE');
@@ -387,9 +365,9 @@ describe('LocationService', () => {
         dobozCount: 50, // 100*50*50 = 250,000 - túl sok
       };
 
-      await expect(
-        service.generateLocations(TEST_IDS.TENANT, largeInput),
-      ).rejects.toThrow('Maximum 50,000 helykód generálható egyszerre');
+      await expect(service.generateLocations(TEST_IDS.TENANT, largeInput)).rejects.toThrow(
+        'Maximum 50,000 helykód generálható egyszerre'
+      );
     });
 
     it('érvénytelen input esetén validációs hiba', async () => {
@@ -399,7 +377,7 @@ describe('LocationService', () => {
       };
 
       await expect(
-        service.generateLocations(TEST_IDS.TENANT, invalidInput as GenerateLocationsInput),
+        service.generateLocations(TEST_IDS.TENANT, invalidInput as GenerateLocationsInput)
       ).rejects.toThrow();
     });
   });
@@ -451,7 +429,7 @@ describe('LocationService', () => {
         expect.objectContaining({
           kommando: 5,
           availableOnly: true,
-        }),
+        })
       );
     });
   });
@@ -467,11 +445,7 @@ describe('LocationService', () => {
       vi.mocked(mockRepository.findById).mockResolvedValue(location);
       vi.mocked(mockRepository.updateOccupancy).mockResolvedValue(updatedLocation);
 
-      const result = await service.updateOccupancy(
-        TEST_IDS.LOCATION_1,
-        TEST_IDS.TENANT,
-        5,
-      );
+      const result = await service.updateOccupancy(TEST_IDS.LOCATION_1, TEST_IDS.TENANT, 5);
 
       expect(result.currentOccupancy).toBe(10);
     });
@@ -482,11 +456,7 @@ describe('LocationService', () => {
       vi.mocked(mockRepository.findById).mockResolvedValue(location);
       vi.mocked(mockRepository.updateOccupancy).mockResolvedValue(updatedLocation);
 
-      const result = await service.updateOccupancy(
-        TEST_IDS.LOCATION_1,
-        TEST_IDS.TENANT,
-        -5,
-      );
+      const result = await service.updateOccupancy(TEST_IDS.LOCATION_1, TEST_IDS.TENANT, -5);
 
       expect(result.currentOccupancy).toBe(5);
     });
@@ -496,7 +466,7 @@ describe('LocationService', () => {
       vi.mocked(mockRepository.findById).mockResolvedValue(location);
 
       await expect(
-        service.updateOccupancy(TEST_IDS.LOCATION_1, TEST_IDS.TENANT, -10),
+        service.updateOccupancy(TEST_IDS.LOCATION_1, TEST_IDS.TENANT, -10)
       ).rejects.toThrow('A foglaltság nem lehet negatív');
     });
 
@@ -509,11 +479,7 @@ describe('LocationService', () => {
       vi.mocked(mockRepository.findById).mockResolvedValue(location);
       vi.mocked(mockRepository.updateOccupancy).mockResolvedValue(fullLocation);
 
-      const result = await service.updateOccupancy(
-        TEST_IDS.LOCATION_1,
-        TEST_IDS.TENANT,
-        5,
-      );
+      const result = await service.updateOccupancy(TEST_IDS.LOCATION_1, TEST_IDS.TENANT, 5);
 
       expect(result.status).toBe('FULL');
     });
@@ -555,9 +521,7 @@ describe('LocationService', () => {
         kommando: 1,
       });
 
-      expect(mockRepository.query).toHaveBeenCalledWith(
-        expect.objectContaining({ kommando: 1 }),
-      );
+      expect(mockRepository.query).toHaveBeenCalledWith(expect.objectContaining({ kommando: 1 }));
     });
   });
 });

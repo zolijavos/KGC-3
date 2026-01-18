@@ -13,5 +13,4 @@ export default defineConfig({
   splitting: false,
   sourcemap: true,
   clean: true,
-  external: ['@kgc/auth', '@kgc/users'],
 });

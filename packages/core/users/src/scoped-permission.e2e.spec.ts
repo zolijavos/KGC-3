@@ -14,26 +14,25 @@
  * - AC8: GLOBAL Scope read-only override
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ScopedPermissionGuard } from './guards/scoped-permission.guard';
-import { ScopedPermissionService } from './services/scoped-permission.service';
-import { RoleScope } from './interfaces/permission.interface';
-import { Role } from './interfaces/user.interface';
-import { AuditAction, IAuditService } from './interfaces/audit.interface';
+import {
+  ROLE_SCOPE_MAP,
+  isGlobalScopedRole,
+  isLocationScopedRole,
+  isTenantScopedRole,
+} from './constants/scoped-permission.constants';
 import {
   SCOPE_REQUIREMENT_KEY,
   ScopeRequirementMetadata,
 } from './decorators/require-scope.decorator';
-import {
-  ROLE_SCOPE_MAP,
-  getScopeForRole,
-  isLocationScopedRole,
-  isTenantScopedRole,
-  isGlobalScopedRole,
-} from './constants/scoped-permission.constants';
+import { ScopedPermissionGuard } from './guards/scoped-permission.guard';
+import { AuditAction, IAuditService } from './interfaces/audit.interface';
+import { RoleScope } from './interfaces/permission.interface';
+import { Role } from './interfaces/user.interface';
+import { ScopedPermissionService } from './services/scoped-permission.service';
 
 // Test UUIDs
 const testUserId = '00000000-0000-0000-0000-000000000001';
@@ -74,9 +73,7 @@ function createMockContext(request: MockRequest): ExecutionContext {
 }
 
 // Mock Reflector for scope requirements
-function createScopeReflector(
-  metadata: ScopeRequirementMetadata | undefined
-): Reflector {
+function createScopeReflector(metadata: ScopeRequirementMetadata | undefined): Reflector {
   return {
     get: vi.fn((key: string) => {
       if (key === SCOPE_REQUIREMENT_KEY) return metadata;
@@ -163,11 +160,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.LOCATION,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -199,11 +192,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.LOCATION,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -229,11 +218,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.LOCATION,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
       await expect(guard.canActivate(context)).rejects.toMatchObject({
@@ -264,11 +249,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.LOCATION,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
     });
@@ -293,11 +274,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.TENANT,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -320,11 +297,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.TENANT,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -349,11 +322,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.TENANT,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
     });
@@ -375,11 +344,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.TENANT,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
     });
@@ -403,11 +368,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.GLOBAL,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -430,11 +391,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.GLOBAL,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -457,11 +414,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.GLOBAL,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -487,11 +440,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         allowGlobalWrite: false,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
       await expect(guard.canActivate(context)).rejects.toMatchObject({
@@ -517,11 +466,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         allowGlobalWrite: false,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
     });
@@ -544,11 +489,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         allowGlobalWrite: false,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
     });
@@ -571,11 +512,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         allowGlobalWrite: true,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -602,11 +539,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.LOCATION,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -632,11 +565,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.LOCATION,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
     });
@@ -661,11 +590,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         resourceIdParam: 'tenantId',
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -690,11 +615,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         resourceIdParam: 'locationId',
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -719,11 +640,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.TENANT,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -747,11 +664,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.LOCATION,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -774,11 +687,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.TENANT,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
     });
@@ -807,11 +716,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.LOCATION,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       await guard.canActivate(context);
 
@@ -843,11 +748,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.LOCATION,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       try {
         await guard.canActivate(context);
@@ -883,11 +784,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
       });
 
       // No audit service
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        null
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, null);
 
       // Should not throw
       const result = await guard.canActivate(context);
@@ -917,11 +814,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
       // No scope requirement
       const reflector = createScopeReflector(undefined);
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -944,11 +837,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         minimumScope: RoleScope.TENANT,
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
@@ -972,11 +861,7 @@ describe('Scoped Permission E2E Tests (Story 2.5)', () => {
         allowGlobalWrite: false, // But same tenant, so should pass
       });
 
-      const guard = new ScopedPermissionGuard(
-        reflector,
-        scopedPermissionService,
-        mockAuditService
-      );
+      const guard = new ScopedPermissionGuard(reflector, scopedPermissionService, mockAuditService);
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);

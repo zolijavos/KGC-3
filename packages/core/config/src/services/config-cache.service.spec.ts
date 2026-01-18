@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ConfigEntry, TypedConfigValue } from '../interfaces/config.interface';
 import { ConfigCacheService } from './config-cache.service';
 import { ConfigService } from './config.service';
 import { FeatureFlagService } from './feature-flag.service';
-import { TypedConfigValue, ConfigEntry, FeatureFlag } from '../interfaces/config.interface';
 
 describe('ConfigCacheService', () => {
   let cacheService: ConfigCacheService;
@@ -124,7 +124,10 @@ describe('ConfigCacheService', () => {
 
   describe('getJson()', () => {
     it('should cache JSON value', async () => {
-      const value: TypedConfigValue<{ name: string }> = { value: { name: 'test' }, source: 'database' };
+      const value: TypedConfigValue<{ name: string }> = {
+        value: { name: 'test' },
+        source: 'database',
+      };
       vi.mocked(mockConfigService.getJson).mockResolvedValue(value);
 
       const result1 = await cacheService.getJson<{ name: string }>('json-config');
@@ -137,7 +140,10 @@ describe('ConfigCacheService', () => {
 
     it('should pass default value when provided', async () => {
       const defaultValue = { fallback: true };
-      const value: TypedConfigValue<{ fallback: boolean }> = { value: defaultValue, source: 'default' };
+      const value: TypedConfigValue<{ fallback: boolean }> = {
+        value: defaultValue,
+        source: 'default',
+      };
       vi.mocked(mockConfigService.getJson).mockResolvedValue(value);
 
       const result = await cacheService.getJson('missing-key', defaultValue);

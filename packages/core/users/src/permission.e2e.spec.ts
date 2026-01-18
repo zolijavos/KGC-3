@@ -14,20 +14,20 @@
  * - AC7: Tenant context integration
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ExecutionContext, ForbiddenException, HttpStatus } from '@nestjs/common';
+import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { of } from 'rxjs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { CONSTRAINT_KEY, ConstraintMetadata } from './decorators/check-constraint.decorator';
+import { PERMISSIONS_KEY, PERMISSION_LOGIC_KEY } from './decorators/require-permission.decorator';
 import { PermissionGuard } from './guards/permission.guard';
 import { ConstraintInterceptor } from './interceptors/constraint.interceptor';
-import { PermissionService } from './services/permission.service';
-import { RoleService } from './services/role.service';
+import { AuditAction, IAuditService } from './interfaces/audit.interface';
 import { Permission } from './interfaces/permission.interface';
 import { Role } from './interfaces/user.interface';
-import { AuditAction, IAuditService } from './interfaces/audit.interface';
-import { PERMISSIONS_KEY, PERMISSION_LOGIC_KEY } from './decorators/require-permission.decorator';
-import { CONSTRAINT_KEY, ConstraintMetadata } from './decorators/check-constraint.decorator';
+import { PermissionService } from './services/permission.service';
+import { RoleService } from './services/role.service';
 
 // C1v2 FIX: Create shared PermissionService for tests
 let permissionService: PermissionService;
@@ -83,9 +83,7 @@ function createPermissionReflector(
 }
 
 // Mock Reflector for constraints
-function createConstraintReflector(
-  constraintMetadata: ConstraintMetadata | undefined
-): Reflector {
+function createConstraintReflector(constraintMetadata: ConstraintMetadata | undefined): Reflector {
   return {
     get: vi.fn((key: string) => {
       if (key === CONSTRAINT_KEY) return constraintMetadata;

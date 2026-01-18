@@ -3,21 +3,25 @@
  * FR31: Partner merge/duplicate detection
  * FR33: Partner azonosítás scan-nel
  */
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import type { IBlacklistRepository } from '../interfaces/blacklist.interface';
+import { BLACKLIST_REPOSITORY } from '../interfaces/blacklist.interface';
+import type { ILoyaltyCardRepository } from '../interfaces/loyalty-card.interface';
+import { LOYALTY_CARD_REPOSITORY } from '../interfaces/loyalty-card.interface';
 import type {
-  PartnerSearchInput,
-  PartnerSearchResult,
-  SearchResult,
   IdentifyPartnerInput,
   IdentifyPartnerResult,
   IPartnerSearchService,
+  PartnerSearchInput,
+  PartnerSearchResult,
+  SearchResult,
 } from '../interfaces/partner-search.interface';
+import type {
+  IPartnerRepository,
+  Partner,
+  PartnerQueryOptions,
+} from '../interfaces/partner.interface';
 import { PARTNER_REPOSITORY } from '../interfaces/partner.interface';
-import type { IPartnerRepository, Partner, PartnerQueryOptions } from '../interfaces/partner.interface';
-import { BLACKLIST_REPOSITORY } from '../interfaces/blacklist.interface';
-import type { IBlacklistRepository } from '../interfaces/blacklist.interface';
-import { LOYALTY_CARD_REPOSITORY } from '../interfaces/loyalty-card.interface';
-import type { ILoyaltyCardRepository } from '../interfaces/loyalty-card.interface';
 
 @Injectable()
 export class PartnerSearchService implements IPartnerSearchService {
@@ -52,7 +56,7 @@ export class PartnerSearchService implements IPartnerSearchService {
 
     // Batch fetch blacklist data to avoid N+1 queries
     // Use Promise.all for parallel execution instead of sequential loop
-    const blacklistPromises = queryResult.items.map(async (partner) => {
+    const blacklistPromises = queryResult.items.map(async partner => {
       const [isBlocked, warnings] = await Promise.all([
         this.blacklistRepository.isBlocked(partner.id, input.tenantId),
         this.blacklistRepository.findActiveByPartner(partner.id, input.tenantId),
@@ -62,7 +66,7 @@ export class PartnerSearchService implements IPartnerSearchService {
 
     const blacklistResults = await Promise.all(blacklistPromises);
     const blacklistMap = new Map(
-      blacklistResults.map((r) => [r.partnerId, { isBlocked: r.isBlocked, warnings: r.warnings }])
+      blacklistResults.map(r => [r.partnerId, { isBlocked: r.isBlocked, warnings: r.warnings }])
     );
 
     const results: SearchResult[] = [];
@@ -104,10 +108,7 @@ export class PartnerSearchService implements IPartnerSearchService {
     );
 
     if (loyaltyCard) {
-      const partner = await this.partnerRepository.findById(
-        loyaltyCard.partnerId,
-        input.tenantId
-      );
+      const partner = await this.partnerRepository.findById(loyaltyCard.partnerId, input.tenantId);
 
       if (partner) {
         return this.buildIdentifyResult(partner, input.tenantId, 'LOYALTY_CARD');
@@ -197,7 +198,7 @@ export class PartnerSearchService implements IPartnerSearchService {
       identifiedBy,
       greeting: this.generateGreeting(partner),
       hasWarnings: warnings.length > 0,
-      warnings: warnings.map((w) => w.description),
+      warnings: warnings.map(w => w.description),
     };
   }
 
@@ -264,9 +265,10 @@ export class PartnerSearchService implements IPartnerSearchService {
 
     const nameParts = partner.name.split(' ');
     // Safe access with noUncheckedIndexedAccess: nameParts[0] is string | undefined
-    const lastName = nameParts.length > 0 && nameParts[0] !== undefined && nameParts[0] !== ''
-      ? nameParts[0]
-      : partner.name;
+    const lastName =
+      nameParts.length > 0 && nameParts[0] !== undefined && nameParts[0] !== ''
+        ? nameParts[0]
+        : partner.name;
 
     return `Üdv újra, ${lastName}!`;
   }
@@ -275,7 +277,7 @@ export class PartnerSearchService implements IPartnerSearchService {
    * Telefonszám-e?
    */
   private looksLikePhone(value: string): boolean {
-    return /^[\+]?[0-9\s\-\(\)]{6,}$/.test(value);
+    return /^[+]?[0-9\s\-()]{6,}$/.test(value);
   }
 
   /**

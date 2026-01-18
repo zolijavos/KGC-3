@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { OnboardingStatus, OnboardingStep } from '../interfaces/onboarding.interface';
+import { DEFAULT_TENANT_SETTINGS, TenantStatus } from '../interfaces/tenant.interface';
 import { OnboardingService } from './onboarding.service';
-import { OnboardingStep, OnboardingStatus } from '../interfaces/onboarding.interface';
-import { TenantStatus, DEFAULT_TENANT_SETTINGS } from '../interfaces/tenant.interface';
 
 /**
  * TDD Tests for OnboardingService
@@ -11,8 +11,8 @@ import { TenantStatus, DEFAULT_TENANT_SETTINGS } from '../interfaces/tenant.inte
 
 // Valid UUID v4 format
 const VALID_TENANT_ID = 'a1b2c3d4-e5f6-4890-abcd-ef1234567890';
-const VALID_SESSION_ID = 'b2c3d4e5-f6a7-4901-8cde-f12345678901';
-const VALID_USER_ID = 'c3d4e5f6-a7b8-4012-9def-123456789012';
+const _VALID_SESSION_ID = 'b2c3d4e5-f6a7-4901-8cde-f12345678901';
+const _VALID_USER_ID = 'c3d4e5f6-a7b8-4012-9def-123456789012';
 
 // Mock services
 const mockTenantService = {
@@ -85,8 +85,7 @@ describe('OnboardingService', () => {
         contactEmail: 'admin@kgc-szeged.hu',
       };
 
-      await expect(onboardingService.startOnboarding(invalidDto))
-        .rejects.toThrow();
+      await expect(onboardingService.startOnboarding(invalidDto)).rejects.toThrow();
     });
 
     it('should validate slug format', async () => {
@@ -96,8 +95,7 @@ describe('OnboardingService', () => {
         contactEmail: 'admin@kgc-szeged.hu',
       };
 
-      await expect(onboardingService.startOnboarding(invalidDto))
-        .rejects.toThrow();
+      await expect(onboardingService.startOnboarding(invalidDto)).rejects.toThrow();
     });
   });
 
@@ -189,9 +187,9 @@ describe('OnboardingService', () => {
     });
 
     it('should fail if session not found', async () => {
-      await expect(
-        onboardingService.completeOnboarding('non-existent-session')
-      ).rejects.toThrow('Onboarding session nem található');
+      await expect(onboardingService.completeOnboarding('non-existent-session')).rejects.toThrow(
+        'Onboarding session nem található'
+      );
     });
 
     it('should fail if required steps not completed', async () => {
@@ -203,9 +201,9 @@ describe('OnboardingService', () => {
       const session = await onboardingService.startOnboarding(startDto);
 
       // Try to complete without admin user step
-      await expect(
-        onboardingService.completeOnboarding(session.id)
-      ).rejects.toThrow('Hiányzó lépések');
+      await expect(onboardingService.completeOnboarding(session.id)).rejects.toThrow(
+        'Hiányzó lépések'
+      );
     });
   });
 

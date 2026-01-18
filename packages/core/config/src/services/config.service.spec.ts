@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ConfigEntry, ConfigValueType, IConfigRepository } from '../interfaces/config.interface';
 import { ConfigService } from './config.service';
-import { IConfigRepository, ConfigEntry, ConfigValueType } from '../interfaces/config.interface';
 
 describe('ConfigService', () => {
   let service: ConfigService;
@@ -195,7 +195,7 @@ describe('ConfigService', () => {
       const entry = createMockEntry({ value: '42', type: 'number' });
       vi.mocked(mockRepository.set).mockResolvedValue(entry);
 
-      const result = await service.set('test-key', 42, 'number');
+      await service.set('test-key', 42, 'number');
 
       expect(mockRepository.set).toHaveBeenCalledWith(
         expect.objectContaining({ value: '42', type: 'number' })
@@ -262,10 +262,7 @@ describe('ConfigService', () => {
 
   describe('list()', () => {
     it('should return all config entries', async () => {
-      const entries = [
-        createMockEntry({ key: 'key-1' }),
-        createMockEntry({ key: 'key-2' }),
-      ];
+      const entries = [createMockEntry({ key: 'key-1' }), createMockEntry({ key: 'key-2' })];
       vi.mocked(mockRepository.list).mockResolvedValue(entries);
 
       const result = await service.list();
@@ -277,7 +274,7 @@ describe('ConfigService', () => {
       const entries = [createMockEntry({ tenantId: 'tenant-1' })];
       vi.mocked(mockRepository.list).mockResolvedValue(entries);
 
-      const result = await service.list('tenant-1');
+      await service.list('tenant-1');
 
       expect(mockRepository.list).toHaveBeenCalledWith('tenant-1');
     });

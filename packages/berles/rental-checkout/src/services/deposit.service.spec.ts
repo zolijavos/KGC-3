@@ -5,17 +5,15 @@
  * TDD RED PHASE - Ezek a tesztek FAILELNI fognak amíg nincs implementáció!
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { DepositService } from './deposit.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CreateDepositDto } from '../dto/deposit.dto';
 import {
-  DepositStatus,
   DepositPaymentMethod,
   DepositRetentionReason,
+  DepositStatus,
   IDeposit,
-  IDepositCollectionInput,
-  IDepositCalculationResult,
 } from '../interfaces/deposit.interface';
-import { CreateDepositDto } from '../dto/deposit.dto';
+import { DepositService } from './deposit.service';
 
 // Mock dependencies
 const mockDepositRepository = {
@@ -54,7 +52,7 @@ describe('DepositService', () => {
       mockDepositRepository as any,
       mockRentalService as any,
       mockPartnerService as any,
-      mockAuditService as any,
+      mockAuditService as any
     );
 
     // Default mock returns
@@ -85,14 +83,13 @@ describe('DepositService', () => {
   describe('calculateSuggestedAmount()', () => {
     describe('happy path', () => {
       it('should suggest deposit based on equipment value (10%)', async () => {
-        // Arrange
-        const equipmentValue = 500000; // 500.000 Ft
+        // Arrange - equipment value set in mock: 500.000 Ft → 10% = 50.000 Ft
 
         // Act
         const result = await service.calculateSuggestedAmount(
           mockRentalId,
           mockPartnerId,
-          mockTenantId,
+          mockTenantId
         );
 
         // Assert
@@ -109,7 +106,7 @@ describe('DepositService', () => {
         const result = await service.calculateSuggestedAmount(
           mockRentalId,
           mockPartnerId,
-          mockTenantId,
+          mockTenantId
         );
 
         // Assert
@@ -132,7 +129,7 @@ describe('DepositService', () => {
         const result = await service.calculateSuggestedAmount(
           mockRentalId,
           mockPartnerId,
-          mockTenantId,
+          mockTenantId
         );
 
         // Assert
@@ -154,7 +151,7 @@ describe('DepositService', () => {
         const result = await service.calculateSuggestedAmount(
           mockRentalId,
           mockPartnerId,
-          mockTenantId,
+          mockTenantId
         );
 
         // Assert
@@ -174,7 +171,7 @@ describe('DepositService', () => {
         const result = await service.calculateSuggestedAmount(
           mockRentalId,
           mockPartnerId,
-          mockTenantId,
+          mockTenantId
         );
 
         // Assert
@@ -187,7 +184,7 @@ describe('DepositService', () => {
 
         // Act & Assert
         await expect(
-          service.calculateSuggestedAmount(mockRentalId, mockPartnerId, mockTenantId),
+          service.calculateSuggestedAmount(mockRentalId, mockPartnerId, mockTenantId)
         ).rejects.toThrow('Bérlés nem található');
       });
     });
@@ -251,7 +248,7 @@ describe('DepositService', () => {
             entityType: 'deposit',
             userId: mockUserId,
             tenantId: mockTenantId,
-          }),
+          })
         );
       });
     });
@@ -263,7 +260,7 @@ describe('DepositService', () => {
 
         // Act & Assert
         await expect(service.collect(validCashInput, mockTenantId, mockUserId)).rejects.toThrow(
-          'Bérlés nem aktív',
+          'Bérlés nem aktív'
         );
       });
 
@@ -276,7 +273,7 @@ describe('DepositService', () => {
 
         // Act & Assert
         await expect(service.collect(validCashInput, mockTenantId, mockUserId)).rejects.toThrow(
-          'Már létezik kaució ehhez a bérléshez',
+          'Már létezik kaució ehhez a bérléshez'
         );
       });
     });
@@ -324,23 +321,23 @@ describe('DepositService', () => {
           notes: 'Transaction: TRX-123456',
         };
 
-        mockDepositRepository.create.mockImplementation((data) =>
+        mockDepositRepository.create.mockImplementation(data =>
           Promise.resolve({
             ...data,
             id: '990e8400-e29b-41d4-a716-446655440004',
             createdAt: new Date(),
             updatedAt: new Date(),
-          }),
+          })
         );
 
         // Act
-        const result = await service.collect(inputWithTransactionId, mockTenantId, mockUserId);
+        await service.collect(inputWithTransactionId, mockTenantId, mockUserId);
 
         // Assert
         expect(mockDepositRepository.create).toHaveBeenCalledWith(
           expect.objectContaining({
             paymentMethod: DepositPaymentMethod.CARD,
-          }),
+          })
         );
       });
     });
@@ -361,7 +358,7 @@ describe('DepositService', () => {
 
       // Act & Assert
       await expect(service.collect(invalidInput, mockTenantId, mockUserId)).rejects.toThrow(
-        'Kaució összeg nem lehet negatív',
+        'Kaució összeg nem lehet negatív'
       );
     });
 
@@ -376,7 +373,7 @@ describe('DepositService', () => {
 
       // Act & Assert
       await expect(service.collect(invalidInput, mockTenantId, mockUserId)).rejects.toThrow(
-        'Kaució összeg maximum 1.000.000 Ft',
+        'Kaució összeg maximum 1.000.000 Ft'
       );
     });
 
@@ -416,7 +413,7 @@ describe('DepositService', () => {
 
       // Act & Assert
       await expect(service.collect(invalidInput, mockTenantId, mockUserId)).rejects.toThrow(
-        'Érvénytelen bérlés azonosító',
+        'Érvénytelen bérlés azonosító'
       );
     });
 
@@ -433,7 +430,7 @@ describe('DepositService', () => {
 
       // Act & Assert
       await expect(service.collect(validInput, mockTenantId, mockUserId)).rejects.toThrow(
-        'Partner nem található',
+        'Partner nem található'
       );
     });
   });
@@ -493,7 +490,7 @@ describe('DepositService', () => {
 
       // Act & Assert
       await expect(service.collect(validInput, mockTenantId, mockUserId)).rejects.toThrow(
-        'Hozzáférés megtagadva',
+        'Hozzáférés megtagadva'
       );
     });
   });
@@ -517,7 +514,7 @@ describe('DepositService', () => {
         const result = await service.calculateSuggestedAmount(
           mockRentalId,
           mockPartnerId,
-          mockTenantId,
+          mockTenantId
         );
 
         expect(result.suggestedAmount).toBeGreaterThanOrEqual(0);
@@ -539,7 +536,7 @@ describe('DepositService', () => {
         const result = await service.calculateSuggestedAmount(
           mockRentalId,
           mockPartnerId,
-          mockTenantId,
+          mockTenantId
         );
 
         expect(result.suggestedAmount).toBeLessThanOrEqual(500000);
@@ -560,7 +557,7 @@ describe('DepositService', () => {
         const result = await service.calculateSuggestedAmount(
           mockRentalId,
           mockPartnerId,
-          mockTenantId,
+          mockTenantId
         );
 
         expect(result.suggestedAmount % 1000).toBe(0);
@@ -708,7 +705,7 @@ describe('DepositService', () => {
           mockDepositId,
           expect.objectContaining({
             status: DepositStatus.RELEASED,
-          }),
+          })
         );
       });
 
@@ -734,7 +731,7 @@ describe('DepositService', () => {
               releasedAmount: 50000,
               previousStatus: DepositStatus.COLLECTED,
             }),
-          }),
+          })
         );
       });
     });
@@ -779,7 +776,7 @@ describe('DepositService', () => {
             metadata: expect.objectContaining({
               myposTransactionId: 'mypos-txn-12345',
             }),
-          }),
+          })
         );
       });
     });
@@ -800,7 +797,7 @@ describe('DepositService', () => {
           retainedAmount,
           'Sérülés: karcolás a gépen',
           mockTenantId,
-          mockUserId,
+          mockUserId
         );
 
         // Assert
@@ -809,21 +806,21 @@ describe('DepositService', () => {
           mockDepositId,
           expect.objectContaining({
             status: DepositStatus.PARTIALLY_RETAINED,
-          }),
+          })
         );
       });
 
       it('should require description for partial release', async () => {
         // Arrange & Act & Assert
         await expect(
-          service.releasePartial(mockDepositId, 10000, '', mockTenantId, mockUserId),
+          service.releasePartial(mockDepositId, 10000, '', mockTenantId, mockUserId)
         ).rejects.toThrow('Indoklás kötelező részleges visszatartás esetén');
       });
 
       it('should reject if retained amount exceeds deposit', async () => {
         // Arrange & Act & Assert
         await expect(
-          service.releasePartial(mockDepositId, 60000, 'Sérülés', mockTenantId, mockUserId),
+          service.releasePartial(mockDepositId, 60000, 'Sérülés', mockTenantId, mockUserId)
         ).rejects.toThrow('Visszatartott összeg nem lehet nagyobb mint a kaució');
       });
     });
@@ -838,7 +835,7 @@ describe('DepositService', () => {
 
         // Act & Assert
         await expect(service.release(mockDepositId, mockTenantId, mockUserId)).rejects.toThrow(
-          'Kaució nem adható vissza',
+          'Kaució nem adható vissza'
         );
       });
 
@@ -869,7 +866,7 @@ describe('DepositService', () => {
 
         // Act & Assert
         await expect(service.release(mockDepositId, mockTenantId, mockUserId)).rejects.toThrow(
-          'Kaució nem adható vissza',
+          'Kaució nem adható vissza'
         );
       });
 
@@ -879,7 +876,7 @@ describe('DepositService', () => {
 
         // Act & Assert
         await expect(service.release(mockDepositId, mockTenantId, mockUserId)).rejects.toThrow(
-          'Kaució nem található',
+          'Kaució nem található'
         );
       });
 
@@ -889,7 +886,7 @@ describe('DepositService', () => {
 
         // Act & Assert
         await expect(service.release(mockDepositId, differentTenantId, mockUserId)).rejects.toThrow(
-          'Kaució nem található',
+          'Kaució nem található'
         );
       });
     });
@@ -960,7 +957,7 @@ describe('DepositService', () => {
           DepositRetentionReason.EQUIPMENT_DAMAGE,
           'Súlyos sérülés: motor tönkrement',
           mockTenantId,
-          mockUserId,
+          mockUserId
         );
 
         // Assert
@@ -969,7 +966,7 @@ describe('DepositService', () => {
           mockDepositId,
           expect.objectContaining({
             status: DepositStatus.RETAINED,
-          }),
+          })
         );
       });
 
@@ -986,7 +983,7 @@ describe('DepositService', () => {
           DepositRetentionReason.EQUIPMENT_LOST,
           'Bérgép elveszett',
           mockTenantId,
-          mockUserId,
+          mockUserId
         );
 
         // Assert
@@ -1001,8 +998,8 @@ describe('DepositService', () => {
             DepositRetentionReason.EQUIPMENT_DAMAGE,
             '',
             mockTenantId,
-            mockUserId,
-          ),
+            mockUserId
+          )
         ).rejects.toThrow('Leírás kötelező');
       });
     });
@@ -1023,7 +1020,7 @@ describe('DepositService', () => {
           DepositRetentionReason.EQUIPMENT_DAMAGE,
           'Kisebb karcolás a burkolaton',
           mockTenantId,
-          mockUserId,
+          mockUserId
         );
 
         // Assert
@@ -1039,8 +1036,8 @@ describe('DepositService', () => {
             DepositRetentionReason.EQUIPMENT_DAMAGE,
             'Sérülés',
             mockTenantId,
-            mockUserId,
-          ),
+            mockUserId
+          )
         ).rejects.toThrow('Visszatartott összeg nem lehet nagyobb mint a kaució');
       });
 
@@ -1053,8 +1050,8 @@ describe('DepositService', () => {
             DepositRetentionReason.EQUIPMENT_DAMAGE,
             'Sérülés',
             mockTenantId,
-            mockUserId,
-          ),
+            mockUserId
+          )
         ).rejects.toThrow('Visszatartott összeg nem lehet negatív');
       });
     });
@@ -1081,7 +1078,7 @@ describe('DepositService', () => {
           DepositRetentionReason.EQUIPMENT_DAMAGE,
           'Sérülés - MyPOS capture szükséges',
           mockTenantId,
-          mockUserId,
+          mockUserId
         );
 
         // Assert
@@ -1102,7 +1099,7 @@ describe('DepositService', () => {
           DepositRetentionReason.EQUIPMENT_DAMAGE,
           'Sérülés',
           mockTenantId,
-          mockUserId,
+          mockUserId
         );
 
         // Assert
@@ -1111,7 +1108,7 @@ describe('DepositService', () => {
             metadata: expect.objectContaining({
               myposTransactionId: 'mypos-txn-12345',
             }),
-          }),
+          })
         );
       });
     });
@@ -1136,7 +1133,7 @@ describe('DepositService', () => {
           reason,
           description,
           mockTenantId,
-          mockUserId,
+          mockUserId
         );
 
         // Assert
@@ -1159,8 +1156,8 @@ describe('DepositService', () => {
             DepositRetentionReason.EQUIPMENT_DAMAGE,
             'Sérülés',
             mockTenantId,
-            mockUserId,
-          ),
+            mockUserId
+          )
         ).rejects.toThrow('Kaució nem tartható vissza');
       });
 
@@ -1181,7 +1178,7 @@ describe('DepositService', () => {
           DepositRetentionReason.EQUIPMENT_DAMAGE,
           'Sérülés',
           mockTenantId,
-          mockUserId,
+          mockUserId
         );
 
         // Assert
@@ -1199,8 +1196,8 @@ describe('DepositService', () => {
             DepositRetentionReason.EQUIPMENT_DAMAGE,
             'Sérülés',
             mockTenantId,
-            mockUserId,
-          ),
+            mockUserId
+          )
         ).rejects.toThrow('Kaució nem található');
       });
 
@@ -1215,8 +1212,8 @@ describe('DepositService', () => {
             DepositRetentionReason.EQUIPMENT_DAMAGE,
             'Sérülés',
             differentTenantId,
-            mockUserId,
-          ),
+            mockUserId
+          )
         ).rejects.toThrow('Kaució nem található');
       });
     });
@@ -1235,7 +1232,7 @@ describe('DepositService', () => {
           DepositRetentionReason.EQUIPMENT_DAMAGE,
           'Motor tönkrement a túlterhelés miatt',
           mockTenantId,
-          mockUserId,
+          mockUserId
         );
 
         // Assert
@@ -1270,7 +1267,7 @@ describe('DepositService', () => {
           DepositRetentionReason.CLEANING_FEE,
           'Olajfolt tisztítása',
           mockTenantId,
-          mockUserId,
+          mockUserId
         );
 
         // Assert

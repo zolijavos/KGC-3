@@ -1,11 +1,10 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { LicenseService } from './license.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  DEFAULT_LICENSE_LIMITS,
   ILicenseRepository,
   License,
-  LicenseType,
-  DEFAULT_LICENSE_LIMITS,
 } from '../interfaces/license.interface';
+import { LicenseService } from './license.service';
 
 describe('LicenseService', () => {
   let service: LicenseService;
@@ -115,7 +114,7 @@ describe('LicenseService', () => {
 
       expect(result.isValid).toBe(true);
       expect(result.status).toBe('GRACE_PERIOD');
-      expect(result.warnings.some((w) => w.toLowerCase().includes('grace period'))).toBe(true);
+      expect(result.warnings.some(w => w.toLowerCase().includes('grace period'))).toBe(true);
     });
 
     it('should return warning when license expires soon', async () => {
@@ -126,7 +125,7 @@ describe('LicenseService', () => {
       const result = await service.validateLicense(tenantId);
 
       expect(result.isValid).toBe(true);
-      expect(result.warnings.some((w) => w.includes('expires in'))).toBe(true);
+      expect(result.warnings.some(w => w.includes('expires in'))).toBe(true);
     });
 
     it('should return invalid when license is suspended', async () => {
@@ -254,7 +253,7 @@ describe('LicenseService', () => {
       const expectedLicense = createMockLicense({ type: 'BASIC' });
       vi.mocked(mockRepository.set).mockResolvedValue(expectedLicense);
 
-      const result = await service.createLicense(tenantId, 'BASIC', 30);
+      await service.createLicense(tenantId, 'BASIC', 30);
 
       expect(mockRepository.set).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -272,9 +271,7 @@ describe('LicenseService', () => {
 
       await service.createLicense(tenantId, 'PRO', 30, { maxUsers: 100 });
 
-      expect(mockRepository.set).toHaveBeenCalledWith(
-        expect.objectContaining({ maxUsers: 100 })
-      );
+      expect(mockRepository.set).toHaveBeenCalledWith(expect.objectContaining({ maxUsers: 100 }));
     });
 
     it('should throw error for zero or negative duration', async () => {
@@ -330,7 +327,7 @@ describe('LicenseService', () => {
         ...updates,
       }));
 
-      const result = await service.extendLicense(tenantId, 30);
+      await service.extendLicense(tenantId, 30);
 
       expect(mockRepository.update).toHaveBeenCalled();
       // Check that the new expiration is roughly 30 days after the existing one

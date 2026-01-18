@@ -6,16 +6,16 @@
  * TDD Red-Green-Refactor
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CallHandler, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { of } from 'rxjs';
-import { ConstraintInterceptor } from './constraint.interceptor';
-import { PermissionService } from '../services/permission.service';
-import { RoleService } from '../services/role.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CONSTRAINT_KEY, ConstraintMetadata } from '../decorators/check-constraint.decorator';
 import { Permission } from '../interfaces/permission.interface';
 import { Role } from '../interfaces/user.interface';
-import { CONSTRAINT_KEY, ConstraintMetadata } from '../decorators/check-constraint.decorator';
+import { PermissionService } from '../services/permission.service';
+import { RoleService } from '../services/role.service';
+import { ConstraintInterceptor } from './constraint.interceptor';
 
 // C1v2 FIX: Create shared PermissionService for tests
 let permissionService: PermissionService;
@@ -52,9 +52,7 @@ function createMockExecutionContext(
 }
 
 // Mock Reflector factory
-function createMockReflector(
-  constraintMetadata: ConstraintMetadata | undefined
-): Reflector {
+function createMockReflector(constraintMetadata: ConstraintMetadata | undefined): Reflector {
   return {
     get: vi.fn((key: string) => {
       if (key === CONSTRAINT_KEY) return constraintMetadata;
@@ -137,7 +135,7 @@ describe('ConstraintInterceptor', () => {
       );
 
       // Act
-      const result = interceptor.intercept(context, mockCallHandler);
+      interceptor.intercept(context, mockCallHandler);
 
       // Assert
       expect(mockCallHandler.handle).toHaveBeenCalled();
@@ -160,9 +158,7 @@ describe('ConstraintInterceptor', () => {
       );
 
       // Act & Assert
-      expect(() => interceptor.intercept(context, mockCallHandler)).toThrow(
-        ForbiddenException
-      );
+      expect(() => interceptor.intercept(context, mockCallHandler)).toThrow(ForbiddenException);
     });
 
     it('should include limit in error message', () => {
@@ -210,9 +206,7 @@ describe('ConstraintInterceptor', () => {
       );
 
       // Act & Assert
-      expect(() => interceptor.intercept(context, mockCallHandler)).toThrow(
-        ForbiddenException
-      );
+      expect(() => interceptor.intercept(context, mockCallHandler)).toThrow(ForbiddenException);
     });
 
     it('should allow negative value within limit when using absolute value', () => {
@@ -230,7 +224,7 @@ describe('ConstraintInterceptor', () => {
       );
 
       // Act
-      const result = interceptor.intercept(context, mockCallHandler);
+      interceptor.intercept(context, mockCallHandler);
 
       // Assert
       expect(mockCallHandler.handle).toHaveBeenCalled();
@@ -283,7 +277,7 @@ describe('ConstraintInterceptor', () => {
       );
 
       // Act
-      const result = interceptor.intercept(context, mockCallHandler);
+      interceptor.intercept(context, mockCallHandler);
 
       // Assert
       expect(mockCallHandler.handle).toHaveBeenCalled();
@@ -302,9 +296,7 @@ describe('ConstraintInterceptor', () => {
       const context = createMockExecutionContext(null, { discountPercent: 10 });
 
       // Act & Assert
-      expect(() => interceptor.intercept(context, mockCallHandler)).toThrow(
-        ForbiddenException
-      );
+      expect(() => interceptor.intercept(context, mockCallHandler)).toThrow(ForbiddenException);
     });
   });
 
@@ -323,7 +315,7 @@ describe('ConstraintInterceptor', () => {
       );
 
       // Act
-      const result = interceptor.intercept(context, mockCallHandler);
+      interceptor.intercept(context, mockCallHandler);
 
       // Assert
       expect(mockCallHandler.handle).toHaveBeenCalled();
@@ -345,7 +337,7 @@ describe('ConstraintInterceptor', () => {
       );
 
       // Act
-      const result = interceptor.intercept(context, mockCallHandler);
+      interceptor.intercept(context, mockCallHandler);
 
       // Assert - should allow because no constraint is defined for this permission/role
       expect(mockCallHandler.handle).toHaveBeenCalled();

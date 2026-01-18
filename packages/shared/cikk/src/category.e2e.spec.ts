@@ -1,18 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CategoryService } from './services/category.service';
-import { CategoryStatsService } from './services/category-stats.service';
-import { HierarchyValidationService } from './services/hierarchy-validation.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { parseCategoryFilterFromQuery } from './dto/category-filter.dto';
+import { safeValidateCreateCategoryDto } from './dto/create-category.dto';
 import { CategoryStatus, MAX_CATEGORY_DEPTH } from './interfaces/category.interface';
-import {
-  validateCreateCategoryDto,
-  safeValidateCreateCategoryDto,
-} from './dto/create-category.dto';
-import {
-  validateUpdateCategoryDto,
-} from './dto/update-category.dto';
-import {
-  parseCategoryFilterFromQuery,
-} from './dto/category-filter.dto';
+import { CategoryStatsService } from './services/category-stats.service';
+import { CategoryService } from './services/category.service';
+import { HierarchyValidationService } from './services/hierarchy-validation.service';
 
 /**
  * E2E Tests for Category (Cikkcsoport)
@@ -226,9 +218,9 @@ describe('Category E2E Tests (Story 8-2)', () => {
         path: '/a/b/c/d',
       });
 
-      await expect(
-        categoryService.createCategory(TENANT_ID, input, USER_ID)
-      ).rejects.toThrow('maximális');
+      await expect(categoryService.createCategory(TENANT_ID, input, USER_ID)).rejects.toThrow(
+        'maximális'
+      );
     });
 
     it('should detect and prevent circular reference on parent change', async () => {
@@ -351,9 +343,7 @@ describe('Category E2E Tests (Story 8-2)', () => {
         id: ROOT_CAT_ID,
         tenantId: TENANT_ID,
       });
-      mockPrismaService.category.findMany.mockResolvedValue([
-        { id: CHILD_CAT_ID },
-      ]); // One child
+      mockPrismaService.category.findMany.mockResolvedValue([{ id: CHILD_CAT_ID }]); // One child
       mockPrismaService.item.count
         .mockResolvedValueOnce(10) // Direct itemCount
         .mockResolvedValueOnce(25) // Total with children

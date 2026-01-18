@@ -3,9 +3,9 @@
  * Story 8-3: Beszállító Kapcsolat és Import
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CsvImportService } from './csv-import.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CsvImportService } from './csv-import.service';
 
 // Mock Prisma client
 const mockPrismaItem = {
@@ -254,7 +254,7 @@ MA-12345,5900000001234,Fúrógép XYZ,,55000,99900,,db`;
 
       mockPrismaSupplierItemPriceHistory.create.mockResolvedValue({});
 
-      const result = await service.importSupplierItems(
+      await service.importSupplierItems(
         tenantId,
         supplierId,
         csvContent,

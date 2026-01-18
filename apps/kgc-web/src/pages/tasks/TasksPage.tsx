@@ -169,6 +169,180 @@ const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; bgCo
   urgent: { label: 'Sürgős', color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/30' },
 };
 
+// Helper function for date formatting
+const formatDate = (date: Date) => {
+  const now = new Date();
+  const diff = date.getTime() - now.getTime();
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+
+  if (days < 0) return { text: `${Math.abs(days)} napja lejárt`, isOverdue: true };
+  if (days === 0) return { text: 'Ma', isOverdue: false };
+  if (days === 1) return { text: 'Holnap', isOverdue: false };
+  return { text: date.toLocaleDateString('hu-HU'), isOverdue: false };
+};
+
+// TaskCard component - extracted outside to avoid recreation on render
+interface TaskCardProps {
+  task: Task;
+  onDragStart: (task: Task) => void;
+  onSelect: (task: Task) => void;
+}
+
+function TaskCard({ task, onDragStart, onSelect }: TaskCardProps) {
+  const dueInfo = formatDate(task.dueDate);
+
+  return (
+    <div
+      draggable
+      onDragStart={() => onDragStart(task)}
+      onClick={() => onSelect(task)}
+      className="kgc-card-bg cursor-pointer rounded-lg border border-gray-200 p-4 shadow-sm transition-all hover:shadow-md dark:border-gray-700"
+    >
+      {/* Priority & Tags */}
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span
+          className={`rounded px-1.5 py-0.5 text-xs font-medium ${PRIORITY_CONFIG[task.priority].bgColor} ${PRIORITY_CONFIG[task.priority].color}`}
+        >
+          {PRIORITY_CONFIG[task.priority].label}
+        </span>
+        {task.tags.slice(0, 2).map(tag => (
+          <span
+            key={tag}
+            className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+          >
+            #{tag}
+          </span>
+        ))}
+      </div>
+
+      {/* Title */}
+      <h4 className="mb-1 font-medium text-gray-900 dark:text-white">{task.title}</h4>
+      <p className="mb-3 line-clamp-2 text-sm text-gray-500 dark:text-gray-400">
+        {task.description}
+      </p>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between">
+        {/* Assignee */}
+        <div className="flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-kgc-primary text-xs font-medium text-white">
+            {task.assignee.name.charAt(0)}
+          </div>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {task.assignee.name.split(' ')[1]}
+          </span>
+        </div>
+
+        {/* Due date */}
+        <span
+          className={`text-xs ${dueInfo.isOverdue ? 'font-medium text-red-600' : 'text-gray-500 dark:text-gray-400'}`}
+        >
+          {dueInfo.text}
+        </span>
+      </div>
+
+      {/* Meta info */}
+      {(task.comments > 0 || task.attachments > 0) && (
+        <div className="mt-3 flex items-center gap-3 border-t border-gray-100 pt-2 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
+          {task.comments > 0 && (
+            <span className="flex items-center gap-1">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+              {task.comments}
+            </span>
+          )}
+          {task.attachments > 0 && (
+            <span className="flex items-center gap-1">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                />
+              </svg>
+              {task.attachments}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// KanbanColumn component - extracted outside to avoid recreation on render
+interface KanbanColumnProps {
+  status: TaskStatus;
+  tasks: Task[];
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (status: TaskStatus) => void;
+  onTaskDragStart: (task: Task) => void;
+  onTaskSelect: (task: Task) => void;
+}
+
+function KanbanColumn({
+  status,
+  tasks,
+  onDragOver,
+  onDrop,
+  onTaskDragStart,
+  onTaskSelect,
+}: KanbanColumnProps) {
+  const config = STATUS_CONFIG[status];
+
+  return (
+    <div
+      onDragOver={onDragOver}
+      onDrop={() => onDrop(status)}
+      className="flex min-h-[500px] w-80 flex-shrink-0 flex-col rounded-lg bg-gray-50 dark:bg-gray-800/50"
+    >
+      {/* Column header */}
+      <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
+        <div className="flex items-center gap-2">
+          <span className={`h-2 w-2 rounded-full ${config.bgColor}`} />
+          <h3 className={`font-medium ${config.color}`}>{config.label}</h3>
+          <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+            {tasks.length}
+          </span>
+        </div>
+        <button className="rounded p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+            />
+          </svg>
+        </button>
+      </div>
+
+      {/* Tasks */}
+      <div className="flex-1 space-y-3 overflow-y-auto p-3">
+        {tasks.map(task => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            onDragStart={onTaskDragStart}
+            onSelect={onTaskSelect}
+          />
+        ))}
+        {tasks.length === 0 && (
+          <div className="flex h-32 items-center justify-center text-sm text-gray-400 dark:text-gray-500">
+            Nincs feladat
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
   const [filterAssignee, setFilterAssignee] = useState<string>('all');
@@ -187,17 +361,6 @@ export function TasksPage() {
 
   const getTasksByStatus = (status: TaskStatus) => filteredTasks.filter(t => t.status === status);
 
-  const formatDate = (date: Date) => {
-    const now = new Date();
-    const diff = date.getTime() - now.getTime();
-    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-
-    if (days < 0) return { text: `${Math.abs(days)} napja lejárt`, isOverdue: true };
-    if (days === 0) return { text: 'Ma', isOverdue: false };
-    if (days === 1) return { text: 'Holnap', isOverdue: false };
-    return { text: date.toLocaleDateString('hu-HU'), isOverdue: false };
-  };
-
   const handleDragStart = (task: Task) => {
     setDraggedTask(task);
   };
@@ -211,140 +374,6 @@ export function TasksPage() {
       setTasks(tasks.map(t => (t.id === draggedTask.id ? { ...t, status } : t)));
       setDraggedTask(null);
     }
-  };
-
-  const TaskCard = ({ task }: { task: Task }) => {
-    const dueInfo = formatDate(task.dueDate);
-
-    return (
-      <div
-        draggable
-        onDragStart={() => handleDragStart(task)}
-        onClick={() => setSelectedTask(task)}
-        className="kgc-card-bg cursor-pointer rounded-lg border border-gray-200 p-4 shadow-sm transition-all hover:shadow-md dark:border-gray-700"
-      >
-        {/* Priority & Tags */}
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <span
-            className={`rounded px-1.5 py-0.5 text-xs font-medium ${PRIORITY_CONFIG[task.priority].bgColor} ${PRIORITY_CONFIG[task.priority].color}`}
-          >
-            {PRIORITY_CONFIG[task.priority].label}
-          </span>
-          {task.tags.slice(0, 2).map(tag => (
-            <span
-              key={tag}
-              className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
-
-        {/* Title */}
-        <h4 className="mb-1 font-medium text-gray-900 dark:text-white">{task.title}</h4>
-        <p className="mb-3 line-clamp-2 text-sm text-gray-500 dark:text-gray-400">
-          {task.description}
-        </p>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between">
-          {/* Assignee */}
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-kgc-primary text-xs font-medium text-white">
-              {task.assignee.name.charAt(0)}
-            </div>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {task.assignee.name.split(' ')[1]}
-            </span>
-          </div>
-
-          {/* Due date */}
-          <span
-            className={`text-xs ${dueInfo.isOverdue ? 'font-medium text-red-600' : 'text-gray-500 dark:text-gray-400'}`}
-          >
-            {dueInfo.text}
-          </span>
-        </div>
-
-        {/* Meta info */}
-        {(task.comments > 0 || task.attachments > 0) && (
-          <div className="mt-3 flex items-center gap-3 border-t border-gray-100 pt-2 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
-            {task.comments > 0 && (
-              <span className="flex items-center gap-1">
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-                {task.comments}
-              </span>
-            )}
-            {task.attachments > 0 && (
-              <span className="flex items-center gap-1">
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                  />
-                </svg>
-                {task.attachments}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const KanbanColumn = ({ status }: { status: TaskStatus }) => {
-    const columnTasks = getTasksByStatus(status);
-    const config = STATUS_CONFIG[status];
-
-    return (
-      <div
-        onDragOver={handleDragOver}
-        onDrop={() => handleDrop(status)}
-        className="flex min-h-[500px] w-80 flex-shrink-0 flex-col rounded-lg bg-gray-50 dark:bg-gray-800/50"
-      >
-        {/* Column header */}
-        <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
-          <div className="flex items-center gap-2">
-            <span className={`h-2 w-2 rounded-full ${config.bgColor}`} />
-            <h3 className={`font-medium ${config.color}`}>{config.label}</h3>
-            <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-              {columnTasks.length}
-            </span>
-          </div>
-          <button className="rounded p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* Tasks */}
-        <div className="flex-1 space-y-3 overflow-y-auto p-3">
-          {columnTasks.map(task => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-          {columnTasks.length === 0 && (
-            <div className="flex h-32 items-center justify-center text-sm text-gray-400 dark:text-gray-500">
-              Nincs feladat
-            </div>
-          )}
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -451,10 +480,38 @@ export function TasksPage() {
       {/* Kanban Board */}
       <div className="overflow-x-auto p-6">
         <div className="flex gap-6">
-          <KanbanColumn status="todo" />
-          <KanbanColumn status="in_progress" />
-          <KanbanColumn status="review" />
-          <KanbanColumn status="done" />
+          <KanbanColumn
+            status="todo"
+            tasks={getTasksByStatus('todo')}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onTaskDragStart={handleDragStart}
+            onTaskSelect={setSelectedTask}
+          />
+          <KanbanColumn
+            status="in_progress"
+            tasks={getTasksByStatus('in_progress')}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onTaskDragStart={handleDragStart}
+            onTaskSelect={setSelectedTask}
+          />
+          <KanbanColumn
+            status="review"
+            tasks={getTasksByStatus('review')}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onTaskDragStart={handleDragStart}
+            onTaskSelect={setSelectedTask}
+          />
+          <KanbanColumn
+            status="done"
+            tasks={getTasksByStatus('done')}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onTaskDragStart={handleDragStart}
+            onTaskSelect={setSelectedTask}
+          />
         </div>
       </div>
 

@@ -1,19 +1,19 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  IntentRouterService,
-  IKnowledgeBaseRepository,
-  IApprovalQueueRepository,
-  IConversationRepository,
-  IGeminiClient,
-  IChatwootService,
-  IAuditService,
-} from './intent-router.service';
-import {
-  IKnowledgeBaseArticle,
   IApprovalQueueItem,
+  IKnowledgeBaseArticle,
   Intent,
   InteractionStatus,
 } from '../interfaces/koko.interface';
+import {
+  IApprovalQueueRepository,
+  IAuditService,
+  IChatwootService,
+  IConversationRepository,
+  IGeminiClient,
+  IKnowledgeBaseRepository,
+  IntentRouterService,
+} from './intent-router.service';
 
 const mockKnowledgeBaseRepository: IKnowledgeBaseRepository = {
   create: vi.fn(),
@@ -95,7 +95,7 @@ describe('IntentRouterService', () => {
       mockConversationRepository,
       mockGeminiClient,
       mockChatwootService,
-      mockAuditService,
+      mockAuditService
     );
   });
 
@@ -111,27 +111,29 @@ describe('IntentRouterService', () => {
 
       const result = await service.classifyIntent(
         { message: 'Szeretnék gépet bérelni', language: 'hu' },
-        mockTenantId,
+        mockTenantId
       );
 
       expect(result.intent).toBe(Intent.RENTAL_INQUIRY);
       expect(result.confidence).toBe(0.9);
       expect(mockAuditService.log).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'intent_classified' }),
+        expect.objectContaining({ action: 'intent_classified' })
       );
     });
   });
 
   describe('searchKnowledgeBase', () => {
     it('should search knowledge base with embeddings', async () => {
-      (mockGeminiClient.generateEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue([0.1, 0.2, 0.3]);
-      (mockKnowledgeBaseRepository.searchByEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue([
-        { article: mockKbArticle, similarity: 0.9 },
+      (mockGeminiClient.generateEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue([
+        0.1, 0.2, 0.3,
       ]);
+      (mockKnowledgeBaseRepository.searchByEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue(
+        [{ article: mockKbArticle, similarity: 0.9 }]
+      );
 
       const result = await service.searchKnowledgeBase(
         { query: 'bérlés', language: 'hu', limit: 5 },
-        mockTenantId,
+        mockTenantId
       );
 
       expect(result).toHaveLength(1);
@@ -155,7 +157,9 @@ describe('IntentRouterService', () => {
         entities: [],
       });
       (mockGeminiClient.generateEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue([0.1]);
-      (mockKnowledgeBaseRepository.searchByEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+      (mockKnowledgeBaseRepository.searchByEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue(
+        []
+      );
       (mockGeminiClient.generateContent as ReturnType<typeof vi.fn>).mockResolvedValue({
         text: 'Szia! Miben segíthetek?',
         tokenCount: 100,
@@ -181,18 +185,22 @@ describe('IntentRouterService', () => {
         entities: [],
       });
       (mockGeminiClient.generateEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue([0.1]);
-      (mockKnowledgeBaseRepository.searchByEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+      (mockKnowledgeBaseRepository.searchByEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue(
+        []
+      );
       (mockGeminiClient.generateContent as ReturnType<typeof vi.fn>).mockResolvedValue({
         text: 'Nem vagyok biztos...',
         tokenCount: 100,
       });
-      (mockApprovalQueueRepository.create as ReturnType<typeof vi.fn>).mockResolvedValue(mockQueueItem);
+      (mockApprovalQueueRepository.create as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockQueueItem
+      );
 
       const result = await service.processMessage(
         'Valami bonyolult kérdés',
         mockConversationId,
         mockTenantId,
-        'hu',
+        'hu'
       );
 
       expect(result.status).toBe(InteractionStatus.PENDING_APPROVAL);
@@ -213,7 +221,9 @@ describe('IntentRouterService', () => {
         entities: [],
       });
       (mockGeminiClient.generateEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue([0.1]);
-      (mockKnowledgeBaseRepository.searchByEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+      (mockKnowledgeBaseRepository.searchByEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue(
+        []
+      );
       (mockGeminiClient.generateContent as ReturnType<typeof vi.fn>).mockResolvedValue({
         text: 'Sajnálom...',
         tokenCount: 100,
@@ -226,7 +236,7 @@ describe('IntentRouterService', () => {
         'Nagyon dühös vagyok!',
         mockConversationId,
         mockTenantId,
-        'hu',
+        'hu'
       );
 
       expect(result.status).toBe(InteractionStatus.ESCALATED);
@@ -236,7 +246,9 @@ describe('IntentRouterService', () => {
 
   describe('approveResponse', () => {
     it('should approve and send response', async () => {
-      (mockApprovalQueueRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(mockQueueItem);
+      (mockApprovalQueueRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockQueueItem
+      );
       (mockApprovalQueueRepository.update as ReturnType<typeof vi.fn>).mockResolvedValue({
         ...mockQueueItem,
         status: 'approved',
@@ -245,56 +257,66 @@ describe('IntentRouterService', () => {
       const result = await service.approveResponse(
         { queueItemId: mockQueueItemId, approved: true },
         mockTenantId,
-        mockUserId,
+        mockUserId
       );
 
       expect(result.status).toBe('approved');
       expect(mockConversationRepository.addMessage).toHaveBeenCalled();
       expect(mockAuditService.log).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'response_approved' }),
+        expect.objectContaining({ action: 'response_approved' })
       );
     });
 
     it('should approve with edited response', async () => {
-      (mockApprovalQueueRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(mockQueueItem);
+      (mockApprovalQueueRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockQueueItem
+      );
       (mockApprovalQueueRepository.update as ReturnType<typeof vi.fn>).mockResolvedValue({
         ...mockQueueItem,
         status: 'approved',
         editedResponse: 'Módosított válasz',
       });
 
-      const result = await service.approveResponse(
+      await service.approveResponse(
         { queueItemId: mockQueueItemId, approved: true, editedResponse: 'Módosított válasz' },
         mockTenantId,
-        mockUserId,
+        mockUserId
       );
 
       expect(mockConversationRepository.addMessage).toHaveBeenCalledWith(
         mockConversationId,
-        expect.objectContaining({ content: 'Módosított válasz' }),
+        expect.objectContaining({ content: 'Módosított válasz' })
       );
     });
 
     it('should add to knowledge base when requested', async () => {
-      (mockApprovalQueueRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(mockQueueItem);
+      (mockApprovalQueueRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockQueueItem
+      );
       (mockApprovalQueueRepository.update as ReturnType<typeof vi.fn>).mockResolvedValue({
         ...mockQueueItem,
         status: 'approved',
       });
-      (mockGeminiClient.generateEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue([0.1, 0.2]);
-      (mockKnowledgeBaseRepository.create as ReturnType<typeof vi.fn>).mockResolvedValue(mockKbArticle);
+      (mockGeminiClient.generateEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue([
+        0.1, 0.2,
+      ]);
+      (mockKnowledgeBaseRepository.create as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockKbArticle
+      );
 
       await service.approveResponse(
         { queueItemId: mockQueueItemId, approved: true, addToKnowledgeBase: true },
         mockTenantId,
-        mockUserId,
+        mockUserId
       );
 
       expect(mockKnowledgeBaseRepository.create).toHaveBeenCalled();
     });
 
     it('should escalate on rejection', async () => {
-      (mockApprovalQueueRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(mockQueueItem);
+      (mockApprovalQueueRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockQueueItem
+      );
       (mockApprovalQueueRepository.update as ReturnType<typeof vi.fn>).mockResolvedValue({
         ...mockQueueItem,
         status: 'rejected',
@@ -306,7 +328,7 @@ describe('IntentRouterService', () => {
       const result = await service.approveResponse(
         { queueItemId: mockQueueItemId, approved: false },
         mockTenantId,
-        mockUserId,
+        mockUserId
       );
 
       expect(result.status).toBe('rejected');
@@ -314,22 +336,28 @@ describe('IntentRouterService', () => {
     });
 
     it('should throw error on tenant mismatch', async () => {
-      (mockApprovalQueueRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(mockQueueItem);
+      (mockApprovalQueueRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockQueueItem
+      );
 
       await expect(
         service.approveResponse(
           { queueItemId: mockQueueItemId, approved: true },
           'other-tenant',
-          mockUserId,
-        ),
+          mockUserId
+        )
       ).rejects.toThrow('Access denied');
     });
   });
 
   describe('createKbArticle', () => {
     it('should create knowledge base article', async () => {
-      (mockGeminiClient.generateEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue([0.1, 0.2]);
-      (mockKnowledgeBaseRepository.create as ReturnType<typeof vi.fn>).mockResolvedValue(mockKbArticle);
+      (mockGeminiClient.generateEmbedding as ReturnType<typeof vi.fn>).mockResolvedValue([
+        0.1, 0.2,
+      ]);
+      (mockKnowledgeBaseRepository.create as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockKbArticle
+      );
 
       const result = await service.createKbArticle(
         {
@@ -339,21 +367,21 @@ describe('IntentRouterService', () => {
           answer: 'Teszt válasz.',
         },
         mockTenantId,
-        mockUserId,
+        mockUserId
       );
 
       expect(result.question).toBe('Hogyan bérelhetek gépet?');
       expect(mockAuditService.log).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'kb_article_created' }),
+        expect.objectContaining({ action: 'kb_article_created' })
       );
     });
   });
 
   describe('getPendingApprovals', () => {
     it('should return pending approvals', async () => {
-      (mockApprovalQueueRepository.findPendingByTenantId as ReturnType<typeof vi.fn>).mockResolvedValue([
-        mockQueueItem,
-      ]);
+      (
+        mockApprovalQueueRepository.findPendingByTenantId as ReturnType<typeof vi.fn>
+      ).mockResolvedValue([mockQueueItem]);
 
       const result = await service.getPendingApprovals(mockTenantId);
 

@@ -5,24 +5,24 @@
 
 import { Injectable } from '@nestjs/common';
 import {
-  IKnowledgeBaseArticle,
-  IApprovalQueueItem,
+  ApproveResponseDto,
+  ApproveResponseSchema,
+  ClassifyIntentDto,
+  ClassifyIntentSchema,
+  CreateKbArticleDto,
+  CreateKbArticleSchema,
+  SearchKnowledgeBaseDto,
+  SearchKnowledgeBaseSchema,
+} from '../dto/koko.dto';
+import {
   IAiAnalysisResult,
   IAiResponseResult,
+  IApprovalQueueItem,
+  IKnowledgeBaseArticle,
   Intent,
   InteractionStatus,
   Language,
 } from '../interfaces/koko.interface';
-import {
-  ClassifyIntentDto,
-  ClassifyIntentSchema,
-  SearchKnowledgeBaseDto,
-  SearchKnowledgeBaseSchema,
-  CreateKbArticleDto,
-  CreateKbArticleSchema,
-  ApproveResponseDto,
-  ApproveResponseSchema,
-} from '../dto/koko.dto';
 
 export interface IKnowledgeBaseRepository {
   create(data: Partial<IKnowledgeBaseArticle>): Promise<IKnowledgeBaseArticle>;
@@ -32,7 +32,7 @@ export interface IKnowledgeBaseRepository {
     tenantId: string,
     embedding: number[],
     language: Language,
-    limit: number,
+    limit: number
   ): Promise<{ article: IKnowledgeBaseArticle; similarity: number }[]>;
   update(id: string, data: Partial<IKnowledgeBaseArticle>): Promise<IKnowledgeBaseArticle>;
 }
@@ -45,7 +45,10 @@ export interface IApprovalQueueRepository {
 }
 
 export interface IGeminiClient {
-  generateContent(prompt: string, systemPrompt?: string): Promise<{ text: string; tokenCount: number }>;
+  generateContent(
+    prompt: string,
+    systemPrompt?: string
+  ): Promise<{ text: string; tokenCount: number }>;
   generateEmbedding(text: string): Promise<number[]>;
   classifyIntent(message: string, language: Language): Promise<IAiAnalysisResult>;
 }
@@ -54,13 +57,20 @@ export interface IChatwootService {
   escalateConversation(
     conversationId: string,
     tenantId: string,
-    reason: string,
+    reason: string
   ): Promise<{ ticketId: string }>;
 }
 
 export interface IConversationRepository {
-  findById(id: string): Promise<{ id: string; tenantId: string; messages: { role: string; content: string }[] } | null>;
-  addMessage(conversationId: string, message: { role: string; content: string; status: InteractionStatus }): Promise<void>;
+  findById(id: string): Promise<{
+    id: string;
+    tenantId: string;
+    messages: { role: string; content: string }[];
+  } | null>;
+  addMessage(
+    conversationId: string,
+    message: { role: string; content: string; status: InteractionStatus }
+  ): Promise<void>;
 }
 
 export interface IAuditService {
@@ -87,13 +97,10 @@ export class IntentRouterService {
     private readonly conversationRepository: IConversationRepository,
     private readonly geminiClient: IGeminiClient,
     private readonly chatwootService: IChatwootService,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
-  async classifyIntent(
-    input: ClassifyIntentDto,
-    tenantId: string,
-  ): Promise<IAiAnalysisResult> {
+  async classifyIntent(input: ClassifyIntentDto, tenantId: string): Promise<IAiAnalysisResult> {
     const validationResult = ClassifyIntentSchema.safeParse(input);
     if (!validationResult.success) {
       throw new Error(`Validation failed: ${validationResult.error.message}`);
@@ -122,7 +129,7 @@ export class IntentRouterService {
 
   async searchKnowledgeBase(
     input: SearchKnowledgeBaseDto,
-    tenantId: string,
+    tenantId: string
   ): Promise<{ article: IKnowledgeBaseArticle; similarity: number }[]> {
     const validationResult = SearchKnowledgeBaseSchema.safeParse(input);
     if (!validationResult.success) {
@@ -139,7 +146,7 @@ export class IntentRouterService {
       tenantId,
       queryEmbedding,
       validInput.language,
-      validInput.limit,
+      validInput.limit
     );
 
     return results;
@@ -149,7 +156,7 @@ export class IntentRouterService {
     message: string,
     conversationId: string,
     tenantId: string,
-    language: Language,
+    language: Language
   ): Promise<{
     response: string;
     confidence: number;
@@ -165,17 +172,17 @@ export class IntentRouterService {
     // Search knowledge base for relevant content
     const kbResults = await this.searchKnowledgeBase(
       { query: message, language, intent: analysis.intent, limit: 3 },
-      tenantId,
+      tenantId
     );
 
     // Generate response
     const responseResult = await this.generateResponse(
       message,
       analysis,
-      kbResults.map((r) => r.article),
+      kbResults.map(r => r.article),
       history,
       language,
-      tenantId,
+      tenantId
     );
 
     // Decide action based on confidence
@@ -184,13 +191,14 @@ export class IntentRouterService {
       await this.chatwootService.escalateConversation(
         conversationId,
         tenantId,
-        `Low confidence (${analysis.confidence.toFixed(2)}) - Intent: ${analysis.intent}`,
+        `Low confidence (${analysis.confidence.toFixed(2)}) - Intent: ${analysis.intent}`
       );
 
       return {
-        response: language === 'hu'
-          ? 'Kérdésed egy kollégámhoz irányítom, aki hamarosan válaszol.'
-          : 'I am forwarding your question to a colleague who will respond shortly.',
+        response:
+          language === 'hu'
+            ? 'Kérdésed egy kollégámhoz irányítom, aki hamarosan válaszol.'
+            : 'I am forwarding your question to a colleague who will respond shortly.',
         confidence: analysis.confidence,
         status: InteractionStatus.ESCALATED,
       };
@@ -212,9 +220,10 @@ export class IntentRouterService {
       });
 
       return {
-        response: language === 'hu'
-          ? 'Köszönöm a kérdést! Válaszom ellenőrzés alatt van, hamarosan megkapod.'
-          : 'Thank you for your question! My response is being reviewed and you will receive it shortly.',
+        response:
+          language === 'hu'
+            ? 'Köszönöm a kérdést! Válaszom ellenőrzés alatt van, hamarosan megkapod.'
+            : 'Thank you for your question! My response is being reviewed and you will receive it shortly.',
         confidence: analysis.confidence,
         status: InteractionStatus.PENDING_APPROVAL,
       };
@@ -234,29 +243,32 @@ export class IntentRouterService {
     kbArticles: IKnowledgeBaseArticle[],
     history: { role: string; content: string }[],
     language: Language,
-    tenantId: string,
+    _tenantId: string
   ): Promise<IAiResponseResult> {
-    const systemPrompt = language === 'hu'
-      ? `Te a KGC ügyfélszolgálati asszisztense vagy (név: Koko).
+    const systemPrompt =
+      language === 'hu'
+        ? `Te a KGC ügyfélszolgálati asszisztense vagy (név: Koko).
          Válaszolj magyarul, udvariasan és szakszerűen.
          Ha nem tudod a választ biztosan, jelezd.
          Intent: ${analysis.intent}
          Sentiment: ${analysis.sentiment}`
-      : `You are KGC customer service assistant (name: Koko).
+        : `You are KGC customer service assistant (name: Koko).
          Answer in English, politely and professionally.
          If you are not sure about the answer, indicate it.
          Intent: ${analysis.intent}
          Sentiment: ${analysis.sentiment}`;
 
     // Build context from KB articles
-    const kbContext = kbArticles.length > 0
-      ? `\n\nRelevant knowledge base entries:\n${kbArticles.map((a) => `Q: ${a.question}\nA: ${a.answer}`).join('\n\n')}`
-      : '';
+    const kbContext =
+      kbArticles.length > 0
+        ? `\n\nRelevant knowledge base entries:\n${kbArticles.map(a => `Q: ${a.question}\nA: ${a.answer}`).join('\n\n')}`
+        : '';
 
     // Build conversation context
-    const historyContext = history.length > 0
-      ? `\n\nConversation history:\n${history.map((m) => `${m.role}: ${m.content}`).join('\n')}`
-      : '';
+    const historyContext =
+      history.length > 0
+        ? `\n\nConversation history:\n${history.map(m => `${m.role}: ${m.content}`).join('\n')}`
+        : '';
 
     const prompt = `${historyContext}${kbContext}\n\nUser: ${userMessage}\n\nAssistant:`;
 
@@ -264,7 +276,8 @@ export class IntentRouterService {
 
     // Determine action based on confidence
     const shouldAutoSend = analysis.confidence >= AUTO_SEND_THRESHOLD;
-    const shouldEscalate = analysis.confidence < ESCALATION_THRESHOLD || analysis.sentiment === 'negative';
+    const shouldEscalate =
+      analysis.confidence < ESCALATION_THRESHOLD || analysis.sentiment === 'negative';
     const requiresApproval = !shouldAutoSend && !shouldEscalate;
 
     return {
@@ -280,7 +293,7 @@ export class IntentRouterService {
   async approveResponse(
     input: ApproveResponseDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IApprovalQueueItem> {
     const validationResult = ApproveResponseSchema.safeParse(input);
     if (!validationResult.success) {
@@ -336,7 +349,7 @@ export class IntentRouterService {
       await this.chatwootService.escalateConversation(
         queueItem.conversationId,
         tenantId,
-        'Response rejected by admin',
+        'Response rejected by admin'
       );
     }
 
@@ -355,7 +368,7 @@ export class IntentRouterService {
   async createKbArticle(
     input: CreateKbArticleDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IKnowledgeBaseArticle> {
     const validationResult = CreateKbArticleSchema.safeParse(input);
     if (!validationResult.success) {

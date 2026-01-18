@@ -3,10 +3,10 @@
  * Story 8-3: Beszállító Kapcsolat és Import
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SupplierItemService } from './supplier-item.service';
-import { PriceChangeSource } from '../interfaces/supplier.interface';
 import { Decimal } from '@prisma/client/runtime/library';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { PriceChangeSource } from '../interfaces/supplier.interface';
+import { SupplierItemService } from './supplier-item.service';
 
 // Mock Prisma client
 const mockPrismaSupplierItem = {
@@ -258,7 +258,7 @@ describe('SupplierItemService', () => {
       });
       mockPrismaSupplierItemPriceHistory.create.mockResolvedValue({});
 
-      const result = await service.updateSupplierItem(
+      await service.updateSupplierItem(
         'si-123',
         tenantId,
         { costPrice: 1500, leadTimeDays: 3 },
@@ -434,9 +434,9 @@ describe('SupplierItemService', () => {
     it('should throw error if supplier-item not found', async () => {
       mockPrismaSupplierItem.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.setPrimarySupplier('non-existent', tenantId, userId)
-      ).rejects.toThrow('Cikk-beszállító kapcsolat nem található');
+      await expect(service.setPrimarySupplier('non-existent', tenantId, userId)).rejects.toThrow(
+        'Cikk-beszállító kapcsolat nem található'
+      );
     });
   });
 });

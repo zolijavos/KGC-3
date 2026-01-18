@@ -5,21 +5,20 @@
 
 import { Injectable } from '@nestjs/common';
 import {
-  IHorillaEmployee,
-  IKgcUser,
-  IEmployeeMapping,
-  ISyncResult,
-  IHorillaConfig,
-  SyncDirection,
-  SyncStatus,
-  EmployeeStatus,
-} from '../interfaces/horilla-hr.interface';
-import {
-  SyncEmployeesDto,
-  SyncEmployeesSchema,
   CreateEmployeeMappingDto,
   CreateEmployeeMappingSchema,
+  SyncEmployeesDto,
+  SyncEmployeesSchema,
 } from '../dto/horilla-hr.dto';
+import {
+  IEmployeeMapping,
+  IHorillaConfig,
+  IHorillaEmployee,
+  IKgcUser,
+  ISyncResult,
+  SyncDirection,
+  SyncStatus,
+} from '../interfaces/horilla-hr.interface';
 
 export interface IHorillaApiClient {
   getEmployees(filter?: { department?: string; status?: string }): Promise<IHorillaEmployee[]>;
@@ -68,13 +67,13 @@ export class EmployeeSyncService {
     private readonly userRepository: IUserRepository,
     private readonly mappingRepository: IEmployeeMappingRepository,
     private readonly configRepository: IConfigRepository,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
   async syncEmployees(
     input: SyncEmployeesDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<ISyncResult> {
     const validationResult = SyncEmployeesSchema.safeParse(input);
     if (!validationResult.success) {
@@ -109,7 +108,7 @@ export class EmployeeSyncService {
     }
 
     const horillaEmployees = await this.horillaClient.getEmployees(
-      Object.keys(filter).length > 0 ? filter : undefined,
+      Object.keys(filter).length > 0 ? filter : undefined
     );
 
     result.totalRecords = horillaEmployees.length;
@@ -150,7 +149,7 @@ export class EmployeeSyncService {
     tenantId: string,
     config: IHorillaConfig,
     fullSync: boolean,
-    result: ISyncResult,
+    result: ISyncResult
   ): Promise<void> {
     // Check existing mapping
     const mapping = await this.mappingRepository.findByHorillaId(employee.employeeId, tenantId);
@@ -237,7 +236,7 @@ export class EmployeeSyncService {
   async createMapping(
     input: CreateEmployeeMappingDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IEmployeeMapping> {
     const validationResult = CreateEmployeeMappingSchema.safeParse(input);
     if (!validationResult.success) {
@@ -249,7 +248,7 @@ export class EmployeeSyncService {
     // Check if mapping already exists
     const existingByHorilla = await this.mappingRepository.findByHorillaId(
       validInput.horillaEmployeeId,
-      tenantId,
+      tenantId
     );
     if (existingByHorilla) {
       throw new Error('Horilla employee already mapped');

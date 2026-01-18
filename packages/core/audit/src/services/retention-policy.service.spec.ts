@@ -1,13 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { RetentionPolicyService, ARCHIVE_STORAGE } from './retention-policy.service';
-import { AuditService } from './audit.service';
-import {
-  IArchiveStorage,
-  RetentionPolicy,
-  DEFAULT_RETENTION_POLICY,
-  ArchiveBatch,
-} from '../interfaces/retention.interface';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { IAuditRepository } from '../interfaces/audit.interface';
+import { DEFAULT_RETENTION_POLICY, IArchiveStorage } from '../interfaces/retention.interface';
+import { AuditService } from './audit.service';
+import { RetentionPolicyService } from './retention-policy.service';
 
 describe('RetentionPolicyService', () => {
   let retentionService: RetentionPolicyService;
@@ -194,9 +189,9 @@ describe('RetentionPolicyService', () => {
     });
 
     it('should throw error for non-existent batch', async () => {
-      await expect(
-        retentionService.restoreArchive('non-existent', mockTenantId)
-      ).rejects.toThrow('Archive batch not found');
+      await expect(retentionService.restoreArchive('non-existent', mockTenantId)).rejects.toThrow(
+        'Archive batch not found'
+      );
     });
   });
 

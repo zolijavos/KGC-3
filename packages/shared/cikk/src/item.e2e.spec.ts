@@ -1,11 +1,10 @@
-import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from 'vitest';
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Item, ItemStatus, ItemType } from './interfaces/item.interface';
 import { ItemController } from './item.controller';
-import { ItemService } from './services/item.service';
-import { ItemCodeGeneratorService } from './services/item-code-generator.service';
 import { BarcodeService } from './services/barcode.service';
-import { ItemType, ItemStatus, Item } from './interfaces/item.interface';
+import { ItemCodeGeneratorService } from './services/item-code-generator.service';
+import { ItemService } from './services/item.service';
 
 /**
  * E2E Tests for Item CRUD
@@ -318,12 +317,13 @@ describe('Item E2E Tests', () => {
     });
 
     it('should search by name, code, or barcode', async () => {
-      mockPrismaService.item.findMany.mockResolvedValue([
-        { id: ITEM_ID, name: 'Makita fúrógép' },
-      ]);
+      mockPrismaService.item.findMany.mockResolvedValue([{ id: ITEM_ID, name: 'Makita fúrógép' }]);
       mockPrismaService.item.count.mockResolvedValue(1);
 
-      const result = await controller.list({ search: 'makita', page: '1', limit: '20' }, mockTenant);
+      const result = await controller.list(
+        { search: 'makita', page: '1', limit: '20' },
+        mockTenant
+      );
 
       expect(result.data).toHaveLength(1);
     });

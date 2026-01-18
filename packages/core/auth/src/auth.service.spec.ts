@@ -23,17 +23,17 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthService } from './auth.service';
+import { FORGOT_PASSWORD_MESSAGE } from './dto/forgot-password-response.dto';
+import { RESET_PASSWORD_MESSAGES } from './dto/reset-password-response.dto';
 import type { UserForToken } from './interfaces/jwt-payload.interface';
 import type { IEmailService } from './services/email.service';
 import { PasswordResetService } from './services/password-reset.service';
 import { PasswordService } from './services/password.service';
-import { TokenService } from './services/token.service';
-import { PinService } from './services/pin.service';
 import { PinLockoutService } from './services/pin-lockout.service';
+import { PinService } from './services/pin.service';
+import { TokenService } from './services/token.service';
 import { TrustedDeviceService } from './services/trusted-device.service';
-import { AuthService } from './auth.service';
-import { FORGOT_PASSWORD_MESSAGE } from './dto/forgot-password-response.dto';
-import { RESET_PASSWORD_MESSAGES } from './dto/reset-password-response.dto';
 
 // Mock user for testing
 const mockUser: UserForToken = {
@@ -629,9 +629,7 @@ describe('AuthService - Token Refresh', () => {
       const accessToken = await tokenService.generateAccessToken(mockUser);
 
       // P1 fix: Pass userId for ownership validation
-      await expect(authService.logout(accessToken, mockUser.id)).rejects.toThrow(
-        'Invalid token'
-      );
+      await expect(authService.logout(accessToken, mockUser.id)).rejects.toThrow('Invalid token');
     });
 
     // P2 fix: Add missing test for token ownership validation
@@ -691,7 +689,8 @@ describe('AuthService - Token Refresh', () => {
     });
 
     it('should only revoke tokens for the specified user (isolation)', async () => {
-      const otherUserId = '770e8400-e29b-41d4-a716-446655440002';
+      // Note: otherUserId defined for documentation - verifying only mockUser.id is used
+      const _otherUserId = '770e8400-e29b-41d4-a716-446655440002';
       mockPrisma.refreshToken.updateMany.mockResolvedValue({ count: 2 });
 
       await authService.logoutAll(mockUser.id);
@@ -718,8 +717,8 @@ describe('AuthService - PIN Login (Story 1.4)', () => {
   let tokenService: TokenService;
   let passwordService: PasswordService;
   let pinService: PinService;
-  let pinLockoutService: PinLockoutService;
-  let trustedDeviceService: TrustedDeviceService;
+  let _pinLockoutService: PinLockoutService;
+  let _trustedDeviceService: TrustedDeviceService;
   let mockPrisma: ReturnType<typeof createMockPrisma>;
   let validPinHash: string;
 
@@ -748,9 +747,9 @@ describe('AuthService - PIN Login (Story 1.4)', () => {
       passwordService,
       tokenService,
       mockPrisma as unknown as Parameters<typeof AuthService.prototype.login>[2],
-      pinService,  // PinService for PIN verification
-      null,        // No PinLockoutService - use direct Prisma
-      null         // No TrustedDeviceService - use direct Prisma
+      pinService, // PinService for PIN verification
+      null, // No PinLockoutService - use direct Prisma
+      null // No TrustedDeviceService - use direct Prisma
     );
   });
 
@@ -768,15 +767,17 @@ describe('AuthService - PIN Login (Story 1.4)', () => {
       });
 
       // User with PIN set at location (findMany for location-based lookup)
-      mockPrisma.user.findMany.mockResolvedValue([{
-        id: mockUser.id,
-        email: mockUser.email,
-        name: mockUser.name,
-        role: mockUser.role,
-        tenantId: mockUser.tenantId,
-        status: 'ACTIVE',
-        pinHash: validPinHash,
-      }]);
+      mockPrisma.user.findMany.mockResolvedValue([
+        {
+          id: mockUser.id,
+          email: mockUser.email,
+          name: mockUser.name,
+          role: mockUser.role,
+          tenantId: mockUser.tenantId,
+          status: 'ACTIVE',
+          pinHash: validPinHash,
+        },
+      ]);
 
       // No lockout
       mockPrisma.pinAttempt.findUnique.mockResolvedValue(null);
@@ -812,15 +813,17 @@ describe('AuthService - PIN Login (Story 1.4)', () => {
         registeredAt: new Date(),
       });
 
-      mockPrisma.user.findMany.mockResolvedValue([{
-        id: mockUser.id,
-        email: mockUser.email,
-        name: mockUser.name,
-        role: mockUser.role,
-        tenantId: mockUser.tenantId,
-        status: 'ACTIVE',
-        pinHash: validPinHash,
-      }]);
+      mockPrisma.user.findMany.mockResolvedValue([
+        {
+          id: mockUser.id,
+          email: mockUser.email,
+          name: mockUser.name,
+          role: mockUser.role,
+          tenantId: mockUser.tenantId,
+          status: 'ACTIVE',
+          pinHash: validPinHash,
+        },
+      ]);
 
       mockPrisma.pinAttempt.findUnique.mockResolvedValue(null);
       mockPrisma.trustedDevice.update.mockResolvedValue({});
@@ -848,15 +851,17 @@ describe('AuthService - PIN Login (Story 1.4)', () => {
         registeredAt: new Date(),
       });
 
-      mockPrisma.user.findMany.mockResolvedValue([{
-        id: mockUser.id,
-        email: mockUser.email,
-        name: mockUser.name,
-        role: mockUser.role,
-        tenantId: mockUser.tenantId,
-        status: 'ACTIVE',
-        pinHash: validPinHash,
-      }]);
+      mockPrisma.user.findMany.mockResolvedValue([
+        {
+          id: mockUser.id,
+          email: mockUser.email,
+          name: mockUser.name,
+          role: mockUser.role,
+          tenantId: mockUser.tenantId,
+          status: 'ACTIVE',
+          pinHash: validPinHash,
+        },
+      ]);
 
       // Had previous failed attempts
       mockPrisma.pinAttempt.findUnique.mockResolvedValue({
@@ -927,15 +932,17 @@ describe('AuthService - PIN Login (Story 1.4)', () => {
       });
 
       // No matching users (wrong PIN)
-      mockPrisma.user.findMany.mockResolvedValue([{
-        id: mockUser.id,
-        email: mockUser.email,
-        name: mockUser.name,
-        role: mockUser.role,
-        tenantId: mockUser.tenantId,
-        status: 'ACTIVE',
-        pinHash: validPinHash,
-      }]);
+      mockPrisma.user.findMany.mockResolvedValue([
+        {
+          id: mockUser.id,
+          email: mockUser.email,
+          name: mockUser.name,
+          role: mockUser.role,
+          tenantId: mockUser.tenantId,
+          status: 'ACTIVE',
+          pinHash: validPinHash,
+        },
+      ]);
 
       // User is locked out (3+ failed attempts, lockout active)
       mockPrisma.pinAttempt.findUnique.mockResolvedValue({
@@ -947,9 +954,7 @@ describe('AuthService - PIN Login (Story 1.4)', () => {
       });
 
       // Act & Assert
-      await expect(authService.pinLogin(validPin, validDeviceId)).rejects.toThrow(
-        'Fiók zárolva'
-      );
+      await expect(authService.pinLogin(validPin, validDeviceId)).rejects.toThrow('Fiók zárolva');
     });
 
     it('should increment failed attempts on wrong PIN', async () => {
@@ -965,15 +970,17 @@ describe('AuthService - PIN Login (Story 1.4)', () => {
       });
 
       // No matching users for wrong PIN
-      mockPrisma.user.findMany.mockResolvedValue([{
-        id: mockUser.id,
-        email: mockUser.email,
-        name: mockUser.name,
-        role: mockUser.role,
-        tenantId: mockUser.tenantId,
-        status: 'ACTIVE',
-        pinHash: validPinHash, // Hash for '1234', but we'll send '9999'
-      }]);
+      mockPrisma.user.findMany.mockResolvedValue([
+        {
+          id: mockUser.id,
+          email: mockUser.email,
+          name: mockUser.name,
+          role: mockUser.role,
+          tenantId: mockUser.tenantId,
+          status: 'ACTIVE',
+          pinHash: validPinHash, // Hash for '1234', but we'll send '9999'
+        },
+      ]);
 
       // No current lockout
       mockPrisma.pinAttempt.findUnique.mockResolvedValue(null);
@@ -1009,15 +1016,17 @@ describe('AuthService - PIN Login (Story 1.4)', () => {
       });
 
       // No matching users for wrong PIN
-      mockPrisma.user.findMany.mockResolvedValue([{
-        id: mockUser.id,
-        email: mockUser.email,
-        name: mockUser.name,
-        role: mockUser.role,
-        tenantId: mockUser.tenantId,
-        status: 'ACTIVE',
-        pinHash: validPinHash,
-      }]);
+      mockPrisma.user.findMany.mockResolvedValue([
+        {
+          id: mockUser.id,
+          email: mockUser.email,
+          name: mockUser.name,
+          role: mockUser.role,
+          tenantId: mockUser.tenantId,
+          status: 'ACTIVE',
+          pinHash: validPinHash,
+        },
+      ]);
 
       // 2 previous failed attempts (device-level)
       mockPrisma.pinAttempt.findUnique.mockResolvedValue({
@@ -1038,9 +1047,7 @@ describe('AuthService - PIN Login (Story 1.4)', () => {
       });
 
       // Act & Assert
-      await expect(authService.pinLogin('9999', validDeviceId)).rejects.toThrow(
-        'Fiók zárolva'
-      );
+      await expect(authService.pinLogin('9999', validDeviceId)).rejects.toThrow('Fiók zárolva');
     });
   });
 
@@ -1088,15 +1095,17 @@ describe('AuthService - PIN Login (Story 1.4)', () => {
       });
 
       // Users exist but with different PINs (PIN won't match)
-      mockPrisma.user.findMany.mockResolvedValue([{
-        id: mockUser.id,
-        email: mockUser.email,
-        name: mockUser.name,
-        role: mockUser.role,
-        tenantId: mockUser.tenantId,
-        status: 'ACTIVE',
-        pinHash: validPinHash, // Hash for '1234'
-      }]);
+      mockPrisma.user.findMany.mockResolvedValue([
+        {
+          id: mockUser.id,
+          email: mockUser.email,
+          name: mockUser.name,
+          role: mockUser.role,
+          tenantId: mockUser.tenantId,
+          status: 'ACTIVE',
+          pinHash: validPinHash, // Hash for '1234'
+        },
+      ]);
 
       mockPrisma.pinAttempt.findUnique.mockResolvedValue(null);
       mockPrisma.pinAttempt.upsert.mockResolvedValue({
@@ -1359,9 +1368,9 @@ describe('AuthService - Password Reset (Story 1.5)', () => {
       });
 
       // Act & Assert
-      await expect(authService.resetPassword(tokenResult.plainToken, 'NewPassword1')).rejects.toThrow(
-        'Érvénytelen token'
-      );
+      await expect(
+        authService.resetPassword(tokenResult.plainToken, 'NewPassword1')
+      ).rejects.toThrow('Érvénytelen token');
     });
 
     it('should throw error for already used token', async () => {
@@ -1379,9 +1388,9 @@ describe('AuthService - Password Reset (Story 1.5)', () => {
       });
 
       // Act & Assert
-      await expect(authService.resetPassword(tokenResult.plainToken, 'NewPassword1')).rejects.toThrow(
-        'Érvénytelen token'
-      );
+      await expect(
+        authService.resetPassword(tokenResult.plainToken, 'NewPassword1')
+      ).rejects.toThrow('Érvénytelen token');
     });
 
     it('should throw error for inactive user', async () => {
@@ -1409,9 +1418,9 @@ describe('AuthService - Password Reset (Story 1.5)', () => {
       });
 
       // Act & Assert
-      await expect(authService.resetPassword(tokenResult.plainToken, 'NewPassword1')).rejects.toThrow(
-        'Érvénytelen token'
-      );
+      await expect(
+        authService.resetPassword(tokenResult.plainToken, 'NewPassword1')
+      ).rejects.toThrow('Érvénytelen token');
     });
   });
 });
@@ -1575,10 +1584,7 @@ describe('AuthService - Verify Password for Elevated Access (Story 2.4)', () => 
         });
 
         // Act
-        const result = await authService.verifyPasswordForElevatedAccess(
-          mockUser.id,
-          testPassword
-        );
+        const result = await authService.verifyPasswordForElevatedAccess(mockUser.id, testPassword);
 
         // Assert
         expect(result.data.success).toBe(true);
@@ -1619,10 +1625,7 @@ describe('AuthService - Verify Password for Elevated Access (Story 2.4)', () => 
         });
 
         // Act
-        const result = await authService.verifyPasswordForElevatedAccess(
-          mockUser.id,
-          testPassword
-        );
+        const result = await authService.verifyPasswordForElevatedAccess(mockUser.id, testPassword);
 
         // Assert
         expect(result.data.message).toBe('Emelt szintű hozzáférés megerősítve');
@@ -1712,7 +1715,7 @@ describe('AuthService - Verify Password for Elevated Access (Story 2.4)', () => 
           null, // trustedDeviceService
           null, // passwordResetService
           null, // emailService
-          null  // elevatedAccessService NOT configured
+          null // elevatedAccessService NOT configured
         );
 
         // Arrange

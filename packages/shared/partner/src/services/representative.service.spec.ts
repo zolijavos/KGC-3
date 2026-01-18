@@ -1,13 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { RepresentativeService } from './representative.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { IPartnerRepository, Partner } from '../interfaces/partner.interface';
 import {
+  CreateRepresentativeInput,
   IRepresentativeRepository,
   Representative,
-  CreateRepresentativeInput,
   UpdateRepresentativeInput,
-  AuthorizationType,
 } from '../interfaces/representative.interface';
-import { IPartnerRepository, Partner } from '../interfaces/partner.interface';
+import { RepresentativeService } from './representative.service';
 
 describe('RepresentativeService', () => {
   let service: RepresentativeService;

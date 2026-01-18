@@ -5,9 +5,9 @@
  * TDD: Red-Green-Refactor approach
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SupplierService } from './supplier.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SupplierStatus } from '../interfaces/supplier.interface';
+import { SupplierService } from './supplier.service';
 
 // Mock Prisma client
 const mockPrismaSupplier = {
@@ -33,7 +33,7 @@ describe('SupplierService', () => {
   let service: SupplierService;
   const tenantId = 'tenant-123';
   const userId = 'user-456';
-  const validUUID = '550e8400-e29b-41d4-a716-446655440000';
+  const _validUUID = '550e8400-e29b-41d4-a716-446655440000';
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -229,7 +229,10 @@ describe('SupplierService', () => {
 
       mockPrismaSupplier.findFirst.mockResolvedValue(supplier);
 
-      const result = await service.getSupplierById('550e8400-e29b-41d4-a716-446655440001', tenantId);
+      const result = await service.getSupplierById(
+        '550e8400-e29b-41d4-a716-446655440001',
+        tenantId
+      );
 
       expect(result).toEqual(supplier);
       expect(mockPrismaSupplier.findFirst).toHaveBeenCalledWith({
@@ -251,7 +254,10 @@ describe('SupplierService', () => {
     it('should not return supplier from different tenant', async () => {
       mockPrismaSupplier.findFirst.mockResolvedValue(null);
 
-      const result = await service.getSupplierById('550e8400-e29b-41d4-a716-446655440001', 'different-tenant');
+      const result = await service.getSupplierById(
+        '550e8400-e29b-41d4-a716-446655440001',
+        'different-tenant'
+      );
 
       expect(result).toBeNull();
     });
@@ -454,7 +460,11 @@ describe('SupplierService', () => {
       mockPrismaSupplier.findFirst.mockResolvedValue(existing);
       mockPrismaSupplier.update.mockResolvedValue(deleted);
 
-      const result = await service.deleteSupplier('550e8400-e29b-41d4-a716-446655440001', tenantId, userId);
+      const result = await service.deleteSupplier(
+        '550e8400-e29b-41d4-a716-446655440001',
+        tenantId,
+        userId
+      );
 
       expect(result.status).toBe(SupplierStatus.INACTIVE);
       expect(mockPrismaSupplier.update).toHaveBeenCalledWith({
@@ -471,9 +481,9 @@ describe('SupplierService', () => {
     it('should throw error when deleting non-existent supplier', async () => {
       mockPrismaSupplier.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.deleteSupplier('non-existent', tenantId, userId)
-      ).rejects.toThrow('Beszállító nem található');
+      await expect(service.deleteSupplier('non-existent', tenantId, userId)).rejects.toThrow(
+        'Beszállító nem található'
+      );
     });
 
     it('should throw error when supplier is already inactive', async () => {
@@ -489,9 +499,9 @@ describe('SupplierService', () => {
     });
 
     it('should reject invalid UUID format in delete', async () => {
-      await expect(
-        service.deleteSupplier('invalid-id', tenantId, userId)
-      ).rejects.toThrow('Érvénytelen beszállító ID formátum');
+      await expect(service.deleteSupplier('invalid-id', tenantId, userId)).rejects.toThrow(
+        'Érvénytelen beszállító ID formátum'
+      );
     });
   });
 

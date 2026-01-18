@@ -22,8 +22,8 @@ const DEFAULT_ACCESS_TOKEN_TTL = '24h';
 const DEFAULT_REFRESH_TOKEN_TTL = '7d';
 const DEFAULT_KIOSK_TOKEN_TTL = '4h'; // Story 1.4: Shorter session for kiosk mode
 
-/** TTL in seconds for getExpiresIn() */
-const TTL_IN_SECONDS = {
+/** TTL in seconds for getExpiresIn() (reserved for future use) */
+const _TTL_IN_SECONDS = {
   access: 24 * 60 * 60, // 24 hours
   refresh: 7 * 24 * 60 * 60, // 7 days
   kiosk: 4 * 60 * 60, // 4 hours (Story 1.4 AC1)
