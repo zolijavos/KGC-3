@@ -125,6 +125,20 @@ export function Sidebar() {
     );
   };
 
+  // Get all items that have children (expandable items)
+  const expandableLabels = NAV_ITEMS.filter(item => item.children).map(item => item.label);
+
+  const expandAll = () => {
+    setExpandedItems(expandableLabels);
+  };
+
+  const collapseAll = () => {
+    setExpandedItems([]);
+  };
+
+  const allExpanded = expandableLabels.every(label => expandedItems.includes(label));
+  const allCollapsed = expandedItems.length === 0;
+
   const isActive = (href: string) => {
     if (href === '/dashboard') return location.pathname === href;
     return location.pathname.startsWith(href);
@@ -176,6 +190,61 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4">
+        {/* Expand/Collapse All buttons */}
+        {!collapsed && (
+          <div className="mb-2 flex items-center justify-end gap-1 px-4">
+            <button
+              onClick={expandAll}
+              disabled={allExpanded}
+              className={`rounded p-1.5 text-xs transition-colors ${
+                allExpanded
+                  ? 'cursor-not-allowed text-white/30'
+                  : 'text-white/60 hover:bg-white/10 hover:text-white'
+              }`}
+              title="Mindent kinyit"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                />
+              </svg>
+            </button>
+            <button
+              onClick={collapseAll}
+              disabled={allCollapsed}
+              className={`rounded p-1.5 text-xs transition-colors ${
+                allCollapsed
+                  ? 'cursor-not-allowed text-white/30'
+                  : 'text-white/60 hover:bg-white/10 hover:text-white'
+              }`}
+              title="Mindent összecsuk"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
         {NAV_ITEMS.map(item => (
           <div key={item.label}>
             {item.href ? (
