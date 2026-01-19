@@ -1,6 +1,5 @@
 import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/stores/auth-store';
-import { useThemeStore } from '@/stores/theme-store';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -116,7 +115,6 @@ export function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
-  const { theme, toggleTheme } = useThemeStore();
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(['Bérlés', 'Munkalap']);
 
@@ -158,8 +156,6 @@ export function Sidebar() {
   const isChildActive = (item: NavItem) => {
     return item.children?.some(child => isActive(child.href));
   };
-
-  const isDark = theme === 'dark';
 
   return (
     <aside
@@ -462,48 +458,6 @@ export function Sidebar() {
             </>
           )}
         </a>
-
-        {/* Theme toggle */}
-        <button
-          onClick={toggleTheme}
-          className={`mb-3 flex w-full items-center gap-3 rounded px-3 py-2 text-sm transition-colors ${
-            collapsed ? 'justify-center' : ''
-          } bg-white/5 text-white/80 hover:bg-white/10 hover:text-white`}
-          title={isDark ? 'Világos mód' : 'Sötét mód'}
-        >
-          {isDark ? (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
-          ) : (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-              />
-            </svg>
-          )}
-          {!collapsed && <span>{isDark ? 'Világos mód' : 'Sötét mód'}</span>}
-        </button>
 
         {collapsed ? (
           <button

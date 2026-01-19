@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 
 interface AppLayoutProps {
@@ -9,7 +10,10 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="flex h-screen overflow-hidden kgc-bg">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto kgc-bg">{children}</main>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Header />
+        <main className="flex-1 overflow-y-auto kgc-bg">{children}</main>
+      </div>
     </div>
   );
 }
