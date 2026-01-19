@@ -412,7 +412,7 @@ export function Sidebar() {
 
         {/* Help! Button - Glowing style */}
         <a
-          href="https://docs.mflerp.com"
+          href="https://mfl.support/"
           target="_blank"
           rel="noopener noreferrer"
           className={`group relative mb-3 flex w-full items-center gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-300 ${

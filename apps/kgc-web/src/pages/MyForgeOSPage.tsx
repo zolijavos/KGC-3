@@ -31,7 +31,7 @@ export function MyForgeOSPage() {
           </div>
         </div>
         <a
-          href="http://168.231.108.148:3100/"
+          href="https://dev-kgc.mflerp.com/myforgeos"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 rounded-lg bg-muted px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
@@ -57,7 +57,7 @@ export function MyForgeOSPage() {
       {/* Iframe Container */}
       <div className="flex-1">
         <iframe
-          src="http://168.231.108.148:3100/"
+          src="https://dev-kgc.mflerp.com/myforgeos"
           title="MyForgeOS Dashboard"
           className="h-full w-full border-0"
           allow="clipboard-read; clipboard-write"
