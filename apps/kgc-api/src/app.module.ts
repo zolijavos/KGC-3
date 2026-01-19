@@ -31,6 +31,58 @@ class AppController {
   }
 }
 
+// Twenty CRM Webhook Controller
+@ApiTags('webhooks')
+@Controller('webhooks')
+class WebhookController {
+  private readonly logger = new Logger('WebhookController');
+
+  @Post('twenty')
+  @ApiOperation({ summary: 'Receive Twenty CRM webhook events' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        event: { type: 'string', example: 'person.created' },
+        data: { type: 'object' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Webhook received' })
+  async handleTwentyWebhook(@Body() body: { event: string; data: Record<string, unknown> }) {
+    this.logger.log(`Twenty webhook received: ${body.event}`);
+
+    // Process webhook based on event type
+    switch (body.event) {
+      case 'person.created':
+      case 'person.updated':
+        this.logger.log(`Person event: ${JSON.stringify(body.data)}`);
+        // TODO: Sync to KGC Partner
+        break;
+      case 'company.created':
+      case 'company.updated':
+        this.logger.log(`Company event: ${JSON.stringify(body.data)}`);
+        // TODO: Sync to KGC Partner
+        break;
+      case 'opportunity.created':
+      case 'opportunity.updated':
+        this.logger.log(`Opportunity event: ${JSON.stringify(body.data)}`);
+        // TODO: Handle deal/opportunity
+        break;
+      default:
+        this.logger.log(`Unhandled event type: ${body.event}`);
+    }
+
+    return { received: true, event: body.event, timestamp: new Date().toISOString() };
+  }
+
+  @Get('twenty/health')
+  @ApiOperation({ summary: 'Webhook endpoint health check' })
+  webhookHealth() {
+    return { status: 'ok', endpoint: 'twenty-webhook' };
+  }
+}
+
 // Mock Auth Controller (temporary - until packages are fixed)
 @ApiTags('auth')
 @Controller('auth')
@@ -85,7 +137,7 @@ const prisma = new PrismaClient({
       envFilePath: ['.env.local', '.env'],
     }),
   ],
-  controllers: [AppController, MockAuthController],
+  controllers: [AppController, WebhookController, MockAuthController],
   providers: [
     {
       provide: 'PRISMA_CLIENT',
