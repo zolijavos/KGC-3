@@ -5,6 +5,7 @@ import {
   ContractListPage,
   DashboardPage,
   FeatureFlagsPage,
+  HorillaHRPage,
   InventoryDetailPage,
   InventoryListPage,
   InventoryMovementsPage,
@@ -12,6 +13,7 @@ import {
   InvoiceDetailPage,
   InvoiceListPage,
   LoginPage,
+  MyForgeOSPage,
   PartnerCreatePage,
   PartnerDetailPage,
   PartnerListPage,
@@ -32,6 +34,7 @@ import {
   SettingsPage,
   TasksPage,
   TenantSettingsPage,
+  TwentyCRMPage,
   UserDetailPage,
   UserListPage,
   WorksheetDetailPage,
@@ -160,6 +163,13 @@ function App() {
 
             {/* Feature Flags route */}
             <Route path="/feature-flags" element={<FeatureFlagsPage />} />
+
+            {/* Integration routes */}
+            <Route path="/integrations/crm" element={<TwentyCRMPage />} />
+            <Route path="/integrations/hr" element={<HorillaHRPage />} />
+
+            {/* MyForgeOS route */}
+            <Route path="/myforgeos" element={<MyForgeOSPage />} />
           </Route>
 
           {/* Default redirect */}

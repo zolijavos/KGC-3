@@ -8,7 +8,8 @@ interface NavItem {
   label: string;
   icon: string;
   href?: string;
-  children?: { label: string; href: string }[];
+  external?: boolean; // Opens in new tab
+  children?: { label: string; href: string; external?: boolean }[];
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -83,6 +84,16 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Feladatok',
     icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
     href: '/tasks',
+  },
+  {
+    label: 'Integrációk',
+    icon: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1',
+    children: [
+      { label: 'CRM (Twenty)', href: '/integrations/crm' },
+      { label: 'HR (Horilla)', href: '/integrations/hr' },
+      { label: 'Twenty CRM (új ablak)', href: 'http://crm-dev.mflerp.com', external: true },
+      { label: 'Horilla HR (új ablak)', href: 'http://hr-dev.mflerp.com', external: true },
+    ],
   },
   {
     label: 'Admin',
@@ -325,19 +336,45 @@ export function Sidebar() {
                 {/* Children */}
                 {!collapsed && expandedItems.includes(item.label) && item.children && (
                   <div className="bg-black/20">
-                    {item.children.map(child => (
-                      <button
-                        key={child.href}
-                        onClick={() => navigate(child.href)}
-                        className={`flex w-full items-center gap-3 py-2 pl-12 pr-4 text-left text-sm transition-colors ${
-                          isActive(child.href)
-                            ? 'bg-kgc-accent/20 text-kgc-accent'
-                            : 'text-white/60 hover:bg-white/5 hover:text-white'
-                        }`}
-                      >
-                        {child.label}
-                      </button>
-                    ))}
+                    {item.children.map(child =>
+                      child.external ? (
+                        <a
+                          key={child.href}
+                          href={child.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex w-full items-center gap-2 py-2 pl-12 pr-4 text-left text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
+                        >
+                          {child.label}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3 w-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                          </svg>
+                        </a>
+                      ) : (
+                        <button
+                          key={child.href}
+                          onClick={() => navigate(child.href)}
+                          className={`flex w-full items-center gap-3 py-2 pl-12 pr-4 text-left text-sm transition-colors ${
+                            isActive(child.href)
+                              ? 'bg-kgc-accent/20 text-kgc-accent'
+                              : 'text-white/60 hover:bg-white/5 hover:text-white'
+                          }`}
+                        >
+                          {child.label}
+                        </button>
+                      )
+                    )}
                   </div>
                 )}
               </>
@@ -346,8 +383,86 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Theme toggle & User section */}
+      {/* Special buttons & Theme toggle & User section */}
       <div className="border-t border-white/10 p-4">
+        {/* MyForgeOS Button - Glowing style */}
+        <button
+          onClick={() => navigate('/myforgeos')}
+          className={`group relative mb-2 flex w-full items-center gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-300 ${
+            collapsed ? 'justify-center' : ''
+          } bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:scale-[1.02]`}
+          title="MyForgeOS"
+          style={{
+            boxShadow: '0 0 20px rgba(147, 51, 234, 0.4), 0 0 40px rgba(147, 51, 234, 0.2)',
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-indigo-400/20 opacity-0 transition-opacity group-hover:opacity-100" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 flex-shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
+          </svg>
+          {!collapsed && <span className="relative z-10">MyForgeOS</span>}
+        </button>
+
+        {/* Help! Button - Glowing style */}
+        <a
+          href="https://docs.mflerp.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`group relative mb-3 flex w-full items-center gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-300 ${
+            collapsed ? 'justify-center' : ''
+          } bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:scale-[1.02]`}
+          title="Help!"
+          style={{
+            boxShadow: '0 0 20px rgba(16, 185, 129, 0.4), 0 0 40px rgba(16, 185, 129, 0.2)',
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-teal-400/20 opacity-0 transition-opacity group-hover:opacity-100" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 flex-shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          {!collapsed && (
+            <>
+              <span className="relative z-10 flex-1">Help!</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3 w-3 opacity-60"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
+              </svg>
+            </>
+          )}
+        </a>
+
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}

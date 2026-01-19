@@ -1,4 +1,5 @@
 export { ChatPage } from './chat';
+export { HorillaHRPage, TwentyCRMPage } from './integrations';
 export { ContractDetailPage, ContractListPage } from './contracts';
 export { DashboardPage } from './DashboardPage';
 export { FeatureFlagsPage } from './feature-flags';
@@ -10,6 +11,7 @@ export {
 } from './inventory';
 export { InvoiceDetailPage, InvoiceListPage } from './invoices';
 export { LoginPage } from './LoginPage';
+export { MyForgeOSPage } from './MyForgeOSPage';
 export { PartnerCreatePage, PartnerDetailPage, PartnerListPage } from './partners';
 export { ProductCreatePage, ProductDetailPage, ProductEditPage, ProductListPage } from './products';
 export { QuotationDetailPage, QuotationListPage } from './quotations';
