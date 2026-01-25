@@ -22,13 +22,6 @@ const DEFAULT_ACCESS_TOKEN_TTL = '24h';
 const DEFAULT_REFRESH_TOKEN_TTL = '7d';
 const DEFAULT_KIOSK_TOKEN_TTL = '4h'; // Story 1.4: Shorter session for kiosk mode
 
-/** TTL in seconds for getExpiresIn() (reserved for future use) */
-const _TTL_IN_SECONDS = {
-  access: 24 * 60 * 60, // 24 hours
-  refresh: 7 * 24 * 60 * 60, // 7 days
-  kiosk: 4 * 60 * 60, // 4 hours (Story 1.4 AC1)
-};
-
 /**
  * Parse TTL string to seconds
  * @param ttl - TTL string (e.g., "24h", "7d", "4h", "30m", "60s", "1000ms")
@@ -105,7 +98,7 @@ export class TokenService {
     };
 
     return jwt.sign(payload, this.jwtSecret, {
-      expiresIn: this.accessTokenTtl,
+      expiresIn: parseTtlToSeconds(this.accessTokenTtl),
       algorithm: 'HS256',
     });
   }
@@ -124,7 +117,7 @@ export class TokenService {
     };
 
     return jwt.sign(payload, this.jwtSecret, {
-      expiresIn: this.refreshTokenTtl,
+      expiresIn: parseTtlToSeconds(this.refreshTokenTtl),
       algorithm: 'HS256',
     });
   }
@@ -196,7 +189,7 @@ export class TokenService {
     };
 
     return jwt.sign(payload, this.jwtSecret, {
-      expiresIn: this.kioskTokenTtl,
+      expiresIn: parseTtlToSeconds(this.kioskTokenTtl),
       algorithm: 'HS256',
     });
   }

@@ -24,25 +24,26 @@
  * ```
  */
 
-import { DynamicModule, InjectionToken, Module, OptionalFactoryDependency, Provider } from '@nestjs/common';
+import {
+  DynamicModule,
+  InjectionToken,
+  Module,
+  OptionalFactoryDependency,
+  Provider,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { AuthService } from '@kgc/auth';
+// NOTE: @kgc/auth dependency removed to break circular dependency
+// Use interface-based DI via AUTH_SERVICE token from @kgc/common
+import { AUTH_SERVICE, type IAuthService } from '@kgc/common';
 
-import { UsersController } from './users.controller';
-import { UsersService } from './users.service';
-import { RoleService } from './services/role.service';
-import { PermissionService } from './services/permission.service';
+import { ElevatedAccessGuard } from './guards/elevated-access.guard';
 import { PermissionGuard } from './guards/permission.guard';
 import { ConstraintInterceptor } from './interceptors/constraint.interceptor';
 import { ElevatedAccessService } from './services/elevated-access.service';
-import { ElevatedAccessGuard } from './guards/elevated-access.guard';
-
-/**
- * AuthService interface for token revocation
- */
-interface IAuthService {
-  revokeAllUserTokens(userId: string): Promise<void>;
-}
+import { PermissionService } from './services/permission.service';
+import { RoleService } from './services/role.service';
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
 
 /**
  * Configuration options for UsersModule
@@ -73,8 +74,9 @@ export class UsersModule {
         provide: 'PRISMA_CLIENT',
         useValue: options.prisma ?? null,
       },
+      // AuthService provided via interface to break circular dependency with @kgc/auth
       {
-        provide: AuthService,
+        provide: AUTH_SERVICE,
         useValue: options.authService ?? null,
       },
     ];
@@ -122,8 +124,9 @@ export class UsersModule {
         useFactory: (moduleOptions: UsersModuleOptions) => moduleOptions.prisma ?? null,
         inject: ['USERS_MODULE_OPTIONS'],
       },
+      // AuthService provided via interface to break circular dependency with @kgc/auth
       {
-        provide: AuthService,
+        provide: AUTH_SERVICE,
         useFactory: (moduleOptions: UsersModuleOptions) => moduleOptions.authService ?? null,
         inject: ['USERS_MODULE_OPTIONS'],
       },

@@ -30,30 +30,42 @@ export { AuthService } from './auth.service';
 export { PasswordService } from './services/password.service';
 export { TokenService } from './services/token.service';
 // Story 1.4: PIN Login Services
-export { PinService } from './services/pin.service';
-export { PinLockoutService, MAX_FAILED_ATTEMPTS, LOCKOUT_DURATION_MS } from './services/pin-lockout.service';
+export {
+  LOCKOUT_DURATION_MS,
+  MAX_FAILED_ATTEMPTS,
+  PinLockoutService,
+} from './services/pin-lockout.service';
 export type { FailedAttemptResult } from './services/pin-lockout.service';
+export { PinService } from './services/pin.service';
 export { TrustedDeviceService } from './services/trusted-device.service';
 export type { RegisterDeviceInput, TrustedDevice } from './services/trusted-device.service';
 // Story 1.5: Password Reset Services
+export { EMAIL_SERVICE, MockEmailService } from './services/email.service';
+export type { IEmailService, PasswordResetEmailData } from './services/email.service';
 export {
-  PasswordResetService,
-  RESET_TOKEN_TTL_MS,
   FORGOT_PASSWORD_MAX_REQUESTS,
   FORGOT_PASSWORD_WINDOW_MS,
+  PasswordResetService,
+  RESET_TOKEN_TTL_MS,
 } from './services/password-reset.service';
-export type { GenerateTokenResult, PasswordResetTokenRecord } from './services/password-reset.service';
-export { MockEmailService, EMAIL_SERVICE } from './services/email.service';
-export type { IEmailService, PasswordResetEmailData } from './services/email.service';
+export type {
+  GenerateTokenResult,
+  PasswordResetTokenRecord,
+} from './services/password-reset.service';
 
 // Rate Limiting - Pluggable (in-memory for MVP, Redis for K8s/cluster)
-export { RATE_LIMITER } from './services/rate-limiter.interface';
-export type { IRateLimiter, RateLimitResult, RateLimiterConfig } from './services/rate-limiter.interface';
 export { InMemoryRateLimiter } from './services/in-memory-rate-limiter';
+export { RATE_LIMITER } from './services/rate-limiter.interface';
+export type {
+  IRateLimiter,
+  RateLimitResult,
+  RateLimiterConfig,
+} from './services/rate-limiter.interface';
 export { RedisRateLimiter, createRedisRateLimiter } from './services/redis-rate-limiter';
 
 // Guards
-export { JwtAuthGuard } from './guards/jwt-auth.guard';
+// Re-export JwtAuthGuard from @kgc/common (moved there to break circular dependency)
+export { JwtAuthGuard } from '@kgc/common';
 export { LoginThrottlerGuard } from './guards/login-throttle.guard';
 
 // Pipes - Validation
@@ -76,51 +88,51 @@ export {
 } from './dto/login-response.dto';
 export { LoginDto, loginSchema, validateLoginInput } from './dto/login.dto';
 export type { ValidationError } from './dto/login.dto';
-export { refreshTokenSchema, validateRefreshInput } from './dto/refresh-token.dto';
-export type { RefreshTokenDto } from './dto/refresh-token.dto';
-export { refreshResponseSchema } from './dto/refresh-response.dto';
-export type { RefreshResponse, RefreshResponseDto } from './dto/refresh-response.dto';
-export { logoutSchema, validateLogoutInput } from './dto/logout.dto';
-export type { LogoutDto } from './dto/logout.dto';
-export { logoutResponseSchema, logoutAllResponseSchema } from './dto/logout-response.dto';
+export { logoutAllResponseSchema, logoutResponseSchema } from './dto/logout-response.dto';
 export type {
-  LogoutResponse,
-  LogoutResponseDto,
   LogoutAllResponse,
   LogoutAllResponseDto,
+  LogoutResponse,
+  LogoutResponseDto,
 } from './dto/logout-response.dto';
+export { logoutSchema, validateLogoutInput } from './dto/logout.dto';
+export type { LogoutDto } from './dto/logout.dto';
+export { refreshResponseSchema } from './dto/refresh-response.dto';
+export type { RefreshResponse, RefreshResponseDto } from './dto/refresh-response.dto';
+export { refreshTokenSchema, validateRefreshInput } from './dto/refresh-token.dto';
+export type { RefreshTokenDto } from './dto/refresh-token.dto';
 // Story 1.4: PIN Login DTOs
+export { PinLoginErrorCode, pinLoginResponseSchema } from './dto/pin-login-response.dto';
+export type { PinLoginResponse, PinLoginResponseDto } from './dto/pin-login-response.dto';
 export { pinLoginSchema, validatePinLoginInput } from './dto/pin-login.dto';
 export type { PinLoginDto, PinValidationError } from './dto/pin-login.dto';
-export { pinLoginResponseSchema, PinLoginErrorCode } from './dto/pin-login-response.dto';
-export type { PinLoginResponse, PinLoginResponseDto } from './dto/pin-login-response.dto';
 // Story 1.5: Password Reset DTOs
-export { forgotPasswordSchema, validateForgotPasswordInput } from './dto/forgot-password.dto';
-export type { ForgotPasswordDto, ForgotPasswordValidationError } from './dto/forgot-password.dto';
 export {
-  resetPasswordSchema,
-  passwordPolicySchema,
-  validateResetPasswordInput,
-} from './dto/reset-password.dto';
-export type { ResetPasswordDto, ResetPasswordValidationError } from './dto/reset-password.dto';
-export {
-  forgotPasswordResponseSchema,
   FORGOT_PASSWORD_MESSAGE,
+  forgotPasswordResponseSchema,
 } from './dto/forgot-password-response.dto';
 export type {
   ForgotPasswordResponse,
   ForgotPasswordResponseDto,
 } from './dto/forgot-password-response.dto';
+export { forgotPasswordSchema, validateForgotPasswordInput } from './dto/forgot-password.dto';
+export type { ForgotPasswordDto, ForgotPasswordValidationError } from './dto/forgot-password.dto';
 export {
-  resetPasswordResponseSchema,
   PasswordResetErrorCode,
   RESET_PASSWORD_MESSAGES,
+  resetPasswordResponseSchema,
 } from './dto/reset-password-response.dto';
 export type {
+  PasswordResetErrorResponse,
   ResetPasswordResponse,
   ResetPasswordResponseDto,
-  PasswordResetErrorResponse,
 } from './dto/reset-password-response.dto';
+export {
+  passwordPolicySchema,
+  resetPasswordSchema,
+  validateResetPasswordInput,
+} from './dto/reset-password.dto';
+export type { ResetPasswordDto, ResetPasswordValidationError } from './dto/reset-password.dto';
 
 // Interfaces
 export type {
@@ -132,25 +144,22 @@ export type {
 } from './interfaces/jwt-payload.interface';
 
 // Story 2.4: Elevated Access Interface and DTOs
-export { ELEVATED_ACCESS_SERVICE } from './interfaces/elevated-access.interface';
-export type { IElevatedAccessService } from './interfaces/elevated-access.interface';
+// Re-export from @kgc/common for backward compatibility
+export { ELEVATED_ACCESS_SERVICE, type IElevatedAccessService } from '@kgc/common';
 
 // Story 2.4: Audit Interface (local copy for auth module)
 export { AUDIT_SERVICE, AuditAction } from './interfaces/audit.interface';
-export type { IAuditService, AuditLogEntry } from './interfaces/audit.interface';
+export type { AuditLogEntry, IAuditService } from './interfaces/audit.interface';
 
 // DTOs - Verify Password (Story 2.4)
 export {
-  verifyPasswordSchema,
-  validateVerifyPasswordInput,
-} from './dto/verify-password.dto';
-export type { VerifyPasswordDto } from './dto/verify-password.dto';
-export {
-  verifyPasswordResponseSchema,
   VERIFY_PASSWORD_MESSAGES,
   VerifyPasswordErrorCode,
+  verifyPasswordResponseSchema,
 } from './dto/verify-password-response.dto';
 export type {
   VerifyPasswordResponse,
   VerifyPasswordResponseDto,
 } from './dto/verify-password-response.dto';
+export { validateVerifyPasswordInput, verifyPasswordSchema } from './dto/verify-password.dto';
+export type { VerifyPasswordDto } from './dto/verify-password.dto';

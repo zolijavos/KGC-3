@@ -10,6 +10,8 @@ export default defineConfig({
   },
   server: {
     port: 3100,
+    host: '0.0.0.0',
+    allowedHosts: ['myforgeos.mflerp.com', 'localhost', '127.0.0.1', '168.231.108.148'],
     proxy: {
       '/api': {
         target: 'http://localhost:3000',

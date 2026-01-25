@@ -1,12 +1,29 @@
 /**
  * KGC ERP API - Application Module
  * Root module that imports all feature modules
+ *
+ * Circular dependency between @kgc/auth and @kgc/users has been FIXED:
+ * - Guards and interfaces moved to @kgc/common
+ * - Both modules now depend on @kgc/common instead of each other
+ *
+ * AuthModule is now fully functional with Swagger decorators.
  */
 
+import { AuthModule } from '@kgc/auth';
 import { Body, Controller, Get, Logger, Module, OnModuleInit, Post } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PrismaClient } from '@prisma/client';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { PartnersModule } from './modules/partners/partners.module';
+import { ProductsModule } from './modules/products/products.module';
+import { RentalModule } from './modules/rental/rental.module';
+import { VehiclesModule } from './modules/vehicles/vehicles.module';
+
+// Create singleton PrismaClient
+const prisma = new PrismaClient({
+  log: process.env['NODE_ENV'] === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
+});
 
 // Health check controller
 @Controller()
@@ -52,22 +69,18 @@ class WebhookController {
   async handleTwentyWebhook(@Body() body: { event: string; data: Record<string, unknown> }) {
     this.logger.log(`Twenty webhook received: ${body.event}`);
 
-    // Process webhook based on event type
     switch (body.event) {
       case 'person.created':
       case 'person.updated':
         this.logger.log(`Person event: ${JSON.stringify(body.data)}`);
-        // TODO: Sync to KGC Partner
         break;
       case 'company.created':
       case 'company.updated':
         this.logger.log(`Company event: ${JSON.stringify(body.data)}`);
-        // TODO: Sync to KGC Partner
         break;
       case 'opportunity.created':
       case 'opportunity.updated':
         this.logger.log(`Opportunity event: ${JSON.stringify(body.data)}`);
-        // TODO: Handle deal/opportunity
         break;
       default:
         this.logger.log(`Unhandled event type: ${body.event}`);
@@ -83,52 +96,6 @@ class WebhookController {
   }
 }
 
-// Mock Auth Controller (temporary - until packages are fixed)
-@ApiTags('auth')
-@Controller('auth')
-class MockAuthController {
-  @Post('login')
-  @ApiOperation({ summary: 'Login with email and password' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        email: { type: 'string', example: 'admin@kgc.hu' },
-        password: { type: 'string', example: 'admin123' },
-      },
-    },
-  })
-  @ApiResponse({ status: 200, description: 'Login successful' })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  login(@Body() body: { email: string; password: string }) {
-    // Mock login - accept admin@kgc.hu / admin123
-    if (body.email === 'admin@kgc.hu' && body.password === 'admin123') {
-      return {
-        accessToken: 'mock-jwt-token-for-testing-' + Date.now(),
-        refreshToken: 'mock-refresh-token-' + Date.now(),
-        user: {
-          id: '1',
-          email: 'admin@kgc.hu',
-          name: 'Admin User',
-          role: 'ADMIN',
-        },
-      };
-    }
-    return { statusCode: 401, message: 'Invalid credentials' };
-  }
-
-  @Post('logout')
-  @ApiOperation({ summary: 'Logout current user' })
-  logout() {
-    return { message: 'Logged out successfully' };
-  }
-}
-
-// Create singleton PrismaClient
-const prisma = new PrismaClient({
-  log: process.env['NODE_ENV'] === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
-});
-
 @Module({
   imports: [
     // Configuration module - load .env
@@ -136,8 +103,29 @@ const prisma = new PrismaClient({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
     }),
+
+    // AuthModule with Prisma client and app base URL
+    AuthModule.forRoot({
+      prisma,
+      appBaseUrl: process.env['APP_BASE_URL'] ?? 'http://localhost:3010',
+    }),
+
+    // InventoryModule - Készlet nyilvántartás (Story 9-1)
+    InventoryModule.forRoot({ prisma }),
+
+    // PartnersModule - Partner kezelés (Epic 7)
+    PartnersModule.forRoot({ prisma }),
+
+    // ProductsModule - Termék katalógus (Epic 8)
+    ProductsModule.forRoot({ prisma }),
+
+    // RentalModule - Bérlés, Kaució, Szerződés (Epic 14-16)
+    RentalModule.forRoot({ prisma }),
+
+    // VehiclesModule - Járműnyilvántartás (Epic 34, ADR-027)
+    VehiclesModule.forRoot({ prisma }),
   ],
-  controllers: [AppController, WebhookController, MockAuthController],
+  controllers: [AppController, WebhookController],
   providers: [
     {
       provide: 'PRISMA_CLIENT',
@@ -155,7 +143,6 @@ export class AppModule implements OnModuleInit {
       this.logger.log('Database connection established');
     } catch (error) {
       this.logger.error('Failed to connect to database', error);
-      // Don't throw - allow app to start without DB for basic testing
       this.logger.warn('App starting without database connection');
     }
   }

@@ -28,9 +28,7 @@ export interface FailedAttemptResult {
 
 @Injectable()
 export class PinLockoutService {
-  constructor(
-    @Inject('PRISMA_CLIENT') @Optional() private readonly prisma?: PrismaClient | null
-  ) {}
+  constructor(@Inject('PRISMA_CLIENT') @Optional() private readonly prisma?: PrismaClient | null) {}
 
   /**
    * Check if user is locked out from PIN login on this device
@@ -106,7 +104,7 @@ export class PinLockoutService {
     return {
       attemptCount: result.attemptCount,
       isLocked: shouldLock,
-      lockedUntil: result.lockedUntil ?? undefined,
+      ...(result.lockedUntil ? { lockedUntil: result.lockedUntil } : {}),
     };
   }
 
@@ -163,7 +161,10 @@ export class PinLockoutService {
    * Get attempt info for a user/device combination
    * Useful for logging and debugging
    */
-  async getAttemptInfo(userId: string, deviceId: string): Promise<{
+  async getAttemptInfo(
+    userId: string,
+    deviceId: string
+  ): Promise<{
     attemptCount: number;
     lastAttemptAt: Date | null;
     lockedUntil: Date | null;

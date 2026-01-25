@@ -3,12 +3,16 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
+    "noEmit": false,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     },
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "isolatedModules": false,
+    "composite": false,
+    "incremental": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]

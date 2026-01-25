@@ -7,15 +7,15 @@
  * Story 1.5: Password Reset Flow
  * Story 2.4: Elevated Access Requirement
  *
- * Endpoints:
- * - POST /api/v1/auth/login - User login with email/password
- * - POST /api/v1/auth/refresh - Refresh access token using refresh token
- * - POST /api/v1/auth/logout - Logout from current device (AC1)
- * - POST /api/v1/auth/logout-all - Logout from all devices (AC2)
- * - POST /api/v1/auth/pin-login - PIN login for kiosk mode (Story 1.4)
- * - POST /api/v1/auth/forgot-password - Request password reset (Story 1.5)
- * - POST /api/v1/auth/reset-password - Reset password with token (Story 1.5)
- * - POST /api/v1/auth/verify-password - Verify password for elevated access (Story 2.4)
+ * Endpoints (with global prefix /api/v1):
+ * - POST /auth/login - User login with email/password
+ * - POST /auth/refresh - Refresh access token using refresh token
+ * - POST /auth/logout - Logout from current device (AC1)
+ * - POST /auth/logout-all - Logout from all devices (AC2)
+ * - POST /auth/pin-login - PIN login for kiosk mode (Story 1.4)
+ * - POST /auth/forgot-password - Request password reset (Story 1.5)
+ * - POST /auth/reset-password - Reset password with token (Story 1.5)
+ * - POST /auth/verify-password - Verify password for elevated access (Story 2.4)
  *
  * Security:
  * - Rate limiting: 5 requests per minute per IP (AC4)
@@ -30,14 +30,23 @@
  * - Elevated access verification (Story 2.4 AC6)
  */
 
-import { Body, Controller, HttpCode, HttpStatus, Inject, Post, Req, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '@kgc/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
-import { getClientIp } from './utils/get-client-ip';
 import type { ForgotPasswordResponse } from './dto/forgot-password-response.dto';
 import { forgotPasswordSchema, type ForgotPasswordDto } from './dto/forgot-password.dto';
 import { loginSchema, type LoginDto } from './dto/login.dto';
-import { ZodValidationPipe } from './pipes/zod-validation.pipe';
 import { type LogoutAllResponse, type LogoutResponse } from './dto/logout-response.dto';
 import { logoutSchema, type LogoutDto } from './dto/logout.dto';
 import type { PinLoginResponse } from './dto/pin-login-response.dto';
@@ -48,9 +57,10 @@ import type { ResetPasswordResponse } from './dto/reset-password-response.dto';
 import { resetPasswordSchema, type ResetPasswordDto } from './dto/reset-password.dto';
 import type { VerifyPasswordResponse } from './dto/verify-password-response.dto';
 import { verifyPasswordSchema, type VerifyPasswordDto } from './dto/verify-password.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LoginThrottlerGuard } from './guards/login-throttle.guard';
 import type { LoginResponse } from './interfaces/jwt-payload.interface';
+import { ZodValidationPipe } from './pipes/zod-validation.pipe';
+import { getClientIp } from './utils/get-client-ip';
 
 /**
  * Authenticated request with user context from JwtStrategy
@@ -64,7 +74,8 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-@Controller('api/v1/auth')
+@ApiTags('auth')
+@Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -84,6 +95,20 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LoginThrottlerGuard)
+  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['email', 'password'],
+      properties: {
+        email: { type: 'string', format: 'email', example: 'admin@kgc.hu' },
+        password: { type: 'string', example: 'admin123' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Login successful - returns JWT tokens' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiResponse({ status: 429, description: 'Too many requests - rate limited' })
   async login(
     @Body(new ZodValidationPipe(loginSchema)) dto: LoginDto,
     @Req() request: Request
@@ -130,6 +155,18 @@ export class AuthController {
    */
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Refresh access token using refresh token' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['refreshToken'],
+      properties: {
+        refreshToken: { type: 'string', description: 'JWT refresh token' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Token refreshed - returns new JWT tokens' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
   async refresh(
     @Body(new ZodValidationPipe(refreshTokenSchema)) dto: RefreshTokenDto
   ): Promise<RefreshResponse> {
@@ -153,6 +190,20 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout from current device' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['refreshToken'],
+      properties: {
+        refreshToken: { type: 'string', description: 'JWT refresh token to invalidate' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Logged out successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - invalid access token' })
+  @ApiResponse({ status: 403, description: 'Forbidden - token belongs to another user' })
   async logout(
     @Body(new ZodValidationPipe(logoutSchema)) dto: LogoutDto,
     @Req() request: AuthenticatedRequest
@@ -177,6 +228,10 @@ export class AuthController {
   @Post('logout-all')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout from all devices' })
+  @ApiResponse({ status: 200, description: 'Logged out from all devices' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - invalid access token' })
   async logoutAll(@Req() request: AuthenticatedRequest): Promise<LogoutAllResponse> {
     // Extract user ID from JWT (set by JwtStrategy)
     const userId = request.user.id;
@@ -205,6 +260,26 @@ export class AuthController {
   @Post('pin-login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LoginThrottlerGuard)
+  @ApiOperation({ summary: 'PIN login for kiosk mode' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['pin', 'deviceId'],
+      properties: {
+        pin: {
+          type: 'string',
+          pattern: '^[0-9]{4,6}$',
+          example: '1234',
+          description: '4-6 digit PIN',
+        },
+        deviceId: { type: 'string', format: 'uuid', description: 'Trusted device UUID' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'PIN login successful - returns kiosk token (4h TTL)' })
+  @ApiResponse({ status: 401, description: 'Invalid PIN' })
+  @ApiResponse({ status: 403, description: 'Device not trusted or account locked' })
+  @ApiResponse({ status: 429, description: 'Account locked due to failed attempts' })
   async pinLogin(
     @Body(new ZodValidationPipe(pinLoginSchema)) dto: PinLoginDto
   ): Promise<PinLoginResponse> {
@@ -232,6 +307,21 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LoginThrottlerGuard)
+  @ApiOperation({ summary: 'Request password reset email' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['email'],
+      properties: {
+        email: { type: 'string', format: 'email', example: 'user@kgc.hu' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset email sent (same response for all emails)',
+  })
+  @ApiResponse({ status: 429, description: 'Too many requests - rate limited' })
   async forgotPassword(
     @Body(new ZodValidationPipe(forgotPasswordSchema)) dto: ForgotPasswordDto
   ): Promise<ForgotPasswordResponse> {
@@ -259,6 +349,24 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LoginThrottlerGuard)
+  @ApiOperation({ summary: 'Reset password with token' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['token', 'newPassword'],
+      properties: {
+        token: { type: 'string', description: 'Password reset token from email' },
+        newPassword: {
+          type: 'string',
+          minLength: 8,
+          description: 'New password (min 8 chars, 1 uppercase, 1 number)',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Password reset successful' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
+  @ApiResponse({ status: 429, description: 'Too many requests - rate limited' })
   async resetPassword(
     @Body(new ZodValidationPipe(resetPasswordSchema)) dto: ResetPasswordDto
   ): Promise<ResetPasswordResponse> {
@@ -286,6 +394,24 @@ export class AuthController {
   @Post('verify-password')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, LoginThrottlerGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Verify password for elevated access' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['password'],
+      properties: {
+        password: { type: 'string', description: 'Current password to verify' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Password verified - elevated access granted for 5 minutes',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - invalid access token' })
+  @ApiResponse({ status: 403, description: 'Invalid password' })
+  @ApiResponse({ status: 429, description: 'Too many requests - rate limited' })
   async verifyPassword(
     @Body(new ZodValidationPipe(verifyPasswordSchema)) dto: VerifyPasswordDto,
     @Req() request: AuthenticatedRequest

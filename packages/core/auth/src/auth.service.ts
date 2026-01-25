@@ -90,8 +90,9 @@ export class AuthService {
     @Inject(ELEVATED_ACCESS_SERVICE)
     @Optional()
     private readonly elevatedAccessService?: IElevatedAccessService | null,
-    // Story 2.4: Audit service for logging elevated access events
-    @Inject(AUDIT_SERVICE) @Optional() private readonly auditService?: IAuditService | null
+    // Story 2.4: Audit service for logging elevated access events (reserved for future use)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    @Inject(AUDIT_SERVICE) @Optional() _auditService?: IAuditService | null
   ) {}
 
   /**
@@ -780,7 +781,7 @@ export class AuthService {
       return {
         attemptCount: result.attemptCount,
         isLocked: shouldLock,
-        lockedUntil: result.lockedUntil ?? undefined,
+        ...(result.lockedUntil ? { lockedUntil: result.lockedUntil } : {}),
       };
     }
 

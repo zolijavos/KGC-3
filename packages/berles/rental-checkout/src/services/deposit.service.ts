@@ -6,13 +6,13 @@
  */
 
 import { Injectable } from '@nestjs/common';
+import { CreateDepositDto, CreateDepositSchema } from '../dto/deposit.dto';
 import {
-  DepositStatus,
   DepositRetentionReason,
+  DepositStatus,
   IDeposit,
   IDepositCalculationResult,
 } from '../interfaces/deposit.interface';
-import { CreateDepositDto, CreateDepositSchema } from '../dto/deposit.dto';
 
 // Constants
 const DEPOSIT_PERCENTAGE = 0.1; // 10% of equipment value
@@ -21,21 +21,15 @@ const MAX_DEPOSIT = 500000; // 500.000 Ft maximum
 const MAX_ALLOWED_DEPOSIT = 1000000; // 1.000.000 Ft validation max
 const ROUNDING_UNIT = 1000; // Round to nearest 1.000 Ft
 
-/**
- * Repository interface for Deposit entity
- */
-export interface IDepositRepository {
-  create(data: Partial<IDeposit>): Promise<IDeposit>;
-  findById(id: string): Promise<IDeposit | null>;
-  findByRentalId(rentalId: string, tenantId: string): Promise<IDeposit | null>;
-  update(id: string, data: Partial<IDeposit>): Promise<IDeposit>;
-}
+import type { IDepositRepository } from '../repositories/deposit.repository';
 
 /**
  * Rental service interface (from @kgc/rental-core)
  */
 export interface IRentalService {
-  findById(id: string): Promise<{ id: string; tenantId: string; status: string; equipmentValue: number } | null>;
+  findById(
+    id: string
+  ): Promise<{ id: string; tenantId: string; status: string; equipmentValue: number } | null>;
   isActive(id: string): Promise<boolean>;
 }
 
@@ -72,7 +66,7 @@ export class DepositService {
     private readonly depositRepository: IDepositRepository,
     private readonly rentalService: IRentalService,
     private readonly partnerService: IPartnerService,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
   /**
@@ -88,7 +82,7 @@ export class DepositService {
   async calculateSuggestedAmount(
     rentalId: string,
     partnerId: string,
-    tenantId: string,
+    tenantId: string
   ): Promise<IDepositCalculationResult> {
     // Get rental details
     const rental = await this.rentalService.findById(rentalId);
@@ -139,11 +133,7 @@ export class DepositService {
    * @param userId - Felvevő user azonosító
    * @returns Létrehozott kaució rekord
    */
-  async collect(
-    input: CreateDepositDto,
-    tenantId: string,
-    userId: string,
-  ): Promise<IDeposit> {
+  async collect(input: CreateDepositDto, tenantId: string, userId: string): Promise<IDeposit> {
     // Validate input with Zod
     const validationResult = CreateDepositSchema.safeParse(input);
     if (!validationResult.success) {
@@ -191,17 +181,17 @@ export class DepositService {
     }
 
     // Create deposit record
-    const deposit = await this.depositRepository.create({
+    const deposit = await this.depositRepository.create(
       tenantId,
-      rentalId,
-      partnerId,
-      amount,
-      status: DepositStatus.COLLECTED,
-      paymentMethod,
-      createdBy: userId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+      {
+        rentalId,
+        partnerId,
+        amount,
+        paymentMethod,
+        ...(notes !== undefined && { notes }),
+      },
+      userId
+    );
 
     // Audit log
     await this.auditService.log({
@@ -226,11 +216,7 @@ export class DepositService {
    * Kaució lekérdezés ID alapján
    */
   async findById(depositId: string, tenantId: string): Promise<IDeposit | null> {
-    const deposit = await this.depositRepository.findById(depositId);
-    if (!deposit || deposit.tenantId !== tenantId) {
-      return null;
-    }
-    return deposit;
+    return this.depositRepository.findById(depositId, tenantId);
   }
 
   /**
@@ -266,9 +252,8 @@ export class DepositService {
     const previousStatus = deposit.status;
 
     // Update deposit status
-    const updatedDeposit = await this.depositRepository.update(depositId, {
+    const updatedDeposit = await this.depositRepository.update(depositId, tenantId, {
       status: DepositStatus.RELEASED,
-      updatedAt: new Date(),
     });
 
     // Audit log
@@ -306,7 +291,7 @@ export class DepositService {
     retainedAmount: number,
     description: string,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IDeposit> {
     // Validate description
     if (!description || description.trim().length === 0) {
@@ -338,9 +323,8 @@ export class DepositService {
     const releasedAmount = deposit.amount - retainedAmount;
 
     // Update deposit status
-    const updatedDeposit = await this.depositRepository.update(depositId, {
+    const updatedDeposit = await this.depositRepository.update(depositId, tenantId, {
       status: DepositStatus.PARTIALLY_RETAINED,
-      updatedAt: new Date(),
     });
 
     // Audit log
@@ -381,7 +365,7 @@ export class DepositService {
     reason: DepositRetentionReason,
     description: string,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IDeposit> {
     // Validate description
     if (!description || description.trim().length === 0) {
@@ -403,9 +387,8 @@ export class DepositService {
     const previousStatus = deposit.status;
 
     // Update deposit status
-    const updatedDeposit = await this.depositRepository.update(depositId, {
+    const updatedDeposit = await this.depositRepository.update(depositId, tenantId, {
       status: DepositStatus.RETAINED,
-      updatedAt: new Date(),
     });
 
     // Audit log
@@ -447,7 +430,7 @@ export class DepositService {
     reason: DepositRetentionReason,
     description: string,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IDeposit> {
     // Validate description
     if (!description || description.trim().length === 0) {
@@ -479,9 +462,8 @@ export class DepositService {
     const releasedAmount = deposit.amount - retainedAmount;
 
     // Update deposit status
-    const updatedDeposit = await this.depositRepository.update(depositId, {
+    const updatedDeposit = await this.depositRepository.update(depositId, tenantId, {
       status: DepositStatus.PARTIALLY_RETAINED,
-      updatedAt: new Date(),
     });
 
     // Audit log

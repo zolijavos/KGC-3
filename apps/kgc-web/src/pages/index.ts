@@ -1,8 +1,8 @@
 export { ChatPage } from './chat';
-export { HorillaHRPage, TwentyCRMPage } from './integrations';
 export { ContractDetailPage, ContractListPage } from './contracts';
 export { DashboardPage } from './DashboardPage';
 export { FeatureFlagsPage } from './feature-flags';
+export { HorillaHRPage, TwentyCRMPage } from './integrations';
 export {
   InventoryDetailPage,
   InventoryListPage,
@@ -22,4 +22,5 @@ export { SettingsPage } from './settings';
 export { TasksPage } from './tasks';
 export { TenantSettingsPage } from './tenant';
 export { RoleManagementPage, UserDetailPage, UserListPage } from './users';
+export { CompanyVehicleListPage, ExpiringDocumentsPage, RentalVehicleListPage } from './vehicles';
 export { WorksheetDetailPage, WorksheetListPage, WorksheetWizardPage } from './worksheet';

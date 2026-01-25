@@ -1,9 +1,11 @@
 import { AppLayout } from '@/components/layout';
 import {
   ChatPage,
+  CompanyVehicleListPage,
   ContractDetailPage,
   ContractListPage,
   DashboardPage,
+  ExpiringDocumentsPage,
   FeatureFlagsPage,
   HorillaHRPage,
   InventoryDetailPage,
@@ -26,6 +28,7 @@ import {
   RentalDetailPage,
   RentalListPage,
   RentalReturnPage,
+  RentalVehicleListPage,
   RentalWizardPage,
   ReportsPage,
   RoleManagementPage,
@@ -140,6 +143,11 @@ function App() {
             {/* Invoice routes */}
             <Route path="/invoices" element={<InvoiceListPage />} />
             <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
+
+            {/* Vehicle routes (Epic 34: Járműnyilvántartás) */}
+            <Route path="/vehicles/rental" element={<RentalVehicleListPage />} />
+            <Route path="/vehicles/company" element={<CompanyVehicleListPage />} />
+            <Route path="/vehicles/expiring" element={<ExpiringDocumentsPage />} />
 
             {/* User routes */}
             <Route path="/users" element={<UserListPage />} />

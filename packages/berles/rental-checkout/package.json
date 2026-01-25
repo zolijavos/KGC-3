@@ -2,12 +2,12 @@
   "name": "@kgc/rental-checkout",
   "version": "0.0.1",
   "description": "KGC Rental Checkout & Deposit module - kaució kezelés, MyPOS integráció, visszatartás",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
     }
   },
   "scripts": {

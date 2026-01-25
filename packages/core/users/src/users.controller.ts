@@ -17,50 +17,54 @@
  */
 
 import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Patch,
-  Delete,
   Body,
-  Param,
-  Query,
-  UseGuards,
-  Req,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
   HttpCode,
   HttpStatus,
-  ParseUUIDPipe,
   NotFoundException,
-  ForbiddenException,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 
-import { JwtAuthGuard } from '@kgc/auth';
-import { ZodValidationPipe } from './pipes/zod-validation.pipe';
-import { PermissionGuard } from './guards/permission.guard';
+import { JwtAuthGuard } from '@kgc/common';
 import { RequirePermission } from './decorators/require-permission.decorator';
+import { PermissionGuard } from './guards/permission.guard';
 import { Permission } from './interfaces/permission.interface';
+import { ZodValidationPipe } from './pipes/zod-validation.pipe';
 import { PermissionService } from './services/permission.service';
 
-import { UsersService } from './users.service';
-import { createUserSchema } from './dto/create-user.dto';
-import type { CreateUserDto } from './dto/create-user.dto';
-import { updateUserSchema } from './dto/update-user.dto';
-import type { UpdateUserDto } from './dto/update-user.dto';
-import { userQuerySchema, DEFAULT_LIMIT, DEFAULT_OFFSET } from './dto/user-query.dto';
-import type { UserQueryDto } from './dto/user-query.dto';
-import { USER_MESSAGES } from './dto/user-response.dto';
-import { AssignRoleSchema } from './dto/assign-role.dto';
 import type { AssignRoleInput, AssignRoleResponse } from './dto/assign-role.dto';
-import { updateProfileSchema } from './dto/update-profile.dto';
-import type { UpdateProfileDto } from './dto/update-profile.dto';
-import { updatePinSchema } from './dto/update-pin.dto';
-import type { UpdatePinDto, UpdatePinResponse } from './dto/update-pin.dto';
-import { PROFILE_MESSAGES } from './dto/profile-response.dto';
+import { AssignRoleSchema } from './dto/assign-role.dto';
+import type { CreateUserDto } from './dto/create-user.dto';
+import { createUserSchema } from './dto/create-user.dto';
 import type { ProfileResponseDto } from './dto/profile-response.dto';
-import { Role, UserErrorCode } from './interfaces/user.interface';
-import type { UserResponse, UserListResponse, DeleteUserResponse } from './interfaces/user.interface';
+import { PROFILE_MESSAGES } from './dto/profile-response.dto';
+import type { UpdatePinDto, UpdatePinResponse } from './dto/update-pin.dto';
+import { updatePinSchema } from './dto/update-pin.dto';
+import type { UpdateProfileDto } from './dto/update-profile.dto';
+import { updateProfileSchema } from './dto/update-profile.dto';
+import type { UpdateUserDto } from './dto/update-user.dto';
+import { updateUserSchema } from './dto/update-user.dto';
+import type { UserQueryDto } from './dto/user-query.dto';
+import { DEFAULT_LIMIT, DEFAULT_OFFSET, userQuerySchema } from './dto/user-query.dto';
+import { USER_MESSAGES } from './dto/user-response.dto';
 import type { UserPermissionsResponse } from './interfaces/permission.interface';
+import type {
+  DeleteUserResponse,
+  UserListResponse,
+  UserResponse,
+} from './interfaces/user.interface';
+import { Role, UserErrorCode } from './interfaces/user.interface';
+import { UsersService } from './users.service';
 
 /**
  * Express Request interface (local definition to avoid @types/express dependency)

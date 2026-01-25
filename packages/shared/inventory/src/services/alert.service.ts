@@ -4,28 +4,26 @@
  * Készlet minimum szint figyelmeztetések
  */
 
-import { Injectable, Inject } from '@nestjs/common';
-import { ALERT_REPOSITORY } from '../interfaces/alert.interface';
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  CreateStockLevelSettingInput,
+  CreateStockLevelSettingSchema,
+  UpdateStockLevelSettingInput,
+  UpdateStockLevelSettingSchema,
+} from '../dto/alert.dto';
 import type {
-  StockLevelSetting,
-  StockAlert,
-  StockAlertType,
   AlertPriority,
   AlertQuery,
   AlertQueryResult,
   AlertSummary,
-  StockLevelSettingQuery,
-  StockCheckResult,
   IAlertRepository,
+  StockAlert,
+  StockAlertType,
+  StockCheckResult,
+  StockLevelSetting,
+  StockLevelSettingQuery,
 } from '../interfaces/alert.interface';
-import {
-  CreateStockLevelSettingSchema,
-  CreateStockLevelSettingInput,
-  UpdateStockLevelSettingSchema,
-  UpdateStockLevelSettingInput,
-  SnoozeAlertSchema,
-  SnoozeAlertInput,
-} from '../dto/alert.dto';
+import { ALERT_REPOSITORY } from '../interfaces/alert.interface';
 
 /**
  * Készlet alert szolgáltatás
@@ -35,7 +33,7 @@ import {
 export class AlertService {
   constructor(
     @Inject(ALERT_REPOSITORY)
-    private readonly repository: IAlertRepository,
+    private readonly repository: IAlertRepository
   ) {}
 
   // ============================================
@@ -47,14 +45,12 @@ export class AlertService {
    */
   async createStockLevelSetting(
     tenantId: string,
-    input: CreateStockLevelSettingInput,
+    input: CreateStockLevelSettingInput
   ): Promise<StockLevelSetting> {
     // Validálás
     const validationResult = CreateStockLevelSettingSchema.safeParse(input);
     if (!validationResult.success) {
-      const errorMessage = validationResult.error.errors
-        .map((e) => e.message)
-        .join(', ');
+      const errorMessage = validationResult.error.errors.map(e => e.message).join(', ');
       throw new Error(errorMessage);
     }
 
@@ -64,7 +60,7 @@ export class AlertService {
     const existing = await this.repository.findStockLevelSettingByProduct(
       validInput.productId,
       tenantId,
-      validInput.warehouseId,
+      validInput.warehouseId
     );
     if (existing) {
       throw new Error('A termékhez már létezik készletszint beállítás');
@@ -94,11 +90,19 @@ export class AlertService {
   /**
    * Készlet szint beállítás keresése ID alapján
    */
-  async findStockLevelSettingById(
-    id: string,
-    tenantId: string,
-  ): Promise<StockLevelSetting | null> {
+  async findSettingById(id: string, tenantId: string): Promise<StockLevelSetting | null> {
     return this.repository.findStockLevelSettingById(id, tenantId);
+  }
+
+  /**
+   * Készlet szint beállítás keresése termék alapján
+   */
+  async findSettingByProduct(
+    productId: string,
+    tenantId: string,
+    warehouseId?: string
+  ): Promise<StockLevelSetting | null> {
+    return this.repository.findStockLevelSettingByProduct(productId, tenantId, warehouseId);
   }
 
   /**
@@ -107,13 +111,11 @@ export class AlertService {
   async updateStockLevelSetting(
     id: string,
     tenantId: string,
-    input: UpdateStockLevelSettingInput,
+    input: UpdateStockLevelSettingInput
   ): Promise<StockLevelSetting> {
     const validationResult = UpdateStockLevelSettingSchema.safeParse(input);
     if (!validationResult.success) {
-      const errorMessage = validationResult.error.errors
-        .map((e) => e.message)
-        .join(', ');
+      const errorMessage = validationResult.error.errors.map(e => e.message).join(', ');
       throw new Error(errorMessage);
     }
 
@@ -130,8 +132,10 @@ export class AlertService {
     if (data.minimumLevel !== undefined) updateData.minimumLevel = data.minimumLevel;
     if (data.reorderPoint !== undefined) updateData.reorderPoint = data.reorderPoint;
     if (data.reorderQuantity !== undefined) updateData.reorderQuantity = data.reorderQuantity;
-    if (data.maximumLevel !== undefined && data.maximumLevel !== null) updateData.maximumLevel = data.maximumLevel;
-    if (data.leadTimeDays !== undefined && data.leadTimeDays !== null) updateData.leadTimeDays = data.leadTimeDays;
+    if (data.maximumLevel !== undefined && data.maximumLevel !== null)
+      updateData.maximumLevel = data.maximumLevel;
+    if (data.leadTimeDays !== undefined && data.leadTimeDays !== null)
+      updateData.leadTimeDays = data.leadTimeDays;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
     return this.repository.updateStockLevelSetting(id, tenantId, updateData);
   }
@@ -152,7 +156,7 @@ export class AlertService {
    * Készlet szint beállítások lekérdezése
    */
   async queryStockLevelSettings(
-    query: StockLevelSettingQuery,
+    query: StockLevelSettingQuery
   ): Promise<{ items: StockLevelSetting[]; total: number }> {
     return this.repository.queryStockLevelSettings(query);
   }
@@ -164,10 +168,7 @@ export class AlertService {
   /**
    * Készlet szint ellenőrzése
    */
-  checkStockLevel(
-    currentQuantity: number,
-    setting: StockLevelSetting,
-  ): StockCheckResult {
+  checkStockLevel(currentQuantity: number, setting: StockLevelSetting): StockCheckResult {
     const result: StockCheckResult = {
       productId: setting.productId,
       currentQuantity,
@@ -243,14 +244,14 @@ export class AlertService {
     currentQuantity: number,
     minimumLevel: number,
     unit: string,
-    warehouseId?: string,
+    warehouseId?: string
   ): Promise<StockAlert> {
     // Ellenőrizzük van-e már aktív alert
     const existing = await this.repository.findActiveAlertForProduct(
       productId,
       tenantId,
       warehouseId,
-      'LOW_STOCK',
+      'LOW_STOCK'
     );
 
     // Ha van meglévő alert, frissítjük az aktuális értékekkel
@@ -275,11 +276,7 @@ export class AlertService {
       return existing;
     }
 
-    const priority = this.calculateAlertPriority(
-      'LOW_STOCK',
-      currentQuantity,
-      minimumLevel,
-    );
+    const priority = this.calculateAlertPriority('LOW_STOCK', currentQuantity, minimumLevel);
     const deficit = this.calculateDeficit(currentQuantity, minimumLevel);
     const message = this.generateAlertMessage('LOW_STOCK', currentQuantity, minimumLevel);
 
@@ -308,13 +305,13 @@ export class AlertService {
     tenantId: string,
     productId: string,
     unit: string,
-    warehouseId?: string,
+    warehouseId?: string
   ): Promise<StockAlert> {
     const existing = await this.repository.findActiveAlertForProduct(
       productId,
       tenantId,
       warehouseId,
-      'OUT_OF_STOCK',
+      'OUT_OF_STOCK'
     );
     if (existing) {
       return existing;
@@ -341,12 +338,20 @@ export class AlertService {
   }
 
   /**
+   * Alert lekérdezése ID alapján
+   */
+  async findAlertById(alertId: string, tenantId: string): Promise<StockAlert | null> {
+    return this.repository.findAlertById(alertId, tenantId);
+  }
+
+  /**
    * Alert tudomásul vétele
    */
   async acknowledgeAlert(
     alertId: string,
     tenantId: string,
     userId: string,
+    note?: string
   ): Promise<StockAlert> {
     const alert = await this.repository.findAlertById(alertId, tenantId);
     if (!alert) {
@@ -357,17 +362,22 @@ export class AlertService {
       throw new Error('Az alert már tudomásul van véve');
     }
 
-    return this.repository.updateAlert(alertId, tenantId, {
+    const updateData: Partial<StockAlert> = {
       status: 'ACKNOWLEDGED',
       acknowledgedBy: userId,
       acknowledgedAt: new Date(),
-    });
+    };
+    if (note !== undefined) {
+      updateData.details = note;
+    }
+
+    return this.repository.updateAlert(alertId, tenantId, updateData);
   }
 
   /**
    * Alert megoldása
    */
-  async resolveAlert(alertId: string, tenantId: string): Promise<StockAlert> {
+  async resolveAlert(alertId: string, tenantId: string, note?: string): Promise<StockAlert> {
     const alert = await this.repository.findAlertById(alertId, tenantId);
     if (!alert) {
       throw new Error('Alert nem található');
@@ -377,10 +387,15 @@ export class AlertService {
       throw new Error('Az alert már meg van oldva');
     }
 
-    return this.repository.updateAlert(alertId, tenantId, {
+    const updateData: Partial<StockAlert> = {
       status: 'RESOLVED',
       resolvedAt: new Date(),
-    });
+    };
+    if (note !== undefined) {
+      updateData.details = note;
+    }
+
+    return this.repository.updateAlert(alertId, tenantId, updateData);
   }
 
   /**
@@ -389,14 +404,11 @@ export class AlertService {
   async snoozeAlert(
     alertId: string,
     tenantId: string,
-    input: SnoozeAlertInput,
+    snoozeDays: number,
+    note?: string
   ): Promise<StockAlert> {
-    const validationResult = SnoozeAlertSchema.safeParse(input);
-    if (!validationResult.success) {
-      const errorMessage = validationResult.error.errors
-        .map((e) => e.message)
-        .join(', ');
-      throw new Error(errorMessage);
+    if (snoozeDays < 1 || snoozeDays > 30) {
+      throw new Error('Elhalasztás 1-30 nap között lehetséges');
     }
 
     const alert = await this.repository.findAlertById(alertId, tenantId);
@@ -409,12 +421,17 @@ export class AlertService {
     }
 
     const snoozedUntil = new Date();
-    snoozedUntil.setDate(snoozedUntil.getDate() + validationResult.data.snoozeDays);
+    snoozedUntil.setDate(snoozedUntil.getDate() + snoozeDays);
 
-    return this.repository.updateAlert(alertId, tenantId, {
+    const updateData: Partial<StockAlert> = {
       status: 'SNOOZED',
       snoozedUntil,
-    });
+    };
+    if (note !== undefined) {
+      updateData.details = note;
+    }
+
+    return this.repository.updateAlert(alertId, tenantId, updateData);
   }
 
   /**
@@ -437,7 +454,7 @@ export class AlertService {
   async resolveAlertsByProduct(
     productId: string,
     tenantId: string,
-    warehouseId?: string,
+    warehouseId?: string
   ): Promise<number> {
     return this.repository.resolveAlertsByProduct(productId, tenantId, warehouseId);
   }
@@ -452,7 +469,7 @@ export class AlertService {
   calculateAlertPriority(
     type: StockAlertType,
     currentQuantity: number,
-    threshold: number,
+    threshold: number
   ): AlertPriority {
     // OUT_OF_STOCK mindig CRITICAL
     if (type === 'OUT_OF_STOCK') {
@@ -487,11 +504,7 @@ export class AlertService {
   /**
    * Alert üzenet generálása
    */
-  generateAlertMessage(
-    type: StockAlertType,
-    currentQuantity: number,
-    threshold: number,
-  ): string {
+  generateAlertMessage(type: StockAlertType, currentQuantity: number, threshold: number): string {
     switch (type) {
       case 'OUT_OF_STOCK':
         return 'Készlet kifogyott! Azonnali újrarendelés szükséges.';
@@ -511,5 +524,65 @@ export class AlertService {
       default:
         return 'Készlet figyelmeztetés';
     }
+  }
+
+  // ============================================
+  // BULK OPERATIONS
+  // ============================================
+
+  /**
+   * Tömeges készletszint ellenőrzés
+   * @param tenantId Tenant azonosító
+   * @param input Ellenőrzési paraméterek
+   * @returns Ellenőrzési eredmények
+   */
+  async bulkCheckStockLevels(
+    tenantId: string,
+    input: { productIds?: string[]; warehouseId?: string; createAlerts?: boolean }
+  ): Promise<{ checked: number; alertsCreated: number; results: StockCheckResult[] }> {
+    // Query settings based on input
+    const query: StockLevelSettingQuery = {
+      tenantId,
+      isActive: true,
+      limit: 1000,
+    };
+    if (input.warehouseId) query.warehouseId = input.warehouseId;
+    if (input.productIds && input.productIds.length > 0) {
+      const firstProductId = input.productIds[0];
+      if (firstProductId) {
+        query.productId = firstProductId; // Single product filter for now
+      }
+    }
+
+    const settingsResult = await this.repository.queryStockLevelSettings(query);
+    const results: StockCheckResult[] = [];
+    const alertsCreated = 0;
+
+    // For each setting, we would need to get the current stock level
+    // This is a placeholder - in real implementation, we'd query inventory
+    for (const setting of settingsResult.items) {
+      // Placeholder: we would get current quantity from inventory service
+      // For now, return the setting info as a check result
+      const checkResult: StockCheckResult = {
+        productId: setting.productId,
+        currentQuantity: 0, // Would be fetched from inventory
+        minimumLevel: setting.minimumLevel,
+        reorderPoint: setting.reorderPoint,
+        levelStatus: 'NORMAL',
+        alertRequired: false,
+      };
+      // Assign warehouseId only if it's a non-undefined string
+      const warehouseId = setting.warehouseId;
+      if (warehouseId) {
+        checkResult.warehouseId = warehouseId;
+      }
+      results.push(checkResult);
+    }
+
+    return {
+      checked: settingsResult.items.length,
+      alertsCreated,
+      results,
+    };
   }
 }

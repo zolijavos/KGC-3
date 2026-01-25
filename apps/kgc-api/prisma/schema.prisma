@@ -16,14 +16,14 @@ datasource db {
 
 /// User roles per ADR-032 RBAC Architecture
 enum Role {
-  OPERATOR      // Pultos / Értékesítő (Level 1)
-  TECHNIKUS     // Szerviz technikus (Level 2)
-  BOLTVEZETO    // Boltvezető (Level 3)
-  ACCOUNTANT    // Könyvelő (Level 3)
+  OPERATOR // Pultos / Értékesítő (Level 1)
+  TECHNIKUS // Szerviz technikus (Level 2)
+  BOLTVEZETO // Boltvezető (Level 3)
+  ACCOUNTANT // Könyvelő (Level 3)
   PARTNER_OWNER // Franchise Partner Tulajdonos (Level 4)
   CENTRAL_ADMIN // Központi Admin (Level 5)
-  DEVOPS_ADMIN  // DevOps / IT Admin (Level 6)
-  SUPER_ADMIN   // Rendszergazda (Level 8)
+  DEVOPS_ADMIN // DevOps / IT Admin (Level 6)
+  SUPER_ADMIN // Rendszergazda (Level 8)
 }
 
 /// User account status
@@ -34,12 +34,97 @@ enum UserStatus {
   PENDING_VERIFICATION
 }
 
+/// Inventory item type
+enum InventoryItemType {
+  PRODUCT // Eladható termék
+  RENTAL_EQUIPMENT // Bérelhető gép
+  PART // Alkatrész (szerviz)
+  CONSUMABLE // Fogyóeszköz
+}
+
+/// Inventory item status
+enum InventoryStatus {
+  AVAILABLE // Elérhető, kiadható
+  RESERVED // Foglalt
+  IN_TRANSIT // Szállítás alatt
+  IN_SERVICE // Szervizben
+  SOLD // Eladva
+  RENTED // Kiadva (bérlés)
+  DAMAGED // Sérült
+  LOST // Elveszett
+  SCRAPPED // Selejtezve
+}
+
+/// Stock movement type
+enum MovementType {
+  IN // Bevételezés
+  OUT // Kiadás
+  TRANSFER // Raktárközi mozgás
+  ADJUSTMENT // Korrekció (leltár)
+  RESERVATION // Foglalás
+  RELEASE // Foglalás feloldás
+}
+
+/// Stock alert type
+enum AlertType {
+  LOW_STOCK // Alacsony készlet
+  OUT_OF_STOCK // Elfogyott
+  EXPIRING // Lejáró batch
+  REORDER_POINT // Újrarendelési pont
+}
+
 /// Tenant status
 enum TenantStatus {
-  PENDING    // Onboarding folyamatban
-  ACTIVE     // Aktív tenant
-  INACTIVE   // Soft deleted / inaktív
-  SUSPENDED  // Felfüggesztett (fizetési probléma)
+  PENDING // Onboarding folyamatban
+  ACTIVE // Aktív tenant
+  INACTIVE // Soft deleted / inaktív
+  SUSPENDED // Felfüggesztett (fizetési probléma)
+}
+
+/// Transfer status (Story 9-3: Raktárközi átmozgatás)
+enum TransferStatus {
+  PENDING // Függőben - még nem indult
+  IN_TRANSIT // Szállítás alatt
+  COMPLETED // Befejezve
+  CANCELLED // Törölve
+}
+
+/// Warehouse type (Story 9-3: Multi-warehouse)
+enum WarehouseType {
+  MAIN // Központi raktár
+  BRANCH // Fiók raktár (bolt)
+  VIRTUAL // Virtuális raktár (szervizben lévő gépek)
+  TRANSIT // Tranzit (szállítás alatt)
+}
+
+/// Warehouse status
+enum WarehouseStatus {
+  ACTIVE // Aktív, használható
+  INACTIVE // Inaktív (pl. ideiglenesen zárva)
+  CLOSED // Véglegesen zárva
+}
+
+/// Stock location status (Story 9-2: K-P-D helykód)
+enum LocationStatus {
+  ACTIVE // Aktív, használható
+  INACTIVE // Inaktív (pl. karbantartás alatt)
+  FULL // Tele van
+}
+
+/// Alert priority (Story 9-6: Minimum stock alert)
+enum AlertPriority {
+  LOW // Alacsony prioritás
+  MEDIUM // Közepes prioritás
+  HIGH // Magas prioritás
+  CRITICAL // Kritikus - azonnali beavatkozás szükséges
+}
+
+/// Alert status (Story 9-6: Minimum stock alert)
+enum AlertStatus {
+  ACTIVE // Aktív figyelmeztetés
+  ACKNOWLEDGED // Tudomásul véve
+  RESOLVED // Megoldva
+  SNOOZED // Elhalasztva
 }
 
 // ============================================
@@ -47,33 +132,33 @@ enum TenantStatus {
 // ============================================
 
 model Tenant {
-  id              String       @id @default(uuid()) @db.Uuid
-  name            String       @db.VarChar(255)
-  slug            String       @unique @db.VarChar(100)
-  status          TenantStatus @default(PENDING)
-  settings        Json         @default("{}")
+  id       String       @id @default(uuid()) @db.Uuid
+  name     String       @db.VarChar(255)
+  slug     String       @unique @db.VarChar(100)
+  status   TenantStatus @default(PENDING)
+  settings Json         @default("{}")
 
   // Holding struktúra (Story 3-6)
-  parentTenantId  String?      @map("parent_tenant_id") @db.Uuid
-  parentTenant    Tenant?      @relation("TenantHierarchy", fields: [parentTenantId], references: [id])
-  childTenants    Tenant[]     @relation("TenantHierarchy")
+  parentTenantId String?  @map("parent_tenant_id") @db.Uuid
+  parentTenant   Tenant?  @relation("TenantHierarchy", fields: [parentTenantId], references: [id])
+  childTenants   Tenant[] @relation("TenantHierarchy")
 
   // Schema info
-  schemaName      String?      @map("schema_name") @db.VarChar(100)
-  schemaCreatedAt DateTime?    @map("schema_created_at")
+  schemaName      String?   @map("schema_name") @db.VarChar(100)
+  schemaCreatedAt DateTime? @map("schema_created_at")
 
   // Timestamps
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
-  deletedAt       DateTime?    @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   // Relations
-  users           User[]
-  locations       Location[]
+  users     User[]
+  locations Location[]
 
-  @@map("tenants")
   @@index([status])
   @@index([parentTenantId])
+  @@map("tenants")
 }
 
 model TenantAuditLog {
@@ -84,9 +169,9 @@ model TenantAuditLog {
   userId    String?  @map("user_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at")
 
-  @@map("tenant_audit_logs")
   @@index([tenantId])
   @@index([createdAt])
+  @@map("tenant_audit_logs")
 }
 
 // ============================================
@@ -94,21 +179,21 @@ model TenantAuditLog {
 // ============================================
 
 model Location {
-  id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @map("tenant_id") @db.Uuid
-  name      String   @db.VarChar(255)
-  address   String?  @db.VarChar(500)
-  isActive  Boolean  @default(true) @map("is_active")
+  id       String  @id @default(uuid()) @db.Uuid
+  tenantId String  @map("tenant_id") @db.Uuid
+  name     String  @db.VarChar(255)
+  address  String? @db.VarChar(500)
+  isActive Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  users     User[]
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  users  User[]
 
-  @@map("locations")
   @@index([tenantId])
+  @@map("locations")
 }
 
 // ============================================
@@ -127,12 +212,12 @@ model User {
   pinHash      String?    @map("pin_hash") @db.VarChar(255)
 
   // Soft delete
-  deletedAt    DateTime?  @map("deleted_at") @db.Timestamptz
-  deletedEmail String?    @map("deleted_email") @db.VarChar(255)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz
+  deletedEmail String?   @map("deleted_email") @db.VarChar(255)
 
   // Profile fields
-  phone        String?    @db.VarChar(20)
-  avatarUrl    String?    @map("avatar_url") @db.VarChar(500)
+  phone     String? @db.VarChar(20)
+  avatarUrl String? @map("avatar_url") @db.VarChar(500)
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -153,14 +238,14 @@ model User {
 }
 
 model RefreshToken {
-  id         String   @id @default(uuid()) @db.Uuid
-  token      String   @unique @db.VarChar(500)
-  userId     String   @map("user_id") @db.Uuid
-  expiresAt  DateTime @map("expires_at") @db.Timestamptz
-  deviceInfo String?  @map("device_info") @db.VarChar(500)
-  isRevoked  Boolean  @default(false) @map("is_revoked")
+  id         String    @id @default(uuid()) @db.Uuid
+  token      String    @unique @db.VarChar(500)
+  userId     String    @map("user_id") @db.Uuid
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz
+  deviceInfo String?   @map("device_info") @db.VarChar(500)
+  isRevoked  Boolean   @default(false) @map("is_revoked")
   revokedAt  DateTime? @map("revoked_at") @db.Timestamptz
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -201,13 +286,15 @@ model PasswordResetToken {
 }
 
 model TrustedDevice {
-  id           String   @id @default(uuid()) @db.Uuid
-  tenantId     String   @map("tenant_id") @db.Uuid
-  locationId   String   @map("location_id") @db.Uuid
-  deviceName   String   @map("device_name") @db.VarChar(255)
-  status       String   @default("ACTIVE") @db.VarChar(20)
-  lastUsedAt   DateTime? @map("last_used_at") @db.Timestamptz
-  registeredAt DateTime @default(now()) @map("registered_at") @db.Timestamptz
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  locationId        String    @map("location_id") @db.Uuid
+  deviceName        String    @map("device_name") @db.VarChar(255)
+  deviceFingerprint String?   @map("device_fingerprint") @db.VarChar(255)
+  status            String    @default("ACTIVE") @db.VarChar(20)
+  registeredBy      String?   @map("registered_by") @db.Uuid
+  lastUsedAt        DateTime? @map("last_used_at") @db.Timestamptz
+  registeredAt      DateTime  @default(now()) @map("registered_at") @db.Timestamptz
 
   @@index([tenantId, locationId])
   @@index([status])
@@ -227,4 +314,1993 @@ model PinAttempt {
   @@unique([userId, deviceId])
   @@index([lockedUntil])
   @@map("pin_attempts")
+}
+
+// ============================================
+// INVENTORY MODELS
+// ============================================
+
+/// Warehouse - Raktár (Story 9-3: Multi-warehouse)
+model Warehouse {
+  id        String  @id @default(uuid()) @db.Uuid
+  tenantId  String  @map("tenant_id") @db.Uuid
+  code      String  @db.VarChar(20)
+  name      String  @db.VarChar(255)
+  address   String? @db.VarChar(500)
+  isDefault Boolean @default(false) @map("is_default")
+  isActive  Boolean @default(true) @map("is_active")
+
+  // Extended fields (INV-S1 AC5)
+  type         WarehouseType   @default(BRANCH)
+  status       WarehouseStatus @default(ACTIVE)
+  city         String?         @db.VarChar(100)
+  postalCode   String?         @map("postal_code") @db.VarChar(20)
+  contactName  String?         @map("contact_name") @db.VarChar(255)
+  contactPhone String?         @map("contact_phone") @db.VarChar(30)
+  contactEmail String?         @map("contact_email") @db.VarChar(255)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Soft delete
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  // Relations
+  inventoryItems     InventoryItem[]
+  stockLocations     StockLocation[]
+  movementsFrom      StockMovement[]     @relation("MovementFromWarehouse")
+  movementsTo        StockMovement[]     @relation("MovementToWarehouse")
+  transfersFrom      InventoryTransfer[] @relation("TransferFromWarehouse")
+  transfersTo        InventoryTransfer[] @relation("TransferToWarehouse")
+  stockLevelSettings StockLevelSetting[]
+  locationStructures LocationStructure[]
+  rentals            Rental[]
+  stockAlerts        StockAlert[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([isActive])
+  @@index([type])
+  @@index([status])
+  @@index([isDeleted])
+  @@map("warehouses")
+}
+
+/// StockLocation - K-P-D helykód (Story 9-2)
+model StockLocation {
+  id          String  @id @default(uuid()) @db.Uuid
+  tenantId    String  @map("tenant_id") @db.Uuid
+  warehouseId String  @map("warehouse_id") @db.Uuid
+  code        String  @db.VarChar(50) // K-P-D format (pl. "K1-P2-D3")
+  description String? @db.VarChar(255)
+  isActive    Boolean @default(true) @map("is_active")
+
+  // Extended K-P-D fields (INV-S1 AC6)
+  kommando         Int            @default(0) // Kommandó szám (pl. 1)
+  polc             Int            @default(0) // Polc szám (pl. 2)
+  doboz            Int            @default(0) // Doboz szám (pl. 3)
+  capacity         Int? // Max kapacitás (db)
+  currentOccupancy Int            @default(0) @map("current_occupancy") // Jelenlegi foglaltság
+  status           LocationStatus @default(ACTIVE) // Helykód státusz
+
+  // Soft delete
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  warehouse      Warehouse       @relation(fields: [warehouseId], references: [id])
+  inventoryItems InventoryItem[]
+
+  @@unique([warehouseId, code])
+  @@index([tenantId])
+  @@index([warehouseId])
+  @@index([status])
+  @@index([isDeleted])
+  @@index([kommando, polc, doboz])
+  @@map("stock_locations")
+}
+
+/// InventoryItem - Készlet tétel (Story 9-1)
+model InventoryItem {
+  id          String  @id @default(uuid()) @db.Uuid
+  tenantId    String  @map("tenant_id") @db.Uuid
+  warehouseId String  @map("warehouse_id") @db.Uuid
+  locationId  String? @map("location_id") @db.Uuid
+  productId   String  @map("product_id") @db.Uuid
+
+  type   InventoryItemType
+  status InventoryStatus   @default(AVAILABLE)
+
+  // Azonosítók
+  serialNumber String? @map("serial_number") @db.VarChar(100)
+  batchNumber  String? @map("batch_number") @db.VarChar(100)
+  locationCode String? @map("location_code") @db.VarChar(50) // K-P-D denormalized
+
+  // Mennyiségek
+  quantity Int    @default(0)
+  unit     String @db.VarChar(20) // db, kg, m, etc.
+
+  // Készlet szintek
+  minStockLevel Int? @map("min_stock_level")
+  maxStockLevel Int? @map("max_stock_level")
+
+  // Beszerzési adatok
+  purchasePrice    Decimal?  @map("purchase_price") @db.Decimal(12, 2)
+  lastPurchaseDate DateTime? @map("last_purchase_date") @db.Timestamptz
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  updatedBy String   @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Soft delete
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  // Relations
+  warehouse     Warehouse       @relation(fields: [warehouseId], references: [id])
+  stockLocation StockLocation?  @relation(fields: [locationId], references: [id])
+  product       Product         @relation(fields: [productId], references: [id])
+  movements     StockMovement[]
+  alerts        StockAlert[]
+  transferItems TransferItem[]
+
+  @@unique([tenantId, serialNumber])
+  @@index([tenantId])
+  @@index([warehouseId])
+  @@index([productId])
+  @@index([status])
+  @@index([type])
+  @@index([serialNumber])
+  @@index([batchNumber])
+  @@index([isDeleted])
+  @@map("inventory_items")
+}
+
+/// StockMovement - Készlet mozgás (Story 9-4: Audit trail)
+model StockMovement {
+  id              String @id @default(uuid()) @db.Uuid
+  tenantId        String @map("tenant_id") @db.Uuid
+  inventoryItemId String @map("inventory_item_id") @db.Uuid
+
+  type     MovementType
+  quantity Int
+  reason   String?      @db.VarChar(500)
+
+  // Raktárközi mozgáshoz
+  fromWarehouseId  String? @map("from_warehouse_id") @db.Uuid
+  toWarehouseId    String? @map("to_warehouse_id") @db.Uuid
+  fromLocationCode String? @map("from_location_code") @db.VarChar(50)
+  toLocationCode   String? @map("to_location_code") @db.VarChar(50)
+
+  // Referenciák (bérlés, munkalap, számla)
+  referenceType String? @map("reference_type") @db.VarChar(50) // RENTAL, WORKSHEET, INVOICE
+  referenceId   String? @map("reference_id") @db.Uuid
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  fromWarehouse Warehouse?    @relation("MovementFromWarehouse", fields: [fromWarehouseId], references: [id])
+  toWarehouse   Warehouse?    @relation("MovementToWarehouse", fields: [toWarehouseId], references: [id])
+
+  @@index([tenantId])
+  @@index([inventoryItemId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([referenceType, referenceId])
+  @@map("stock_movements")
+}
+
+/// StockAlert - Készlet riasztás (Story 9-6: Minimum stock alert)
+model StockAlert {
+  id              String @id @default(uuid()) @db.Uuid
+  tenantId        String @map("tenant_id") @db.Uuid
+  inventoryItemId String @map("inventory_item_id") @db.Uuid
+  warehouseId     String @map("warehouse_id") @db.Uuid
+  productId       String @map("product_id") @db.Uuid
+
+  type              AlertType
+  currentQuantity   Int       @map("current_quantity")
+  thresholdQuantity Int       @map("threshold_quantity")
+  message           String    @db.VarChar(500)
+
+  // Extended fields (INV-S1)
+  priority       AlertPriority @default(MEDIUM)
+  status         AlertStatus   @default(ACTIVE)
+  deficit        Int? // Mennyivel van minimum alatt
+  productName    String?       @map("product_name") @db.VarChar(255) // Denormalized
+  warehouseName  String?       @map("warehouse_name") @db.VarChar(255) // Denormalized
+  details        String?       @db.VarChar(1000) // Részletes leírás
+  snoozedUntil   DateTime?     @map("snoozed_until") @db.Timestamptz
+  lastNotifiedAt DateTime?     @map("last_notified_at") @db.Timestamptz
+
+  // Állapot
+  isAcknowledged Boolean   @default(false) @map("is_acknowledged")
+  acknowledgedBy String?   @map("acknowledged_by") @db.Uuid
+  acknowledgedAt DateTime? @map("acknowledged_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  warehouse     Warehouse     @relation(fields: [warehouseId], references: [id])
+
+  @@index([tenantId])
+  @@index([inventoryItemId])
+  @@index([warehouseId])
+  @@index([type])
+  @@index([isAcknowledged])
+  @@index([createdAt])
+  @@index([priority])
+  @@index([status])
+  @@map("stock_alerts")
+}
+
+/// InventoryTransfer - Raktárközi átmozgatás (Story 9-3: Multi-warehouse)
+model InventoryTransfer {
+  id                String         @id @default(uuid()) @db.Uuid
+  tenantId          String         @map("tenant_id") @db.Uuid
+  transferCode      String         @map("transfer_code") @db.VarChar(50) // Egyedi kód tenant-en belül
+  sourceWarehouseId String         @map("source_warehouse_id") @db.Uuid
+  targetWarehouseId String         @map("target_warehouse_id") @db.Uuid
+  status            TransferStatus @default(PENDING)
+  reason            String?        @db.VarChar(500)
+
+  // Workflow
+  initiatedBy String    @map("initiated_by") @db.Uuid
+  initiatedAt DateTime  @map("initiated_at") @db.Timestamptz
+  completedBy String?   @map("completed_by") @db.Uuid
+  completedAt DateTime? @map("completed_at") @db.Timestamptz
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  sourceWarehouse Warehouse      @relation("TransferFromWarehouse", fields: [sourceWarehouseId], references: [id])
+  targetWarehouse Warehouse      @relation("TransferToWarehouse", fields: [targetWarehouseId], references: [id])
+  items           TransferItem[]
+
+  @@unique([tenantId, transferCode])
+  @@index([tenantId])
+  @@index([sourceWarehouseId])
+  @@index([targetWarehouseId])
+  @@index([status])
+  @@index([initiatedAt])
+  @@map("inventory_transfers")
+}
+
+/// TransferItem - Átmozgatott tétel (Story 9-3)
+model TransferItem {
+  id              String  @id @default(uuid()) @db.Uuid
+  transferId      String  @map("transfer_id") @db.Uuid
+  inventoryItemId String  @map("inventory_item_id") @db.Uuid
+  serialNumber    String? @map("serial_number") @db.VarChar(100)
+  quantity        Int
+  unit            String  @db.VarChar(20)
+  note            String? @db.VarChar(500)
+
+  // Relations
+  transfer      InventoryTransfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  inventoryItem InventoryItem     @relation(fields: [inventoryItemId], references: [id])
+
+  @@index([transferId])
+  @@index([inventoryItemId])
+  @@map("transfer_items")
+}
+
+/// StockLevelSetting - Készlet szint beállítások (Story 9-6: Alert küszöbértékek)
+model StockLevelSetting {
+  id              String  @id @default(uuid()) @db.Uuid
+  tenantId        String  @map("tenant_id") @db.Uuid
+  productId       String  @map("product_id") @db.Uuid
+  warehouseId     String? @map("warehouse_id") @db.Uuid // null = minden raktár
+  minimumLevel    Int     @map("minimum_level")
+  reorderPoint    Int     @map("reorder_point")
+  reorderQuantity Int     @map("reorder_quantity")
+  maximumLevel    Int?    @map("maximum_level")
+  unit            String  @db.VarChar(20)
+  leadTimeDays    Int?    @map("lead_time_days")
+  isActive        Boolean @default(true) @map("is_active")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  warehouse Warehouse? @relation(fields: [warehouseId], references: [id])
+
+  @@unique([tenantId, productId, warehouseId])
+  @@index([tenantId])
+  @@index([productId])
+  @@index([warehouseId])
+  @@index([isActive])
+  @@map("stock_level_settings")
+}
+
+/// LocationStructure - K-P-D struktúra konfiguráció (Story 9-2)
+model LocationStructure {
+  id                 String @id @default(uuid()) @db.Uuid
+  tenantId           String @map("tenant_id") @db.Uuid
+  warehouseId        String @map("warehouse_id") @db.Uuid
+  kommandoPrefix     String @default("K") @map("kommando_prefix") @db.VarChar(10)
+  polcPrefix         String @default("P") @map("polc_prefix") @db.VarChar(10)
+  dobozPrefix        String @default("D") @map("doboz_prefix") @db.VarChar(10)
+  separator          String @default("-") @db.VarChar(5)
+  maxKommando        Int    @map("max_kommando")
+  maxPolcPerKommando Int    @map("max_polc_per_kommando")
+  maxDobozPerPolc    Int    @map("max_doboz_per_polc")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Soft delete
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  // Relations
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+
+  @@unique([tenantId, warehouseId])
+  @@index([tenantId])
+  @@index([warehouseId])
+  @@index([isDeleted])
+  @@map("location_structures")
+}
+
+// ============================================
+// PARTNER MODELS (Epic 7)
+// ============================================
+
+/// Partner típus
+enum PartnerType {
+  INDIVIDUAL // Magánszemély
+  COMPANY // Cég
+}
+
+/// Partner státusz
+enum PartnerStatus {
+  ACTIVE // Aktív
+  INACTIVE // Inaktív
+  BLACKLISTED // Feketelistán
+}
+
+/// Partner - Ügyfél/Beszállító (Epic 7: Partner Management)
+model Partner {
+  id       String        @id @default(uuid()) @db.Uuid
+  tenantId String        @map("tenant_id") @db.Uuid
+  type     PartnerType   @default(INDIVIDUAL)
+  status   PartnerStatus @default(ACTIVE)
+
+  // Azonosítók
+  partnerCode String  @map("partner_code") @db.VarChar(50)
+  taxNumber   String? @map("tax_number") @db.VarChar(20) // Adószám (cégeknek)
+  euVatNumber String? @map("eu_vat_number") @db.VarChar(20) // EU VAT
+
+  // Alapadatok
+  name        String  @db.VarChar(255)
+  companyName String? @map("company_name") @db.VarChar(255)
+  contactName String? @map("contact_name") @db.VarChar(255)
+  email       String? @db.VarChar(255)
+  phone       String? @db.VarChar(30)
+  phoneAlt    String? @map("phone_alt") @db.VarChar(30)
+
+  // Cím adatok
+  country    String? @db.VarChar(2) // ISO country code
+  postalCode String? @map("postal_code") @db.VarChar(20)
+  city       String? @db.VarChar(100)
+  address    String? @db.VarChar(255)
+  addressAlt String? @map("address_alt") @db.VarChar(255)
+
+  // Személyes adatok (magánszemélyeknek)
+  birthDate        DateTime? @map("birth_date") @db.Date
+  idCardNumber     String?   @map("id_card_number") @db.VarChar(50)
+  drivingLicenseNo String?   @map("driving_license_no") @db.VarChar(50)
+
+  // Hitelkeret és fizetési feltételek
+  creditLimit       Decimal? @map("credit_limit") @db.Decimal(12, 2)
+  currentBalance    Decimal  @default(0) @map("current_balance") @db.Decimal(12, 2)
+  paymentTermDays   Int      @default(0) @map("payment_term_days")
+  defaultDiscountPc Decimal  @default(0) @map("default_discount_pc") @db.Decimal(5, 2)
+
+  // Törzsvendég rendszer (ADR-034)
+  loyaltyTierId    String?   @map("loyalty_tier_id") @db.Uuid
+  loyaltyPoints    Int       @default(0) @map("loyalty_points")
+  tierCalculatedAt DateTime? @map("tier_calculated_at") @db.Timestamptz
+
+  // Blacklist/figyelmeztetés
+  blacklistReason String?   @map("blacklist_reason") @db.VarChar(500)
+  blacklistedAt   DateTime? @map("blacklisted_at") @db.Timestamptz
+  blacklistedBy   String?   @map("blacklisted_by") @db.Uuid
+  warningNote     String?   @map("warning_note") @db.VarChar(500)
+
+  // Megjegyzések
+  notes String? @db.Text
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  updatedBy String   @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Soft delete
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  // Relations
+  loyaltyTier     LoyaltyTier?     @relation(fields: [loyaltyTierId], references: [id])
+  representatives Representative[]
+  loyaltyHistory  LoyaltyHistory[]
+  rentals         Rental[]
+  worksheets      Worksheet[]
+  invoices        Invoice[]
+  quotes          Quote[]
+
+  @@unique([tenantId, partnerCode])
+  @@unique([tenantId, taxNumber])
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+  @@index([name])
+  @@index([phone])
+  @@index([email])
+  @@index([taxNumber])
+  @@index([loyaltyTierId])
+  @@index([isDeleted])
+  @@index([currentBalance])
+  @@map("partners")
+}
+
+/// Representative - Meghatalmazott (Epic 7: Story 7-2)
+model Representative {
+  id        String @id @default(uuid()) @db.Uuid
+  tenantId  String @map("tenant_id") @db.Uuid
+  partnerId String @map("partner_id") @db.Uuid
+
+  // Alapadatok
+  name     String  @db.VarChar(255)
+  phone    String? @db.VarChar(30)
+  email    String? @db.VarChar(255)
+  idNumber String? @map("id_number") @db.VarChar(50)
+
+  // Érvényesség
+  validFrom  DateTime  @default(now()) @map("valid_from") @db.Date
+  validUntil DateTime? @map("valid_until") @db.Date
+  isActive   Boolean   @default(true) @map("is_active")
+
+  // Jogosultságok
+  canRent    Boolean @default(true) @map("can_rent")
+  canReturn  Boolean @default(true) @map("can_return")
+  canSign    Boolean @default(true) @map("can_sign")
+  canPayCash Boolean @default(false) @map("can_pay_cash")
+
+  notes String? @db.VarChar(500)
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  partner Partner @relation(fields: [partnerId], references: [id])
+
+  @@index([tenantId])
+  @@index([partnerId])
+  @@index([isActive])
+  @@map("representatives")
+}
+
+/// LoyaltyTier - Törzsvendég szint (ADR-034)
+model LoyaltyTier {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  tierCode        String   @map("tier_code") @db.VarChar(20) // BRONZE, SILVER, GOLD, PLATINUM
+  tierName        String   @map("tier_name") @db.VarChar(100)
+  minTransactions Int      @map("min_transactions")
+  minSpend        Decimal? @map("min_spend") @db.Decimal(12, 2)
+  discountPercent Decimal  @map("discount_percent") @db.Decimal(5, 2)
+  benefits        Json     @default("[]")
+  badgeColor      String?  @map("badge_color") @db.VarChar(7)
+  sortOrder       Int      @map("sort_order")
+  isActive        Boolean  @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  partners            Partner[]
+  loyaltyHistoryAsOld LoyaltyHistory[] @relation("OldTierHistory")
+  loyaltyHistoryAsNew LoyaltyHistory[] @relation("NewTierHistory")
+
+  @@unique([tenantId, tierCode])
+  @@index([tenantId, sortOrder])
+  @@map("loyalty_tiers")
+}
+
+/// LoyaltyHistory - Törzsvendég szint változás napló
+model LoyaltyHistory {
+  id        String @id @default(uuid()) @db.Uuid
+  partnerId String @map("partner_id") @db.Uuid
+
+  oldTierId        String?  @map("old_tier_id") @db.Uuid
+  newTierId        String?  @map("new_tier_id") @db.Uuid
+  reason           String   @db.VarChar(50) // CALCULATION, MANUAL, PROMOTION
+  transactionCount Int?     @map("transaction_count")
+  totalSpend       Decimal? @map("total_spend") @db.Decimal(12, 2)
+  changedBy        String?  @map("changed_by") @db.Uuid
+
+  changedAt DateTime @default(now()) @map("changed_at") @db.Timestamptz
+
+  // Relations
+  partner Partner      @relation(fields: [partnerId], references: [id])
+  oldTier LoyaltyTier? @relation("OldTierHistory", fields: [oldTierId], references: [id])
+  newTier LoyaltyTier? @relation("NewTierHistory", fields: [newTierId], references: [id])
+
+  @@index([partnerId])
+  @@index([changedAt])
+  @@map("loyalty_history")
+}
+
+// ============================================
+// PRODUCT MODELS (Epic 8)
+// ============================================
+
+/// Termék típus
+enum ProductType {
+  PRODUCT // Eladható termék
+  RENTAL_EQUIPMENT // Bérelhető gép
+  PART // Alkatrész
+  CONSUMABLE // Fogyóeszköz
+  SERVICE // Szolgáltatás
+}
+
+/// Termék státusz
+enum ProductStatus {
+  ACTIVE // Aktív, elérhető
+  INACTIVE // Inaktív
+  DISCONTINUED // Kifutott
+  DRAFT // Vázlat
+}
+
+/// ProductCategory - Cikkcsoport hierarchia (Epic 8: Story 8-2)
+model ProductCategory {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  code        String  @db.VarChar(50)
+  name        String  @db.VarChar(255)
+  description String? @db.VarChar(500)
+
+  // Hierarchia
+  parentId String? @map("parent_id") @db.Uuid
+  level    Int     @default(0)
+  path     String  @db.VarChar(500) // Materialized path: /root/cat1/cat2/
+
+  // Képek
+  imageUrl String? @map("image_url") @db.VarChar(500)
+
+  sortOrder Int     @default(0) @map("sort_order")
+  isActive  Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  parent   ProductCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children ProductCategory[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([parentId])
+  @@index([path])
+  @@map("product_categories")
+}
+
+/// Supplier - Beszállító (Epic 8: Story 8-3)
+model Supplier {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  code      String  @db.VarChar(50)
+  name      String  @db.VarChar(255)
+  taxNumber String? @map("tax_number") @db.VarChar(20)
+
+  // Kapcsolattartó
+  contactName  String? @map("contact_name") @db.VarChar(255)
+  contactEmail String? @map("contact_email") @db.VarChar(255)
+  contactPhone String? @map("contact_phone") @db.VarChar(30)
+
+  // Cím
+  country    String? @db.VarChar(2)
+  postalCode String? @map("postal_code") @db.VarChar(20)
+  city       String? @db.VarChar(100)
+  address    String? @db.VarChar(255)
+
+  // API integráció (ADR-017)
+  apiEnabled  Boolean   @default(false) @map("api_enabled")
+  apiEndpoint String?   @map("api_endpoint") @db.VarChar(500)
+  apiKey      String?   @map("api_key") @db.VarChar(255)
+  apiVersion  String?   @map("api_version") @db.VarChar(20)
+  lastSyncAt  DateTime? @map("last_sync_at") @db.Timestamptz
+
+  // Fizetési feltételek
+  paymentTermDays   Int     @default(30) @map("payment_term_days")
+  defaultDiscountPc Decimal @default(0) @map("default_discount_pc") @db.Decimal(5, 2)
+  currency          String  @default("HUF") @db.VarChar(3)
+
+  notes    String? @db.Text
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  products Product[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([isActive])
+  @@map("suppliers")
+}
+
+/// Product - Cikk/Termék (Epic 8: Story 8-1)
+model Product {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Azonosítók
+  sku         String        @db.VarChar(100) // Cikkszám
+  name        String        @db.VarChar(255)
+  shortName   String?       @map("short_name") @db.VarChar(100)
+  description String?       @db.Text
+  type        ProductType   @default(PRODUCT)
+  status      ProductStatus @default(ACTIVE)
+
+  // Kategorizálás
+  categoryId String? @map("category_id") @db.Uuid
+  supplierId String? @map("supplier_id") @db.Uuid
+  brand      String? @db.VarChar(100)
+  model      String? @db.VarChar(100)
+
+  // Vonalkód/QR (ADR-022)
+  barcode     String? @db.VarChar(100)
+  barcodeType String? @map("barcode_type") @db.VarChar(20) // EAN13, QR, CODE128
+  qrCode      String? @map("qr_code") @db.VarChar(255)
+  supplierSku String? @map("supplier_sku") @db.VarChar(100) // Beszállítói cikkszám
+
+  // Árazás
+  purchasePrice Decimal? @map("purchase_price") @db.Decimal(12, 2)
+  listPrice     Decimal? @map("list_price") @db.Decimal(12, 2)
+  sellingPrice  Decimal? @map("selling_price") @db.Decimal(12, 2)
+  vatPercent    Decimal  @default(27) @map("vat_percent") @db.Decimal(5, 2)
+
+  // Mértékegység
+  unit        String @db.VarChar(20) // db, kg, m, etc.
+  packageSize Int    @default(1) @map("package_size")
+  packageUnit String @default("db") @map("package_unit") @db.VarChar(20)
+
+  // Készlet beállítások
+  trackInventory  Boolean @default(true) @map("track_inventory")
+  minStockLevel   Int?    @map("min_stock_level")
+  reorderPoint    Int?    @map("reorder_point")
+  reorderQuantity Int?    @map("reorder_quantity")
+  leadTimeDays    Int?    @map("lead_time_days")
+
+  // Robbantott ábra
+  explodedDiagramId  String? @map("exploded_diagram_id") @db.Uuid
+  explodedDiagramUrl String? @map("exploded_diagram_url") @db.VarChar(500)
+  partNumber         String? @map("part_number") @db.VarChar(100) // Robbantott ábrán
+
+  // Fizikai tulajdonságok
+  weight Decimal? @db.Decimal(10, 3) // kg
+  length Decimal? @db.Decimal(10, 2) // cm
+  width  Decimal? @db.Decimal(10, 2)
+  height Decimal? @db.Decimal(10, 2)
+
+  // Képek
+  imageUrl     String? @map("image_url") @db.VarChar(500)
+  thumbnailUrl String? @map("thumbnail_url") @db.VarChar(500)
+  images       Json    @default("[]") // Array of image URLs
+
+  notes String? @db.Text
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  updatedBy String   @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Soft delete
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  // Relations
+  category        ProductCategory?  @relation(fields: [categoryId], references: [id])
+  supplier        Supplier?         @relation(fields: [supplierId], references: [id])
+  priceRules      PriceRule[]
+  rentalEquipment RentalEquipment[]
+  inventoryItems  InventoryItem[]
+  worksheetItems  WorksheetItem[]
+  invoiceItems    InvoiceItem[]
+  quoteItems      QuoteItem[]
+
+  @@unique([tenantId, sku])
+  @@unique([tenantId, barcode])
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+  @@index([categoryId])
+  @@index([supplierId])
+  @@index([barcode])
+  @@index([sku])
+  @@index([name])
+  @@index([isDeleted])
+  @@map("products")
+}
+
+/// PriceRule - Árszabály (Epic 8: Story 8-5)
+model PriceRule {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  productId  String? @map("product_id") @db.Uuid // Null = összes termék
+  categoryId String? @map("category_id") @db.Uuid // Vagy kategória szinten
+
+  ruleName        String   @map("rule_name") @db.VarChar(100)
+  ruleType        String   @map("rule_type") @db.VarChar(50) // DISCOUNT, MARKUP, FIXED
+  discountPercent Decimal? @map("discount_percent") @db.Decimal(5, 2)
+  discountAmount  Decimal? @map("discount_amount") @db.Decimal(12, 2)
+  fixedPrice      Decimal? @map("fixed_price") @db.Decimal(12, 2)
+
+  // Feltételek
+  minQuantity   Int?     @map("min_quantity")
+  minAmount     Decimal? @map("min_amount") @db.Decimal(12, 2)
+  partnerTier   String?  @map("partner_tier") @db.VarChar(20)
+  applyToRental Boolean  @default(false) @map("apply_to_rental")
+  applyToSales  Boolean  @default(true) @map("apply_to_sales")
+
+  // Érvényesség
+  validFrom  DateTime  @map("valid_from") @db.Date
+  validUntil DateTime? @map("valid_until") @db.Date
+  priority   Int       @default(0) // Magasabb = előbb alkalmazódik
+  isActive   Boolean   @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@index([tenantId])
+  @@index([productId])
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([validFrom, validUntil])
+  @@map("price_rules")
+}
+
+// ============================================
+// RENTAL EQUIPMENT MODELS (Epic 13)
+// ============================================
+
+/// Bérgép státusz
+enum EquipmentStatus {
+  AVAILABLE // Elérhető, kiadható
+  RENTED // Kiadva (bérlésben)
+  RESERVED // Foglalt
+  IN_SERVICE // Szervizben
+  DAMAGED // Sérült
+  LOST // Elveszett
+  SOLD // Eladva
+  SCRAPPED // Selejtezve
+}
+
+/// RentalEquipment - Bérgép (Epic 13)
+model RentalEquipment {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Azonosítók
+  equipmentCode String  @map("equipment_code") @db.VarChar(50)
+  serialNumber  String  @map("serial_number") @db.VarChar(100)
+  productId     String  @map("product_id") @db.Uuid
+  warehouseId   String? @map("warehouse_id") @db.Uuid
+  locationId    String? @map("location_id") @db.Uuid
+
+  status EquipmentStatus @default(AVAILABLE)
+
+  // QR kód (ADR-022)
+  qrCode         String? @map("qr_code") @db.VarChar(255)
+  factoryBarcode String? @map("factory_barcode") @db.VarChar(100)
+
+  // Állapot és értékelés
+  condition       String    @default("GOOD") @db.VarChar(20) // NEW, GOOD, FAIR, POOR
+  purchaseDate    DateTime? @map("purchase_date") @db.Date
+  purchasePrice   Decimal?  @map("purchase_price") @db.Decimal(12, 2)
+  currentValue    Decimal?  @map("current_value") @db.Decimal(12, 2)
+  warrantyEndDate DateTime? @map("warranty_end_date") @db.Date
+
+  // Bérlési árak (ADR-037)
+  dailyRate      Decimal? @map("daily_rate") @db.Decimal(10, 2)
+  weeklyRate     Decimal? @map("weekly_rate") @db.Decimal(10, 2)
+  monthlyRate    Decimal? @map("monthly_rate") @db.Decimal(10, 2)
+  depositAmount  Decimal? @map("deposit_amount") @db.Decimal(10, 2)
+  depositPercent Decimal? @map("deposit_percent") @db.Decimal(5, 2)
+
+  // Statisztikák
+  totalRentals    Int       @default(0) @map("total_rentals")
+  totalRevenue    Decimal   @default(0) @map("total_revenue") @db.Decimal(12, 2)
+  lastRentalDate  DateTime? @map("last_rental_date") @db.Date
+  lastServiceDate DateTime? @map("last_service_date") @db.Date
+  nextServiceDate DateTime? @map("next_service_date") @db.Date
+
+  // Karbantartás
+  serviceIntervalDays Int? @map("service_interval_days")
+  operatingHours      Int  @default(0) @map("operating_hours")
+
+  notes String? @db.Text
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  updatedBy String   @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Soft delete
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  // Relations
+  product       Product           @relation(fields: [productId], references: [id])
+  accessories   RentalAccessory[]
+  rentalItems   RentalItem[]
+  worksheets    Worksheet[]
+  RentalVehicle RentalVehicle[]
+
+  @@unique([tenantId, equipmentCode])
+  @@unique([tenantId, serialNumber])
+  @@index([tenantId])
+  @@index([status])
+  @@index([productId])
+  @@index([warehouseId])
+  @@index([serialNumber])
+  @@index([qrCode])
+  @@index([isDeleted])
+  @@map("rental_equipment")
+}
+
+/// RentalAccessory - Tartozék (Epic 13: Story 13-4)
+model RentalAccessory {
+  id          String @id @default(uuid()) @db.Uuid
+  equipmentId String @map("equipment_id") @db.Uuid
+
+  name         String   @db.VarChar(255)
+  description  String?  @db.VarChar(500)
+  serialNumber String?  @map("serial_number") @db.VarChar(100)
+  condition    String   @default("GOOD") @db.VarChar(20)
+  isRequired   Boolean  @default(false) @map("is_required")
+  value        Decimal? @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  equipment RentalEquipment @relation(fields: [equipmentId], references: [id])
+
+  @@index([equipmentId])
+  @@map("rental_accessories")
+}
+
+// ============================================
+// RENTAL MODELS (Epic 14)
+// ============================================
+
+/// Bérlés státusz
+enum RentalStatus {
+  DRAFT // Vázlat
+  CONFIRMED // Megerősített
+  ACTIVE // Aktív (gép kiadva)
+  OVERDUE // Lejárt (késedelemben)
+  RETURNED // Visszahozva
+  COMPLETED // Lezárt
+  CANCELLED // Törölve
+}
+
+/// Rental - Bérlés (Epic 14)
+model Rental {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  rentalCode String       @map("rental_code") @db.VarChar(50)
+  partnerId  String       @map("partner_id") @db.Uuid
+  status     RentalStatus @default(DRAFT)
+
+  // Időszak
+  startDate   DateTime  @map("start_date") @db.Date
+  expectedEnd DateTime  @map("expected_end") @db.Date
+  actualEnd   DateTime? @map("actual_end") @db.Date
+  returnedAt  DateTime? @map("returned_at") @db.Timestamptz
+
+  // Helyszín
+  warehouseId      String  @map("warehouse_id") @db.Uuid
+  pickupLocationId String? @map("pickup_location_id") @db.Uuid
+  returnLocationId String? @map("return_location_id") @db.Uuid
+
+  // Összegek (ADR-037)
+  subtotal       Decimal @map("subtotal") @db.Decimal(12, 2)
+  discountAmount Decimal @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  discountReason String? @map("discount_reason") @db.VarChar(255)
+  lateFeeAmount  Decimal @default(0) @map("late_fee_amount") @db.Decimal(12, 2)
+  totalAmount    Decimal @map("total_amount") @db.Decimal(12, 2)
+  vatAmount      Decimal @map("vat_amount") @db.Decimal(12, 2)
+  grandTotal     Decimal @map("grand_total") @db.Decimal(12, 2)
+
+  // Kaució
+  depositRequired Decimal @map("deposit_required") @db.Decimal(12, 2)
+  depositPaid     Decimal @default(0) @map("deposit_paid") @db.Decimal(12, 2)
+  depositReturned Decimal @default(0) @map("deposit_returned") @db.Decimal(12, 2)
+  depositRetained Decimal @default(0) @map("deposit_retained") @db.Decimal(12, 2)
+
+  // Kalkuláció részletei
+  calculationBreakdown Json? @map("calculation_breakdown")
+
+  // Kiadás/visszavétel
+  issuedBy     String?   @map("issued_by") @db.Uuid
+  issuedAt     DateTime? @map("issued_at") @db.Timestamptz
+  returnedBy   String?   @map("returned_by") @db.Uuid
+  returnNotes  String?   @map("return_notes") @db.VarChar(500)
+  damageReport String?   @map("damage_report") @db.Text
+
+  // Szerződés
+  contractId String? @map("contract_id") @db.Uuid
+  invoiceId  String? @map("invoice_id") @db.Uuid
+
+  notes String? @db.Text
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  updatedBy String   @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  partner    Partner           @relation(fields: [partnerId], references: [id])
+  warehouse  Warehouse         @relation(fields: [warehouseId], references: [id])
+  contract   RentalContract?   @relation(fields: [contractId], references: [id])
+  invoice    Invoice?          @relation(fields: [invoiceId], references: [id])
+  items      RentalItem[]
+  extensions RentalExtension[]
+  deposits   Deposit[]
+
+  @@unique([tenantId, rentalCode])
+  @@index([tenantId])
+  @@index([partnerId])
+  @@index([status])
+  @@index([startDate])
+  @@index([expectedEnd])
+  @@index([warehouseId])
+  @@map("rentals")
+}
+
+/// RentalItem - Bérlés tétel
+model RentalItem {
+  id       String @id @default(uuid()) @db.Uuid
+  rentalId String @map("rental_id") @db.Uuid
+
+  equipmentId String @map("equipment_id") @db.Uuid
+  quantity    Int    @default(1)
+
+  // Árazás
+  dailyRate   Decimal  @map("daily_rate") @db.Decimal(10, 2)
+  weeklyRate  Decimal? @map("weekly_rate") @db.Decimal(10, 2)
+  monthlyRate Decimal? @map("monthly_rate") @db.Decimal(10, 2)
+  appliedRate Decimal  @map("applied_rate") @db.Decimal(10, 2)
+  totalDays   Int      @map("total_days")
+  itemTotal   Decimal  @map("item_total") @db.Decimal(12, 2)
+
+  // Visszavétel
+  returnedAt DateTime? @map("returned_at") @db.Timestamptz
+  condition  String?   @db.VarChar(20) // Visszavételkori állapot
+
+  notes String? @db.VarChar(500)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  rental    Rental          @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  equipment RentalEquipment @relation(fields: [equipmentId], references: [id])
+
+  @@index([rentalId])
+  @@index([equipmentId])
+  @@map("rental_items")
+}
+
+/// RentalExtension - Bérlés hosszabbítás (ADR-043)
+model RentalExtension {
+  id       String @id @default(uuid()) @db.Uuid
+  rentalId String @map("rental_id") @db.Uuid
+
+  previousEndDate DateTime @map("previous_end_date") @db.Date
+  newEndDate      DateTime @map("new_end_date") @db.Date
+  extensionDays   Int      @map("extension_days")
+
+  // Árazás
+  extensionAmount Decimal   @map("extension_amount") @db.Decimal(12, 2)
+  isPaid          Boolean   @default(false) @map("is_paid")
+  paidAt          DateTime? @map("paid_at") @db.Timestamptz
+
+  // Jóváhagyás
+  requestedAt DateTime  @default(now()) @map("requested_at") @db.Timestamptz
+  requestedBy String?   @map("requested_by") @db.Uuid // null = self-service
+  approvedAt  DateTime? @map("approved_at") @db.Timestamptz
+  approvedBy  String?   @map("approved_by") @db.Uuid
+
+  notes String? @db.VarChar(500)
+
+  // Relations
+  rental Rental @relation(fields: [rentalId], references: [id])
+
+  @@index([rentalId])
+  @@map("rental_extensions")
+}
+
+// ============================================
+// RENTAL CONTRACT MODELS (Epic 15)
+// ============================================
+
+/// ContractTemplate - Szerződés sablon
+model ContractTemplate {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  name        String  @db.VarChar(255)
+  description String? @db.VarChar(500)
+  content     String  @db.Text // HTML/Markdown template
+  version     Int     @default(1)
+  isDefault   Boolean @default(false) @map("is_default")
+  isActive    Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  contracts RentalContract[]
+
+  @@index([tenantId])
+  @@map("contract_templates")
+}
+
+/// RentalContract - Bérlési szerződés (Epic 15)
+model RentalContract {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  contractNumber String  @map("contract_number") @db.VarChar(50)
+  templateId     String? @map("template_id") @db.Uuid
+
+  // Aláírás
+  signedAt          DateTime? @map("signed_at") @db.Timestamptz
+  signedByPartner   Boolean   @default(false) @map("signed_by_partner")
+  signedByOperator  Boolean   @default(false) @map("signed_by_operator")
+  partnerSignature  String?   @map("partner_signature") @db.Text // Base64 signature image
+  operatorSignature String?   @map("operator_signature") @db.Text
+
+  // PDF
+  pdfUrl   String?   @map("pdf_url") @db.VarChar(500)
+  pdfGenAt DateTime? @map("pdf_gen_at") @db.Timestamptz
+
+  // Archiválás
+  archivedAt DateTime? @map("archived_at") @db.Timestamptz
+  archivedBy String?   @map("archived_by") @db.Uuid
+
+  notes String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  template ContractTemplate? @relation(fields: [templateId], references: [id])
+  rentals  Rental[]
+
+  @@unique([tenantId, contractNumber])
+  @@index([tenantId])
+  @@map("rental_contracts")
+}
+
+// ============================================
+// DEPOSIT MODELS (Epic 16)
+// ============================================
+
+/// Kaució típus
+enum DepositType {
+  CASH // Készpénz
+  CARD // Kártyás fizetés
+  BANK_TRANSFER // Átutalás
+  PRE_AUTH // Kártya előzetes zárolás (MyPos)
+}
+
+/// Kaució státusz
+enum DepositStatus {
+  PENDING // Függőben
+  RECEIVED // Beérkezett
+  HELD // Tartva
+  RELEASED // Feloldva/visszaadva
+  RETAINED // Visszatartva (sérülés)
+  PARTIAL // Részben visszaadva
+}
+
+/// Deposit - Kaució (Epic 16)
+model Deposit {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  rentalId String @map("rental_id") @db.Uuid
+
+  type   DepositType
+  status DepositStatus @default(PENDING)
+  amount Decimal       @db.Decimal(12, 2)
+
+  // MyPos integráció (ADR-005)
+  myposTransactionId String?   @map("mypos_transaction_id") @db.VarChar(100)
+  myposAuthCode      String?   @map("mypos_auth_code") @db.VarChar(50)
+  cardLast4          String?   @map("card_last_4") @db.VarChar(4)
+  preAuthExpiresAt   DateTime? @map("pre_auth_expires_at") @db.Timestamptz
+
+  // Visszaadás
+  returnedAmount      Decimal?  @map("returned_amount") @db.Decimal(12, 2)
+  retainedAmount      Decimal?  @map("retained_amount") @db.Decimal(12, 2)
+  retentionReason     String?   @map("retention_reason") @db.VarChar(500)
+  returnedAt          DateTime? @map("returned_at") @db.Timestamptz
+  returnedBy          String?   @map("returned_by") @db.Uuid
+  returnTransactionId String?   @map("return_transaction_id") @db.VarChar(100)
+
+  notes String? @db.VarChar(500)
+
+  // Audit
+  receivedBy String   @map("received_by") @db.Uuid
+  receivedAt DateTime @default(now()) @map("received_at") @db.Timestamptz
+
+  // Relations
+  rental       Rental               @relation(fields: [rentalId], references: [id])
+  transactions DepositTransaction[]
+
+  @@index([tenantId])
+  @@index([rentalId])
+  @@index([status])
+  @@map("deposits")
+}
+
+/// DepositTransaction - Kaució tranzakció napló
+model DepositTransaction {
+  id        String @id @default(uuid()) @db.Uuid
+  depositId String @map("deposit_id") @db.Uuid
+
+  transactionType String  @map("transaction_type") @db.VarChar(50) // RECEIVE, RETURN, RETAIN
+  amount          Decimal @db.Decimal(12, 2)
+  paymentMethod   String  @map("payment_method") @db.VarChar(50)
+  reference       String? @db.VarChar(100)
+  notes           String? @db.VarChar(500)
+
+  processedBy String   @map("processed_by") @db.Uuid
+  processedAt DateTime @default(now()) @map("processed_at") @db.Timestamptz
+
+  // Relations
+  deposit Deposit @relation(fields: [depositId], references: [id])
+
+  @@index([depositId])
+  @@map("deposit_transactions")
+}
+
+// ============================================
+// WORKSHEET MODELS (Epic 17)
+// ============================================
+
+/// Munkalap státusz
+enum WorksheetStatus {
+  DRAFT // Vázlat (felvétel)
+  PENDING // Függőben (várakozik diagnózisra)
+  IN_PROGRESS // Folyamatban (javítás alatt)
+  WAITING_PARTS // Alkatrészre vár
+  WAITING_QUOTE // Árajánlatra vár
+  QUOTE_SENT // Árajánlat elküldve
+  APPROVED // Jóváhagyva
+  COMPLETED // Elkészült
+  DELIVERED // Kiadva
+  CANCELLED // Törölve
+}
+
+/// Munkalap prioritás (ADR-041)
+enum WorksheetPriority {
+  NORMAL // Normál
+  HIGH // Sürgős
+  EXPRESS // Expressz (+felár)
+  WARRANTY // Garanciális
+  FRANCHISE // Franchise partner
+}
+
+/// Worksheet - Munkalap (Epic 17)
+model Worksheet {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  worksheetNumber String            @map("worksheet_number") @db.VarChar(50)
+  partnerId       String            @map("partner_id") @db.Uuid
+  status          WorksheetStatus   @default(DRAFT)
+  priority        WorksheetPriority @default(NORMAL)
+
+  // Gép adatok
+  equipmentId     String?   @map("equipment_id") @db.Uuid
+  productId       String?   @map("product_id") @db.Uuid // Ha nincs egyedi gép
+  serialNumber    String?   @map("serial_number") @db.VarChar(100)
+  brand           String?   @db.VarChar(100)
+  model           String?   @db.VarChar(100)
+  purchaseDate    DateTime? @map("purchase_date") @db.Date
+  warrantyEndDate DateTime? @map("warranty_end_date") @db.Date
+
+  // Hibabejelentés
+  reportedIssue   String  @map("reported_issue") @db.Text
+  diagnosticNotes String? @map("diagnostic_notes") @db.Text
+  internalNotes   String? @map("internal_notes") @db.Text
+
+  // Garanciális státusz
+  isWarranty      Boolean @default(false) @map("is_warranty")
+  warrantyClaimId String? @map("warranty_claim_id") @db.Uuid
+
+  // Költség limit (FR107-FR109)
+  customerCostLimit Decimal? @map("customer_cost_limit") @db.Decimal(12, 2)
+  estimatedCost     Decimal? @map("estimated_cost") @db.Decimal(12, 2)
+  requiresQuote     Boolean  @default(false) @map("requires_quote")
+
+  // Időpontok
+  receivedAt   DateTime  @default(now()) @map("received_at") @db.Timestamptz
+  diagnosedAt  DateTime? @map("diagnosed_at") @db.Timestamptz
+  startedAt    DateTime? @map("started_at") @db.Timestamptz
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz
+  deliveredAt  DateTime? @map("delivered_at") @db.Timestamptz
+  promisedDate DateTime? @map("promised_date") @db.Date
+
+  // Tárolási díj (ADR-026)
+  storageStartDate DateTime? @map("storage_start_date") @db.Date
+  storageDailyFee  Decimal?  @map("storage_daily_fee") @db.Decimal(10, 2)
+  storageTotalFee  Decimal?  @map("storage_total_fee") @db.Decimal(12, 2)
+
+  // Összegek
+  laborCost      Decimal @default(0) @map("labor_cost") @db.Decimal(12, 2)
+  partsCost      Decimal @default(0) @map("parts_cost") @db.Decimal(12, 2)
+  otherCost      Decimal @default(0) @map("other_cost") @db.Decimal(12, 2)
+  subtotal       Decimal @default(0) @db.Decimal(12, 2)
+  discountAmount Decimal @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  vatAmount      Decimal @default(0) @map("vat_amount") @db.Decimal(12, 2)
+  totalAmount    Decimal @default(0) @map("total_amount") @db.Decimal(12, 2)
+
+  // Kapcsolódó bérlés
+  rentalId String? @map("rental_id") @db.Uuid
+
+  // Lezárás
+  closedBy  String?   @map("closed_by") @db.Uuid
+  closedAt  DateTime? @map("closed_at") @db.Timestamptz
+  invoiceId String?   @map("invoice_id") @db.Uuid
+
+  // Várakozási lista pozíció
+  queuePosition Int? @map("queue_position")
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  updatedBy String   @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  partner       Partner          @relation(fields: [partnerId], references: [id])
+  equipment     RentalEquipment? @relation(fields: [equipmentId], references: [id])
+  warrantyClaim WarrantyClaim?   @relation(fields: [warrantyClaimId], references: [id])
+  invoice       Invoice?         @relation(fields: [invoiceId], references: [id])
+  items         WorksheetItem[]
+  diagnostics   DiagnosticCode[]
+  quotes        Quote[]
+
+  @@unique([tenantId, worksheetNumber])
+  @@index([tenantId])
+  @@index([partnerId])
+  @@index([status])
+  @@index([priority])
+  @@index([equipmentId])
+  @@index([serialNumber])
+  @@index([receivedAt])
+  @@index([queuePosition])
+  @@map("worksheets")
+}
+
+/// WorksheetItem - Munkalap tétel (alkatrész, munkadíj)
+model WorksheetItem {
+  id          String @id @default(uuid()) @db.Uuid
+  worksheetId String @map("worksheet_id") @db.Uuid
+
+  itemType      String  @map("item_type") @db.VarChar(20) // PART, LABOR, OTHER
+  productId     String? @map("product_id") @db.Uuid
+  serviceNormId String? @map("service_norm_id") @db.Uuid
+
+  description String  @db.VarChar(255)
+  quantity    Decimal @db.Decimal(10, 3)
+  unit        String  @db.VarChar(20)
+  unitPrice   Decimal @map("unit_price") @db.Decimal(12, 2)
+  totalPrice  Decimal @map("total_price") @db.Decimal(12, 2)
+
+  // Foglalás státusz (FR110-FR112)
+  isReserved       Boolean   @default(false) @map("is_reserved")
+  reservedAt       DateTime? @map("reserved_at") @db.Timestamptz
+  reserveExpiresAt DateTime? @map("reserve_expires_at") @db.Timestamptz
+
+  notes String? @db.VarChar(500)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  worksheet   Worksheet    @relation(fields: [worksheetId], references: [id], onDelete: Cascade)
+  product     Product?     @relation(fields: [productId], references: [id])
+  serviceNorm ServiceNorm? @relation(fields: [serviceNormId], references: [id])
+
+  @@index([worksheetId])
+  @@index([productId])
+  @@map("worksheet_items")
+}
+
+/// DiagnosticCode - Hibakód (diagnózis)
+model DiagnosticCode {
+  id          String @id @default(uuid()) @db.Uuid
+  worksheetId String @map("worksheet_id") @db.Uuid
+
+  code        String  @db.VarChar(50)
+  description String  @db.VarChar(255)
+  severity    String  @default("MEDIUM") @db.VarChar(20) // LOW, MEDIUM, HIGH, CRITICAL
+  causeFound  Boolean @default(false) @map("cause_found")
+
+  diagnosedBy String   @map("diagnosed_by") @db.Uuid
+  diagnosedAt DateTime @default(now()) @map("diagnosed_at") @db.Timestamptz
+
+  // Relations
+  worksheet Worksheet @relation(fields: [worksheetId], references: [id], onDelete: Cascade)
+
+  @@index([worksheetId])
+  @@map("diagnostic_codes")
+}
+
+// ============================================
+// QUOTE MODELS (Epic 18)
+// ============================================
+
+/// Árajánlat státusz
+enum QuoteStatus {
+  DRAFT // Vázlat
+  SENT // Elküldve
+  VIEWED // Megtekintve
+  ACCEPTED // Elfogadva
+  REJECTED // Elutasítva
+  EXPIRED // Lejárt
+  CONVERTED // Munkalapra konvertálva
+}
+
+/// Quote - Árajánlat (Epic 18)
+model Quote {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  quoteNumber String      @map("quote_number") @db.VarChar(50)
+  partnerId   String      @map("partner_id") @db.Uuid
+  worksheetId String?     @map("worksheet_id") @db.Uuid
+  status      QuoteStatus @default(DRAFT)
+
+  // Érvényesség
+  validUntil  DateTime  @map("valid_until") @db.Date
+  sentAt      DateTime? @map("sent_at") @db.Timestamptz
+  viewedAt    DateTime? @map("viewed_at") @db.Timestamptz
+  respondedAt DateTime? @map("responded_at") @db.Timestamptz
+
+  // Összegek
+  subtotal       Decimal @db.Decimal(12, 2)
+  discountAmount Decimal @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  vatAmount      Decimal @map("vat_amount") @db.Decimal(12, 2)
+  totalAmount    Decimal @map("total_amount") @db.Decimal(12, 2)
+
+  // Tartalom
+  introduction String? @db.Text
+  terms        String? @db.Text
+  notes        String? @db.Text
+
+  // PDF
+  pdfUrl   String?   @map("pdf_url") @db.VarChar(500)
+  pdfGenAt DateTime? @map("pdf_gen_at") @db.Timestamptz
+
+  // Elfogadás/elutasítás
+  acceptedAt      DateTime? @map("accepted_at") @db.Timestamptz
+  rejectedAt      DateTime? @map("rejected_at") @db.Timestamptz
+  rejectionReason String?   @map("rejection_reason") @db.VarChar(500)
+
+  // Konverzió
+  convertedToWorksheetId String?   @map("converted_to_worksheet_id") @db.Uuid
+  convertedAt            DateTime? @map("converted_at") @db.Timestamptz
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  updatedBy String   @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  partner   Partner     @relation(fields: [partnerId], references: [id])
+  worksheet Worksheet?  @relation(fields: [worksheetId], references: [id])
+  items     QuoteItem[]
+
+  @@unique([tenantId, quoteNumber])
+  @@index([tenantId])
+  @@index([partnerId])
+  @@index([worksheetId])
+  @@index([status])
+  @@index([validUntil])
+  @@map("quotes")
+}
+
+/// QuoteItem - Árajánlat tétel
+model QuoteItem {
+  id      String @id @default(uuid()) @db.Uuid
+  quoteId String @map("quote_id") @db.Uuid
+
+  itemType  String  @map("item_type") @db.VarChar(20) // PART, LABOR, OTHER
+  productId String? @map("product_id") @db.Uuid
+
+  description String  @db.VarChar(255)
+  quantity    Decimal @db.Decimal(10, 3)
+  unit        String  @db.VarChar(20)
+  unitPrice   Decimal @map("unit_price") @db.Decimal(12, 2)
+  totalPrice  Decimal @map("total_price") @db.Decimal(12, 2)
+
+  // Robbantott ábra referencia
+  explodedPartNumber String? @map("exploded_part_number") @db.VarChar(50)
+
+  notes String? @db.VarChar(500)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  quote   Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@index([quoteId])
+  @@map("quote_items")
+}
+
+// ============================================
+// WARRANTY MODELS (Epic 19)
+// ============================================
+
+/// Garanciális igény státusz
+enum ClaimStatus {
+  DRAFT // Vázlat
+  SUBMITTED // Beküldve
+  UNDER_REVIEW // Elbírálás alatt
+  APPROVED // Jóváhagyva
+  REJECTED // Elutasítva
+  PROCESSING // Feldolgozás alatt
+  COMPLETED // Lezárva
+  CANCELLED // Törölve
+}
+
+/// WarrantyClaim - Garanciális igény (Epic 19)
+model WarrantyClaim {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  claimNumber  String      @map("claim_number") @db.VarChar(50)
+  status       ClaimStatus @default(DRAFT)
+  manufacturer String      @db.VarChar(100) // Makita, Stihl, etc.
+
+  // Gép adatok
+  serialNumber String   @map("serial_number") @db.VarChar(100)
+  productName  String   @map("product_name") @db.VarChar(255)
+  purchaseDate DateTime @map("purchase_date") @db.Date
+  warrantyEnd  DateTime @map("warranty_end") @db.Date
+
+  // Hiba leírás
+  issueDescription String  @map("issue_description") @db.Text
+  diagnosisResult  String? @map("diagnosis_result") @db.Text
+
+  // Norma alapú költségek (ADR - Makita norma)
+  normLaborMinutes Int?     @map("norm_labor_minutes")
+  normLaborRate    Decimal? @map("norm_labor_rate") @db.Decimal(10, 2)
+  partsValue       Decimal? @map("parts_value") @db.Decimal(12, 2)
+  totalClaimValue  Decimal? @map("total_claim_value") @db.Decimal(12, 2)
+
+  // Beküldés
+  submittedAt DateTime? @map("submitted_at") @db.Timestamptz
+  submittedBy String?   @map("submitted_by") @db.Uuid
+
+  // Gyártói válasz
+  manufacturerRef String?   @map("manufacturer_ref") @db.VarChar(100)
+  reviewedAt      DateTime? @map("reviewed_at") @db.Timestamptz
+  approvedAt      DateTime? @map("approved_at") @db.Timestamptz
+  rejectedAt      DateTime? @map("rejected_at") @db.Timestamptz
+  rejectionReason String?   @map("rejection_reason") @db.VarChar(500)
+
+  // Elszámolás
+  settledAt        DateTime? @map("settled_at") @db.Timestamptz
+  settledAmount    Decimal?  @map("settled_amount") @db.Decimal(12, 2)
+  creditNoteNumber String?   @map("credit_note_number") @db.VarChar(50)
+
+  notes String? @db.Text
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  updatedBy String   @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  worksheets Worksheet[]
+  items      ClaimItem[]
+
+  @@unique([tenantId, claimNumber])
+  @@index([tenantId])
+  @@index([status])
+  @@index([manufacturer])
+  @@index([serialNumber])
+  @@map("warranty_claims")
+}
+
+/// ClaimItem - Garanciális igény tétel
+model ClaimItem {
+  id      String @id @default(uuid()) @db.Uuid
+  claimId String @map("claim_id") @db.Uuid
+
+  itemType    String  @map("item_type") @db.VarChar(20) // PART, LABOR
+  partNumber  String? @map("part_number") @db.VarChar(50)
+  description String  @db.VarChar(255)
+  quantity    Int
+  normMinutes Int?    @map("norm_minutes") // Norma percek
+  unitValue   Decimal @map("unit_value") @db.Decimal(12, 2)
+  totalValue  Decimal @map("total_value") @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  claim WarrantyClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId])
+  @@map("claim_items")
+}
+
+// ============================================
+// SERVICE NORM MODELS (Epic 20)
+// ============================================
+
+/// ServiceNorm - Szerviz norma (Makita, Stihl - Epic 20)
+model ServiceNorm {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  manufacturer String @db.VarChar(100) // Makita, Stihl, Hikoki
+  normCode     String @map("norm_code") @db.VarChar(50)
+  description  String @db.VarChar(500)
+
+  // Norma értékek
+  laborMinutes    Int     @map("labor_minutes")
+  laborRate       Decimal @map("labor_rate") @db.Decimal(10, 2)
+  difficultyLevel String  @default("MEDIUM") @map("difficulty_level") @db.VarChar(20)
+
+  // Kategorizálás
+  productCategory String? @map("product_category") @db.VarChar(100)
+  repairType      String? @map("repair_type") @db.VarChar(100)
+
+  // Érvényesség
+  validFrom  DateTime  @map("valid_from") @db.Date
+  validUntil DateTime? @map("valid_until") @db.Date
+  isActive   Boolean   @default(true) @map("is_active")
+
+  // Import/szinkronizálás
+  importedAt   DateTime? @map("imported_at") @db.Timestamptz
+  importSource String?   @map("import_source") @db.VarChar(100)
+  externalId   String?   @map("external_id") @db.VarChar(100)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  worksheetItems WorksheetItem[]
+
+  @@unique([tenantId, manufacturer, normCode])
+  @@index([tenantId])
+  @@index([manufacturer])
+  @@index([normCode])
+  @@index([isActive])
+  @@map("service_norms")
+}
+
+// ============================================
+// INVOICE MODELS (Epic 10)
+// ============================================
+
+/// Számla típus
+enum InvoiceType {
+  STANDARD // Normál számla
+  ADVANCE // Előlegszámla
+  FINAL // Végszámla
+  PROFORMA // Proforma
+  CREDIT_NOTE // Jóváíró számla (sztornó)
+}
+
+/// Számla státusz
+enum InvoiceStatus {
+  DRAFT // Vázlat
+  PENDING // Jóváhagyásra vár
+  APPROVED // Jóváhagyva
+  SENT // Elküldve
+  PAID // Kifizetve
+  PARTIALLY_PAID // Részben fizetve
+  OVERDUE // Lejárt
+  CANCELLED // Törölve
+  VOIDED // Sztornózva
+}
+
+/// Invoice - Számla (Epic 10)
+model Invoice {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  invoiceNumber String        @map("invoice_number") @db.VarChar(50)
+  partnerId     String        @map("partner_id") @db.Uuid
+  type          InvoiceType   @default(STANDARD)
+  status        InvoiceStatus @default(DRAFT)
+
+  // Dátumok
+  issueDate    DateTime  @map("issue_date") @db.Date
+  dueDate      DateTime  @map("due_date") @db.Date
+  deliveryDate DateTime? @map("delivery_date") @db.Date
+  paidAt       DateTime? @map("paid_at") @db.Timestamptz
+
+  // Összegek
+  subtotal       Decimal @db.Decimal(12, 2)
+  discountAmount Decimal @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  vatAmount      Decimal @map("vat_amount") @db.Decimal(12, 2)
+  totalAmount    Decimal @map("total_amount") @db.Decimal(12, 2)
+  paidAmount     Decimal @default(0) @map("paid_amount") @db.Decimal(12, 2)
+  balanceDue     Decimal @map("balance_due") @db.Decimal(12, 2)
+
+  // Pénznem
+  currency     String  @default("HUF") @db.VarChar(3)
+  exchangeRate Decimal @default(1) @map("exchange_rate") @db.Decimal(10, 4)
+
+  // Fizetési mód
+  paymentMethod String? @map("payment_method") @db.VarChar(50) // CASH, CARD, TRANSFER
+  paymentRef    String? @map("payment_ref") @db.VarChar(100)
+
+  // NAV Online (ADR-030)
+  navStatus        String?   @map("nav_status") @db.VarChar(50)
+  navTransactionId String?   @map("nav_transaction_id") @db.VarChar(100)
+  navSentAt        DateTime? @map("nav_sent_at") @db.Timestamptz
+  navConfirmedAt   DateTime? @map("nav_confirmed_at") @db.Timestamptz
+  navErrorMessage  String?   @map("nav_error_message") @db.VarChar(500)
+
+  // PDF és küldés
+  pdfUrl   String?   @map("pdf_url") @db.VarChar(500)
+  pdfGenAt DateTime? @map("pdf_gen_at") @db.Timestamptz
+  sentAt   DateTime? @map("sent_at") @db.Timestamptz
+  sentTo   String?   @map("sent_to") @db.VarChar(255)
+
+  // Sztornó kapcsolat
+  voidedInvoiceId String?   @unique @map("voided_invoice_id") @db.Uuid
+  voidReason      String?   @map("void_reason") @db.VarChar(500)
+  voidedAt        DateTime? @map("voided_at") @db.Timestamptz
+  voidedBy        String?   @map("voided_by") @db.Uuid
+
+  // Megjegyzések
+  notes         String? @db.Text
+  internalNotes String? @map("internal_notes") @db.Text
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  updatedBy String   @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  partner        Partner       @relation(fields: [partnerId], references: [id])
+  items          InvoiceItem[]
+  rentals        Rental[]
+  worksheets     Worksheet[]
+  voidedInvoice  Invoice?      @relation("InvoiceVoid", fields: [voidedInvoiceId], references: [id])
+  voidingInvoice Invoice?      @relation("InvoiceVoid")
+
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId])
+  @@index([partnerId])
+  @@index([type])
+  @@index([status])
+  @@index([issueDate])
+  @@index([dueDate])
+  @@index([navStatus])
+  @@map("invoices")
+}
+
+/// InvoiceItem - Számla tétel
+model InvoiceItem {
+  id        String @id @default(uuid()) @db.Uuid
+  invoiceId String @map("invoice_id") @db.Uuid
+
+  itemType  String  @map("item_type") @db.VarChar(20) // PRODUCT, SERVICE, RENTAL, OTHER
+  productId String? @map("product_id") @db.Uuid
+
+  description String  @db.VarChar(255)
+  quantity    Decimal @db.Decimal(10, 3)
+  unit        String  @db.VarChar(20)
+  unitPrice   Decimal @map("unit_price") @db.Decimal(12, 2)
+  vatPercent  Decimal @map("vat_percent") @db.Decimal(5, 2)
+  vatAmount   Decimal @map("vat_amount") @db.Decimal(12, 2)
+  totalPrice  Decimal @map("total_price") @db.Decimal(12, 2)
+
+  // Referencia (bérlés, munkalap, stb.)
+  referenceType String? @map("reference_type") @db.VarChar(50)
+  referenceId   String? @map("reference_id") @db.Uuid
+
+  sortOrder Int @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  invoice Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@index([invoiceId])
+  @@index([productId])
+  @@map("invoice_items")
+}
+
+// ============================================
+// TASK LIST MODELS (Epic 12)
+// ============================================
+
+/// Feladat státusz
+enum TaskStatus {
+  OPEN // Nyitott
+  IN_PROGRESS // Folyamatban
+  COMPLETED // Kész
+  CANCELLED // Törölve
+}
+
+/// Feladat típus
+enum TaskType {
+  SHOPPING // Bevásárlólista tétel
+  TODO // To-Do feladat
+  NOTE // Személyes jegyzet
+  MESSAGE // Dolgozók közötti üzenet
+}
+
+/// Task - Feladat/Bevásárlólista (Epic 12, ADR-040)
+model Task {
+  id         String @id @default(uuid()) @db.Uuid
+  tenantId   String @map("tenant_id") @db.Uuid
+  locationId String @map("location_id") @db.Uuid
+
+  type   TaskType   @default(TODO)
+  status TaskStatus @default(OPEN)
+
+  // Tartalom
+  title       String  @db.VarChar(255)
+  description String? @db.Text
+  quantity    Int? // Bevásárlólistához
+  unit        String? @db.VarChar(20)
+
+  // Hozzárendelés
+  assignedToIds Json    @default("[]") @map("assigned_to_ids") // UUID array
+  isPrivate     Boolean @default(false) @map("is_private") // Személyes jegyzet
+
+  // Határidő
+  dueDate  DateTime? @map("due_date") @db.Date
+  priority Int       @default(0) // 0=normál, 1=magas, 2=sürgős
+
+  // Teljesítés
+  completedAt DateTime? @map("completed_at") @db.Timestamptz
+  completedBy String?   @map("completed_by") @db.Uuid
+
+  // Munkalap kapcsolat (FR97)
+  worksheetId String? @map("worksheet_id") @db.Uuid
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Soft delete
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  @@index([tenantId])
+  @@index([locationId])
+  @@index([type])
+  @@index([status])
+  @@index([createdBy])
+  @@index([dueDate])
+  @@index([isDeleted])
+  @@map("tasks")
+}
+
+// ============================================
+// VEHICLE MODELS (Epic 34 - ADR-027)
+// Járműnyilvántartás: Bérgép járművek + Céges gépkocsik
+// ============================================
+
+/// Bérgép jármű típus
+enum RentalVehicleType {
+  TRAILER // Utánfutó
+  AGGREGATOR // Aggregátor
+  PLATFORM // Emelő platform
+  EQUIPMENT // Egyéb bérelhető jármű/eszköz
+}
+
+/// Céges jármű típus
+enum CompanyVehicleType {
+  CAR // Személygépkocsi
+  VAN // Kisteherautó
+  TRUCK // Furgon
+  MOTORCYCLE // Motor
+}
+
+/// Jármű státusz
+enum VehicleStatus {
+  ACTIVE // Aktív, használatban
+  INACTIVE // Inaktív
+  IN_SERVICE // Szervizben
+  SOLD // Eladva
+  SCRAPPED // Selejtezve
+}
+
+/// Dokumentum típus (emlékeztetőkhöz)
+enum VehicleDocumentType {
+  REGISTRATION // Forgalmi engedély
+  TECHNICAL_INSPECTION // Műszaki vizsga
+  KGFB_INSURANCE // Kötelező biztosítás
+  CASCO_INSURANCE // CASCO biztosítás
+  HIGHWAY_STICKER // Pályamatrica
+}
+
+/// RentalVehicle - Bérgép járművek (ADR-027, tenant-specifikus)
+/// Utánfutók, aggregátorok és egyéb bérelhető járművek
+model RentalVehicle {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Alapadatok
+  licensePlate String            @map("license_plate") @db.VarChar(20)
+  vehicleType  RentalVehicleType @map("vehicle_type")
+  brand        String?           @db.VarChar(100)
+  model        String?           @db.VarChar(100)
+  description  String?           @db.Text
+
+  // Kapcsolat bérgép modulhoz
+  rentalEquipmentId String? @map("rental_equipment_id") @db.Uuid
+
+  // Dokumentumok - Forgalmi és műszaki
+  registrationDocNumber    String?   @map("registration_doc_number") @db.VarChar(50)
+  registrationValidUntil   DateTime? @map("registration_valid_until") @db.Date
+  technicalInspectionUntil DateTime? @map("technical_inspection_until") @db.Date
+
+  // Státusz
+  status VehicleStatus @default(ACTIVE)
+  notes  String?       @db.Text
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  rentalEquipment RentalEquipment?          @relation(fields: [rentalEquipmentId], references: [id])
+  reminders       VehicleDocumentReminder[] @relation("RentalVehicleReminders")
+
+  @@unique([tenantId, licensePlate])
+  @@index([tenantId])
+  @@index([status])
+  @@index([vehicleType])
+  @@index([registrationValidUntil])
+  @@index([technicalInspectionUntil])
+  @@map("rental_vehicles")
+}
+
+/// CompanyVehicle - Céges gépkocsik (ADR-027, központi)
+/// Személygépkocsik, furgonok a cég tulajdonában
+model CompanyVehicle {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Alapadatok
+  licensePlate      String             @map("license_plate") @db.VarChar(20)
+  vehicleType       CompanyVehicleType @map("vehicle_type")
+  brand             String?            @db.VarChar(100)
+  model             String?            @db.VarChar(100)
+  yearOfManufacture Int?               @map("year_of_manufacture")
+  vin               String?            @db.VarChar(17) // Alvázszám
+
+  // Hozzárendelés
+  assignedTenantId String? @map("assigned_tenant_id") @db.Uuid
+  assignedUserId   String? @map("assigned_user_id") @db.Uuid
+
+  // Dokumentumok - Forgalmi és műszaki
+  registrationDocNumber    String?   @map("registration_doc_number") @db.VarChar(50)
+  registrationValidUntil   DateTime? @map("registration_valid_until") @db.Date
+  technicalInspectionUntil DateTime? @map("technical_inspection_until") @db.Date
+
+  // KGFB biztosítás
+  kgfbPolicyNumber String?   @map("kgfb_policy_number") @db.VarChar(50)
+  kgfbInsurer      String?   @map("kgfb_insurer") @db.VarChar(100)
+  kgfbValidUntil   DateTime? @map("kgfb_valid_until") @db.Date
+
+  // CASCO biztosítás
+  cascoPolicyNumber String?   @map("casco_policy_number") @db.VarChar(50)
+  cascoInsurer      String?   @map("casco_insurer") @db.VarChar(100)
+  cascoValidUntil   DateTime? @map("casco_valid_until") @db.Date
+
+  // Pályamatrica
+  highwayStickerCategory String?   @map("highway_sticker_category") @db.VarChar(10) // D1, D2, U, stb.
+  highwayStickerUntil    DateTime? @map("highway_sticker_until") @db.Date
+
+  // Státusz
+  status VehicleStatus @default(ACTIVE)
+  notes  String?       @db.Text
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  reminders VehicleDocumentReminder[] @relation("CompanyVehicleReminders")
+
+  @@unique([licensePlate])
+  @@index([assignedTenantId])
+  @@index([assignedUserId])
+  @@index([status])
+  @@index([vehicleType])
+  @@index([technicalInspectionUntil])
+  @@index([kgfbValidUntil])
+  @@index([cascoValidUntil])
+  @@index([highwayStickerUntil])
+  @@map("company_vehicles")
+}
+
+/// VehicleDocumentReminder - Dokumentum lejárati emlékeztetők log (ADR-027)
+model VehicleDocumentReminder {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Polimorf kapcsolat
+  rentalVehicleId  String? @map("rental_vehicle_id") @db.Uuid
+  companyVehicleId String? @map("company_vehicle_id") @db.Uuid
+
+  // Emlékeztető részletek
+  documentType       VehicleDocumentType @map("document_type")
+  expiryDate         DateTime            @map("expiry_date") @db.Date
+  reminderDaysBefore Int                 @map("reminder_days_before") // 30 vagy 60
+
+  // Küldés státusz
+  notificationSentAt DateTime? @map("notification_sent_at") @db.Timestamptz
+  notificationType   String?   @map("notification_type") @db.VarChar(20) // push, email, both
+  sentToUserIds      Json      @default("[]") @map("sent_to_user_ids") // UUID array
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  rentalVehicle  RentalVehicle?  @relation("RentalVehicleReminders", fields: [rentalVehicleId], references: [id], onDelete: Cascade)
+  companyVehicle CompanyVehicle? @relation("CompanyVehicleReminders", fields: [companyVehicleId], references: [id], onDelete: Cascade)
+
+  @@index([rentalVehicleId])
+  @@index([companyVehicleId])
+  @@index([expiryDate])
+  @@index([documentType])
+  @@index([notificationSentAt])
+  @@map("vehicle_document_reminders")
 }

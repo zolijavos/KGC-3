@@ -4,28 +4,28 @@
  * FR8, FR10, FR32 implementáció
  */
 
-import { Injectable, Inject } from '@nestjs/common';
-import { LOCATION_REPOSITORY } from '../interfaces/location.interface';
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  CreateLocationStructureInput,
+  CreateLocationStructureSchema,
+  GenerateLocationsInput,
+  GenerateLocationsSchema,
+  UpdateLocationInput,
+  UpdateLocationSchema,
+  UpdateLocationStructureInput,
+  UpdateLocationStructureSchema,
+} from '../dto/location.dto';
 import type {
+  ILocationRepository,
   LocationCode,
-  LocationStructure,
+  LocationGenerationResult,
   LocationQuery,
   LocationQueryResult,
-  ILocationRepository,
-  ParsedLocationCode,
+  LocationStructure,
   LocationValidationResult,
-  LocationGenerationResult,
+  ParsedLocationCode,
 } from '../interfaces/location.interface';
-import {
-  CreateLocationStructureSchema,
-  CreateLocationStructureInput,
-  UpdateLocationStructureSchema,
-  UpdateLocationStructureInput,
-  GenerateLocationsSchema,
-  GenerateLocationsInput,
-  UpdateLocationSchema,
-  UpdateLocationInput,
-} from '../dto/location.dto';
+import { LOCATION_REPOSITORY } from '../interfaces/location.interface';
 
 /**
  * Helykód kezelő szolgáltatás
@@ -47,7 +47,7 @@ export class LocationService {
 
   constructor(
     @Inject(LOCATION_REPOSITORY)
-    private readonly repository: ILocationRepository,
+    private readonly repository: ILocationRepository
   ) {}
 
   // ============================================
@@ -59,14 +59,12 @@ export class LocationService {
    */
   async createStructure(
     tenantId: string,
-    input: CreateLocationStructureInput,
+    input: CreateLocationStructureInput
   ): Promise<LocationStructure> {
     // Validálás
     const validationResult = CreateLocationStructureSchema.safeParse(input);
     if (!validationResult.success) {
-      const errorMessage = validationResult.error.errors
-        .map((e) => e.message)
-        .join(', ');
+      const errorMessage = validationResult.error.errors.map(e => e.message).join(', ');
       throw new Error(errorMessage);
     }
 
@@ -95,10 +93,7 @@ export class LocationService {
   /**
    * Struktúra lekérdezése
    */
-  async getStructure(
-    tenantId: string,
-    warehouseId: string,
-  ): Promise<LocationStructure | null> {
+  async getStructure(tenantId: string, warehouseId: string): Promise<LocationStructure | null> {
     return this.repository.getStructure(tenantId, warehouseId);
   }
 
@@ -108,24 +103,25 @@ export class LocationService {
   async updateStructure(
     structureId: string,
     tenantId: string,
-    input: UpdateLocationStructureInput,
+    input: UpdateLocationStructureInput
   ): Promise<LocationStructure> {
     const validationResult = UpdateLocationStructureSchema.safeParse(input);
     if (!validationResult.success) {
-      const errorMessage = validationResult.error.errors
-        .map((e) => e.message)
-        .join(', ');
+      const errorMessage = validationResult.error.errors.map(e => e.message).join(', ');
       throw new Error(errorMessage);
     }
 
-    const updateData: Partial<Omit<LocationStructure, 'id' | 'createdAt' | 'tenantId' | 'warehouseId'>> = {};
+    const updateData: Partial<
+      Omit<LocationStructure, 'id' | 'createdAt' | 'tenantId' | 'warehouseId'>
+    > = {};
     const data = validationResult.data;
     if (data.kommandoPrefix !== undefined) updateData.kommandoPrefix = data.kommandoPrefix;
     if (data.polcPrefix !== undefined) updateData.polcPrefix = data.polcPrefix;
     if (data.dobozPrefix !== undefined) updateData.dobozPrefix = data.dobozPrefix;
     if (data.separator !== undefined) updateData.separator = data.separator;
     if (data.maxKommando !== undefined) updateData.maxKommando = data.maxKommando;
-    if (data.maxPolcPerKommando !== undefined) updateData.maxPolcPerKommando = data.maxPolcPerKommando;
+    if (data.maxPolcPerKommando !== undefined)
+      updateData.maxPolcPerKommando = data.maxPolcPerKommando;
     if (data.maxDobozPerPolc !== undefined) updateData.maxDobozPerPolc = data.maxDobozPerPolc;
     return this.repository.updateStructure(structureId, tenantId, updateData);
   }
@@ -140,7 +136,7 @@ export class LocationService {
   async validateCode(
     tenantId: string,
     warehouseId: string,
-    code: string,
+    code: string
   ): Promise<LocationValidationResult> {
     // Struktúra lekérdezése
     const structure = await this.repository.getStructure(tenantId, warehouseId);
@@ -158,7 +154,7 @@ export class LocationService {
       structure.kommandoPrefix,
       structure.polcPrefix,
       structure.dobozPrefix,
-      structure.separator,
+      structure.separator
     );
 
     if (!parsed) {
@@ -219,7 +215,7 @@ export class LocationService {
     kommandoPrefix: string,
     polcPrefix: string,
     dobozPrefix: string,
-    separator: string,
+    separator: string
   ): ParsedLocationCode | null {
     // Escape regex special chars in separator
     const escapedSep = separator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -227,7 +223,7 @@ export class LocationService {
     // Build regex pattern
     // e.g., K(\d+)-P(\d+)-D(\d+)
     const pattern = new RegExp(
-      `^${kommandoPrefix}(\\d+)${escapedSep}${polcPrefix}(\\d+)${escapedSep}${dobozPrefix}(\\d+)$`,
+      `^${kommandoPrefix}(\\d+)${escapedSep}${polcPrefix}(\\d+)${escapedSep}${dobozPrefix}(\\d+)$`
     );
 
     const match = code.match(pattern);
@@ -261,7 +257,7 @@ export class LocationService {
     kommandoPrefix: string,
     polcPrefix: string,
     dobozPrefix: string,
-    separator: string,
+    separator: string
   ): string {
     return `${kommandoPrefix}${kommando}${separator}${polcPrefix}${polc}${separator}${dobozPrefix}${doboz}`;
   }
@@ -275,22 +271,19 @@ export class LocationService {
    */
   async generateLocations(
     tenantId: string,
-    input: GenerateLocationsInput,
+    input: GenerateLocationsInput
   ): Promise<LocationGenerationResult> {
     // Validálás
     const validationResult = GenerateLocationsSchema.safeParse(input);
     if (!validationResult.success) {
-      const errorMessage = validationResult.error.errors
-        .map((e) => e.message)
-        .join(', ');
+      const errorMessage = validationResult.error.errors.map(e => e.message).join(', ');
       throw new Error(errorMessage);
     }
 
     const validInput = validationResult.data;
 
     // Mennyiség ellenőrzés
-    const totalToCreate =
-      validInput.kommandoCount * validInput.polcCount * validInput.dobozCount;
+    const totalToCreate = validInput.kommandoCount * validInput.polcCount * validInput.dobozCount;
     if (totalToCreate > LocationService.MAX_GENERATION_COUNT) {
       throw new Error('Maximum 50,000 helykód generálható egyszerre');
     }
@@ -326,7 +319,7 @@ export class LocationService {
             structure.kommandoPrefix,
             structure.polcPrefix,
             structure.dobozPrefix,
-            structure.separator,
+            structure.separator
           );
 
           const locationData: Omit<LocationCode, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -383,13 +376,11 @@ export class LocationService {
   async updateLocation(
     locationId: string,
     tenantId: string,
-    input: UpdateLocationInput,
+    input: UpdateLocationInput
   ): Promise<LocationCode> {
     const validationResult = UpdateLocationSchema.safeParse(input);
     if (!validationResult.success) {
-      const errorMessage = validationResult.error.errors
-        .map((e) => e.message)
-        .join(', ');
+      const errorMessage = validationResult.error.errors.map(e => e.message).join(', ');
       throw new Error(errorMessage);
     }
 
@@ -398,7 +389,20 @@ export class LocationService {
       throw new Error('Helykód nem található');
     }
 
-    const updateData: Partial<Omit<LocationCode, 'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'warehouseId' | 'code' | 'kommando' | 'polc' | 'doboz'>> = {};
+    const updateData: Partial<
+      Omit<
+        LocationCode,
+        | 'id'
+        | 'createdAt'
+        | 'updatedAt'
+        | 'tenantId'
+        | 'warehouseId'
+        | 'code'
+        | 'kommando'
+        | 'polc'
+        | 'doboz'
+      >
+    > = {};
     const data = validationResult.data;
     if (data.status !== undefined) updateData.status = data.status;
     if (data.capacity !== undefined && data.capacity !== null) updateData.capacity = data.capacity;
@@ -411,7 +415,7 @@ export class LocationService {
   async findAvailableLocation(
     tenantId: string,
     warehouseId: string,
-    preferredKommando?: number,
+    preferredKommando?: number
   ): Promise<LocationCode | null> {
     const query: LocationQuery = {
       tenantId,
@@ -437,7 +441,7 @@ export class LocationService {
   async updateOccupancy(
     locationId: string,
     tenantId: string,
-    adjustment: number,
+    adjustment: number
   ): Promise<LocationCode> {
     const existing = await this.repository.findById(locationId, tenantId);
     if (!existing || existing.isDeleted) {
@@ -455,8 +459,34 @@ export class LocationService {
   /**
    * Helykódok lekérdezése
    */
-  async query(query: LocationQuery): Promise<LocationQueryResult> {
+  async queryLocations(query: LocationQuery): Promise<LocationQueryResult> {
     return this.repository.query(query);
+  }
+
+  /**
+   * Helykód keresése ID alapján
+   */
+  async findById(locationId: string, tenantId: string): Promise<LocationCode | null> {
+    const location = await this.repository.findById(locationId, tenantId);
+    if (location?.isDeleted) {
+      return null;
+    }
+    return location;
+  }
+
+  /**
+   * Helykód keresése kód alapján
+   */
+  async findByCode(
+    code: string,
+    tenantId: string,
+    warehouseId: string
+  ): Promise<LocationCode | null> {
+    const location = await this.repository.findByCode(code, tenantId, warehouseId);
+    if (location?.isDeleted) {
+      return null;
+    }
+    return location;
   }
 
   /**
@@ -473,5 +503,12 @@ export class LocationService {
     }
 
     await this.repository.deleteLocation(locationId, tenantId);
+  }
+
+  /**
+   * Összes helykód törlése raktárból
+   */
+  async deleteAllByWarehouse(tenantId: string, warehouseId: string): Promise<number> {
+    return this.repository.deleteAllByWarehouse(tenantId, warehouseId);
   }
 }

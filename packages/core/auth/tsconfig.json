@@ -8,7 +8,15 @@
       "@/*": ["src/*"]
     },
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "declaration": true,
+    "declarationMap": true,
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "noEmit": false,
+    "isolatedModules": false,
+    "composite": false,
+    "incremental": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]

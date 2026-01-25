@@ -1,5 +1,3 @@
-import { authApi } from '@/api/auth';
-import { useAuthStore } from '@/stores/auth-store';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -70,6 +68,15 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    label: 'Járművek',
+    icon: 'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0',
+    children: [
+      { label: 'Bérgép járművek', href: '/vehicles/rental' },
+      { label: 'Céges járművek', href: '/vehicles/company' },
+      { label: 'Lejáró dokumentumok', href: '/vehicles/expiring' },
+    ],
+  },
+  {
     label: 'Chat',
     icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z',
     href: '/chat',
@@ -114,19 +121,8 @@ const NAV_ITEMS: NavItem[] = [
 export function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(['Bérlés', 'Munkalap']);
-
-  const handleLogout = async () => {
-    try {
-      await authApi.logout();
-    } catch {
-      // Ignore logout API errors
-    }
-    logout();
-    navigate('/login');
-  };
 
   const toggleExpanded = (label: string) => {
     setExpandedItems(prev =>
@@ -379,7 +375,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Special buttons & Theme toggle & User section */}
+      {/* Special buttons */}
       <div className="border-t border-white/10 p-4">
         {/* MyForgeOS Button - Glowing style */}
         <button
@@ -415,7 +411,7 @@ export function Sidebar() {
           href="https://mfl.support/"
           target="_blank"
           rel="noopener noreferrer"
-          className={`group relative mb-3 flex w-full items-center gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-300 ${
+          className={`group relative flex w-full items-center gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-300 ${
             collapsed ? 'justify-center' : ''
           } bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:scale-[1.02]`}
           title="Help!"
@@ -458,61 +454,6 @@ export function Sidebar() {
             </>
           )}
         </a>
-
-        {collapsed ? (
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center justify-center rounded p-2 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
-            title="Kijelentkezés"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-          </button>
-        ) : (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-kgc-accent text-sm font-medium">
-                {user?.name?.charAt(0) || 'U'}
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <p className="truncate text-sm font-medium">{user?.name || 'Felhasználó'}</p>
-                <p className="truncate text-xs text-white/60">{user?.role || 'Szerepkör'}</p>
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="flex w-full items-center justify-center gap-2 rounded bg-white/10 px-3 py-2 text-sm text-white/80 transition-colors hover:bg-white/20 hover:text-white"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
-              </svg>
-              Kijelentkezés
-            </button>
-          </div>
-        )}
       </div>
     </aside>
   );

@@ -4,19 +4,16 @@
  * Minden készlet mozgás rögzítése auditáláshoz
  */
 
-import { Injectable, Inject } from '@nestjs/common';
-import { MOVEMENT_REPOSITORY } from '../interfaces/movement.interface';
+import { Inject, Injectable } from '@nestjs/common';
+import { CreateMovementInput, CreateMovementSchema } from '../dto/movement.dto';
 import type {
+  IMovementRepository,
   InventoryMovement,
   MovementQuery,
   MovementQueryResult,
   MovementSummary,
-  IMovementRepository,
 } from '../interfaces/movement.interface';
-import {
-  CreateMovementSchema,
-  CreateMovementInput,
-} from '../dto/movement.dto';
+import { MOVEMENT_REPOSITORY } from '../interfaces/movement.interface';
 
 /**
  * Készlet mozgás szolgáltatás (audit trail)
@@ -26,7 +23,7 @@ import {
 export class MovementService {
   constructor(
     @Inject(MOVEMENT_REPOSITORY)
-    private readonly repository: IMovementRepository,
+    private readonly repository: IMovementRepository
   ) {}
 
   // ============================================
@@ -42,14 +39,12 @@ export class MovementService {
   async recordMovement(
     tenantId: string,
     input: CreateMovementInput,
-    performedBy: string,
+    performedBy: string
   ): Promise<InventoryMovement> {
     // Validálás
     const validationResult = CreateMovementSchema.safeParse(input);
     if (!validationResult.success) {
-      const errorMessage = validationResult.error.errors
-        .map((e) => e.message)
-        .join(', ');
+      const errorMessage = validationResult.error.errors.map(e => e.message).join(', ');
       throw new Error(errorMessage);
     }
 
@@ -58,7 +53,7 @@ export class MovementService {
     // Új mennyiség számítása
     const newQuantity = this.calculateNewQuantity(
       validInput.previousQuantity,
-      validInput.quantityChange,
+      validInput.quantityChange
     );
 
     const now = new Date();
@@ -78,11 +73,15 @@ export class MovementService {
       performedAt: now,
     };
     if (validInput.referenceId !== undefined) movementData.referenceId = validInput.referenceId;
-    if (validInput.referenceType !== undefined) movementData.referenceType = validInput.referenceType;
-    if (validInput.previousStatus !== undefined) movementData.previousStatus = validInput.previousStatus;
+    if (validInput.referenceType !== undefined)
+      movementData.referenceType = validInput.referenceType;
+    if (validInput.previousStatus !== undefined)
+      movementData.previousStatus = validInput.previousStatus;
     if (validInput.newStatus !== undefined) movementData.newStatus = validInput.newStatus;
-    if (validInput.previousLocationCode !== undefined) movementData.previousLocationCode = validInput.previousLocationCode;
-    if (validInput.newLocationCode !== undefined) movementData.newLocationCode = validInput.newLocationCode;
+    if (validInput.previousLocationCode !== undefined)
+      movementData.previousLocationCode = validInput.previousLocationCode;
+    if (validInput.newLocationCode !== undefined)
+      movementData.newLocationCode = validInput.newLocationCode;
     if (validInput.serialNumber !== undefined) movementData.serialNumber = validInput.serialNumber;
     if (validInput.batchNumber !== undefined) movementData.batchNumber = validInput.batchNumber;
     if (validInput.value !== undefined) movementData.value = validInput.value;
@@ -101,23 +100,21 @@ export class MovementService {
   async recordManyMovements(
     tenantId: string,
     inputs: CreateMovementInput[],
-    performedBy: string,
+    performedBy: string
   ): Promise<number> {
     const now = new Date();
 
-    const movements = inputs.map((input) => {
+    const movements = inputs.map(input => {
       const validationResult = CreateMovementSchema.safeParse(input);
       if (!validationResult.success) {
-        const errorMessage = validationResult.error.errors
-          .map((e) => e.message)
-          .join(', ');
+        const errorMessage = validationResult.error.errors.map(e => e.message).join(', ');
         throw new Error(errorMessage);
       }
 
       const validInput = validationResult.data;
       const newQuantity = this.calculateNewQuantity(
         validInput.previousQuantity,
-        validInput.quantityChange,
+        validInput.quantityChange
       );
 
       const movementData: Omit<InventoryMovement, 'id' | 'createdAt'> = {
@@ -135,12 +132,17 @@ export class MovementService {
         performedAt: now,
       };
       if (validInput.referenceId !== undefined) movementData.referenceId = validInput.referenceId;
-      if (validInput.referenceType !== undefined) movementData.referenceType = validInput.referenceType;
-      if (validInput.previousStatus !== undefined) movementData.previousStatus = validInput.previousStatus;
+      if (validInput.referenceType !== undefined)
+        movementData.referenceType = validInput.referenceType;
+      if (validInput.previousStatus !== undefined)
+        movementData.previousStatus = validInput.previousStatus;
       if (validInput.newStatus !== undefined) movementData.newStatus = validInput.newStatus;
-      if (validInput.previousLocationCode !== undefined) movementData.previousLocationCode = validInput.previousLocationCode;
-      if (validInput.newLocationCode !== undefined) movementData.newLocationCode = validInput.newLocationCode;
-      if (validInput.serialNumber !== undefined) movementData.serialNumber = validInput.serialNumber;
+      if (validInput.previousLocationCode !== undefined)
+        movementData.previousLocationCode = validInput.previousLocationCode;
+      if (validInput.newLocationCode !== undefined)
+        movementData.newLocationCode = validInput.newLocationCode;
+      if (validInput.serialNumber !== undefined)
+        movementData.serialNumber = validInput.serialNumber;
       if (validInput.batchNumber !== undefined) movementData.batchNumber = validInput.batchNumber;
       if (validInput.value !== undefined) movementData.value = validInput.value;
       if (validInput.currency !== undefined) movementData.currency = validInput.currency;
@@ -159,8 +161,15 @@ export class MovementService {
   /**
    * Mozgások lekérdezése szűrőkkel
    */
-  async query(query: MovementQuery): Promise<MovementQueryResult> {
+  async queryMovements(query: MovementQuery): Promise<MovementQueryResult> {
     return this.repository.query(query);
+  }
+
+  /**
+   * Mozgás lekérdezése ID alapján
+   */
+  async findById(id: string, tenantId: string): Promise<InventoryMovement | null> {
+    return this.repository.findById(id, tenantId);
   }
 
   /**
@@ -172,7 +181,7 @@ export class MovementService {
   async getHistory(
     inventoryItemId: string,
     tenantId: string,
-    limit?: number,
+    limit?: number
   ): Promise<InventoryMovement[]> {
     return this.repository.getHistory(inventoryItemId, tenantId, limit);
   }
@@ -188,14 +197,9 @@ export class MovementService {
     tenantId: string,
     warehouseId: string | undefined,
     periodStart: Date,
-    periodEnd: Date,
+    periodEnd: Date
   ): Promise<MovementSummary> {
-    return this.repository.getSummary(
-      tenantId,
-      warehouseId,
-      periodStart,
-      periodEnd,
-    );
+    return this.repository.getSummary(tenantId, warehouseId, periodStart, periodEnd);
   }
 
   /**
@@ -205,7 +209,7 @@ export class MovementService {
    */
   async getLastMovement(
     inventoryItemId: string,
-    tenantId: string,
+    tenantId: string
   ): Promise<InventoryMovement | null> {
     return this.repository.getLastMovement(inventoryItemId, tenantId);
   }

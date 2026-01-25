@@ -23,16 +23,16 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaClient } from '@prisma/client';
-import { UsersModule, ElevatedAccessService } from '@kgc/users';
+// NOTE: UsersModule dependency removed to break circular dependency
+// Use interface-based DI via ELEVATED_ACCESS_SERVICE token from @kgc/common
+import { ELEVATED_ACCESS_SERVICE, JwtAuthGuard, type IElevatedAccessService } from '@kgc/common';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LoginThrottlerGuard } from './guards/login-throttle.guard';
 import { PasswordService } from './services/password.service';
 import { TokenService } from './services/token.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { ELEVATED_ACCESS_SERVICE } from './interfaces/elevated-access.interface';
 
 /**
  * Configuration options for AuthModule
@@ -44,6 +44,8 @@ export interface AuthModuleOptions {
   jwtSecret?: string;
   /** Application base URL for password reset links - if not provided, reads from APP_BASE_URL env var */
   appBaseUrl?: string;
+  /** Elevated Access Service implementation (optional - breaks circular dep with @kgc/users) */
+  elevatedAccessService?: IElevatedAccessService;
 }
 
 /**
@@ -98,7 +100,11 @@ export class AuthModule {
 
     const providers: Provider[] = [
       AuthService,
-      PasswordService,
+      // PasswordService needs factory because constructor has optional rounds parameter
+      {
+        provide: PasswordService,
+        useFactory: () => new PasswordService(),
+      },
       TokenService,
       JwtStrategy,
       JwtAuthGuard,
@@ -115,16 +121,19 @@ export class AuthModule {
         provide: 'PRISMA_CLIENT',
         useValue: options.prisma ?? null,
       },
+      // Elevated Access Service - provided via options to break circular dependency
+      // with @kgc/users (which implements IElevatedAccessService)
       {
         provide: ELEVATED_ACCESS_SERVICE,
-        useExisting: ElevatedAccessService, // Use same instance from UsersModule
+        useValue: options.elevatedAccessService ?? null,
       },
     ];
 
     return {
       module: AuthModule,
       imports: [
-        UsersModule.forRoot(options),
+        // NOTE: UsersModule removed to break circular dependency
+        // ElevatedAccessService now provided via options.elevatedAccessService
         PassportModule.register({ defaultStrategy: 'jwt' }),
         JwtModule.register({
           secret: jwtSecret,

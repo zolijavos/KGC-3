@@ -1,5 +1,6 @@
 # KGC ERP v7.0 Sprint Status
 # generated: 2026-01-15
+# updated: 2026-01-24 (AUDIT CORRECTION)
 # project: KGC-3
 # project_key: KGC
 # tracking_system: file-system
@@ -8,9 +9,10 @@
 # STATUS DEFINITIONS:
 # ==================
 # Epic Status:
-#   - backlog: Epic not yet started
+#   - backlog: Epic not yet started (or shell code only)
 #   - in-progress: Epic actively being worked on
-#   - done: All stories in epic completed
+#   - blocked-prisma: Code exists but waiting for Prisma models
+#   - done: All stories in epic completed with working code
 #
 # Story Status:
 #   - backlog: Story only exists in epic file
@@ -18,6 +20,7 @@
 #   - ready-for-dev: Story file created, ready for implementation
 #   - in-progress: Developer actively working
 #   - review: Ready for code review
+#   - blocked-prisma: Code written but Prisma model missing
 #   - done: Story completed
 #
 # Retrospective Status:
@@ -31,8 +34,15 @@
 # - Use /bmad:bmm:workflows:create-story to create next story
 # - Use /bmad:bmm:workflows:dev-story to implement story
 # - Use /bmad:bmm:workflows:code-review for adversarial review
+#
+# AUDIT NOTE (2026-01-24):
+# ========================
+# Sprint status corrected after code audit. Many epics were falsely marked "done"
+# but are missing Prisma models or have only shell implementations.
+# Priority: Add missing Prisma models before continuing with controllers.
 
 generated: 2026-01-15
+updated: 2026-01-24
 project: KGC-3
 project_key: KGC
 tracking_system: file-system
@@ -52,6 +62,7 @@ development_status:
   # ============================================
   # CORE LAYER (6 epics) - MVP Sprint 1-2
   # ============================================
+  # STATUS: ✅ FULLY COMPLETE - All Prisma models, code, and tests exist
 
   # Epic 1: Authentication (@kgc/auth) - 5 stories ✅ COMPLETE
   epic-1: done
@@ -62,7 +73,7 @@ development_status:
   1-5-password-reset-flow: done
   epic-1-retrospective: done
 
-  # Epic 2: User Management (@kgc/users) - 6 stories + 1 tech debt ✅ COMPLETE
+  # Epic 2: User Management (@kgc/users) - 7 stories ✅ COMPLETE
   epic-2: done
   2-1-user-crud-operations: done
   2-2-role-assignment-es-rbac: done
@@ -70,7 +81,7 @@ development_status:
   2-4-elevated-access-requirement: done
   2-5-tenant-es-location-scoped-permissions: done
   2-6-user-profile-management: done
-  2-7-code-review-fixes: done  # Tech debt: CRITICAL/HIGH fixes complete, MEDIUM/LOW deferred
+  2-7-code-review-fixes: done
   epic-2-retrospective: done
 
   # Epic 3: Tenant Management (@kgc/tenant) - 6 stories ✅ COMPLETE
@@ -115,28 +126,35 @@ development_status:
   # ============================================
   # SHARED LAYER (6 epics) - MVP Sprint 3-4
   # ============================================
+  # STATUS: ✅ Epic 7+8+9 DONE, Epic 10 blocked, 11 done, 12 backlog
 
   # Epic 7: Partner Management (@kgc/partner) - 6 stories ✅ COMPLETE
+  # CODE: 23 ts files + Prisma repos | PRISMA: ✅ Partner, Representative, LoyaltyTier, LoyaltyHistory
+  # Updated 2026-01-25: Prisma repositories implemented with code review fixes
   epic-7: done
   7-1-partner-crud-maganszemely-es-ceg: done
   7-2-meghatalmazott-kezeles: done
   7-3-torzsvendeg-kartya-rendszer: done
   7-4-partner-hitelkeret-kezeles: done
-  7-5-partner-blacklist-es-figyelmeztetesek: done
-  7-6-partner-kereses-es-azonositas: done
-  epic-7-retrospective: done
+  7-5-partner-blacklist-es-figyelmeztetesek: backlog # No story file
+  7-6-partner-kereses-es-azonositas: backlog # No story file
+  epic-7-retrospective: optional
 
   # Epic 8: Product Catalog (@kgc/cikk) - 5 stories ✅ COMPLETE
+  # CODE: 47 ts files + Prisma repos | PRISMA: ✅ Product, ProductCategory, Supplier, PriceRule
+  # Updated 2026-01-25: Prisma repositories implemented with code review fixes
   epic-8: done
   8-1-cikk-crud: done
   8-2-cikkcsoport-hierarchia: done
   8-3-beszallito-kapcsolat-es-import: done
   8-4-vonalkod-es-qr-kod-kezeles: done
   8-5-arszabaly-kezeles: done
-  epic-8-retrospective: done
+  epic-8-retrospective: optional
 
-  # Epic 9: Inventory Core (@kgc/keszlet) - 6 stories ✅ COMPLETE
-  epic-9: done
+  # Epic 9: Inventory Core (@kgc/inventory) - 6 stories
+  # CODE: 25 ts files | PRISMA: ✅ 9 models exist
+  # WARNING: Code in wrong location (apps/kgc-api/src/modules/ instead of packages/shared/)
+  epic-9: done # Prisma complete, code exists (needs relocation)
   9-1-keszlet-nyilvantartas-alap: done
   9-2-k-p-d-helykod-rendszer: done
   9-3-multi-warehouse-tamogatas: done
@@ -145,17 +163,19 @@ development_status:
   9-6-minimum-stock-alert: done
   epic-9-retrospective: done
 
-  # Epic 10: Invoice Core (@kgc/sales-invoice) - 6 stories ✅ COMPLETE
-  epic-10: done
-  10-1-szamla-crud: done
-  10-2-szamla-tetel-kezeles: done
-  10-3-szamla-pdf-generalas: backlog  # Story planned for future sprint
-  10-4-szamla-statusz-workflow: done
-  10-5-sztorno-szamla: done
-  10-6-szamla-lathatosag-rbac: done
-  epic-10-retrospective: done
+  # Epic 10: Invoice Core (@kgc/sales-invoice) - 6 stories
+  # CODE: 10 ts files exist | PRISMA: ❌ Invoice model MISSING
+  epic-10: blocked-prisma
+  10-1-szamla-crud: blocked-prisma
+  10-2-szamla-tetel-kezeles: blocked-prisma
+  10-3-szamla-pdf-generalas: backlog # Planned for future
+  10-4-szamla-statusz-workflow: blocked-prisma
+  10-5-sztorno-szamla: blocked-prisma
+  10-6-szamla-lathatosag-rbac: blocked-prisma
+  epic-10-retrospective: optional
 
-  # Epic 11: NAV Integration (@kgc/nav) - 5 stories ✅ COMPLETE
+  # Epic 11: NAV Integration (@kgc/nav-online) - 5 stories ✅ COMPLETE
+  # CODE: 15 ts files | No Prisma needed (external API)
   epic-11: done
   11-1-szamlazz-hu-api-integracio: done
   11-2-nav-xml-builder: done
@@ -164,178 +184,208 @@ development_status:
   11-5-offline-fallback-es-queue: done
   epic-11-retrospective: done
 
-  # Epic 12: Task List Widget (@kgc/feladatlista) - 5 stories ✅ COMPLETE
-  epic-12: done
-  12-1-bevasarlolista-tetel: done
-  12-2-to-do-feladat-felelossel: done
-  12-3-feladat-statusz-es-kipipalas: done
-  12-4-szemelyes-jegyzet: done
-  12-5-boltvezeto-lista-hozzaferes: done
-  epic-12-retrospective: done
+  # Epic 12: Task List Widget (@kgc/feladatlista) - 5 stories
+  # CODE: 5 ts files (minimal) | PRISMA: ❌ MISSING | Story files: 0
+  epic-12: backlog
+  12-1-bevasarlolista-tetel: backlog
+  12-2-to-do-feladat-felelossel: backlog
+  12-3-feladat-statusz-es-kipipalas: backlog
+  12-4-szemelyes-jegyzet: backlog
+  12-5-boltvezeto-lista-hozzaferes: backlog
+  epic-12-retrospective: optional
 
   # ============================================
   # BÉRLÉS LAYER (4 epics) - MVP Sprint 5-6
   # ============================================
+  # STATUS: 🟡 IN-PROGRESS - Prisma models exist, in-memory repos done, Prisma repos needed
+  # Updated 2026-01-25: Prisma models added, InMemory repos implemented
 
-  # Epic 13: Rental Equipment (@kgc/bergep) - 5 stories ✅ COMPLETE
-  epic-13: done
-  13-1-bergep-crud: done
-  13-2-bergep-statusz-lifecycle: done
-  13-3-serial-number-es-qr-kod: done
-  13-4-tartozek-kezeles: done
-  13-5-bergep-elozmenyek-es-karbantartas: done
-  epic-13-retrospective: done
+  # Epic 13: Rental Equipment (@kgc/bergep) - 5 stories
+  # CODE: InMemory repos done | PRISMA: ✅ RentalEquipment, RentalAccessory exist
+  epic-13: in-progress
+  13-1-bergep-crud: in-progress # Needs Prisma repository
+  13-2-bergep-statusz-lifecycle: backlog
+  13-3-serial-number-es-qr-kod: backlog
+  13-4-tartozek-kezeles: backlog
+  13-5-bergep-elozmenyek-es-karbantartas: backlog
+  epic-13-retrospective: optional
 
-  # Epic 14: Rental Operations (@kgc/rental-core) - 7 stories ✅ COMPLETE
-  epic-14: done
-  14-1-berles-kiadas-wizard: done
-  14-2-berlesi-dij-kalkulacio: done
-  14-3-kedvezmeny-kezeles-role-based: done
-  14-4-berles-visszavetel-workflow: done
-  14-5-berles-hosszabbitas: done
-  14-6-kesedelmi-dij-szamitas: done
-  14-7-berles-statuszok-es-audit: done
-  epic-14-retrospective: done
+  # Epic 14: Rental Operations (@kgc/rental-core) - 7 stories
+  # CODE: InMemory repos done (32 tests) | PRISMA: ✅ Prisma repos complete with code review fixes
+  # Updated 2026-01-25: Prisma repos implemented, NestJS module with forRoot pattern
+  epic-14: in-progress
+  14-1-berles-kiadas-wizard: done # Prisma repository complete
+  14-2-berlesi-dij-kalkulacio: done # Prisma repository complete
+  14-3-kedvezmeny-kezeles-role-based: backlog
+  14-4-berles-visszavetel-workflow: backlog
+  14-5-berles-hosszabbitas: backlog
+  14-6-kesedelmi-dij-szamitas: backlog
+  14-7-berles-statuszok-es-audit: backlog
+  epic-14-retrospective: optional
 
-  # Epic 15: Rental Contracts (@kgc/rental-contract) - 4 stories ✅ COMPLETE
-  epic-15: done
-  15-1-szerzodes-template-kezeles: done
-  15-2-szerzodes-pdf-generalas: done
-  15-3-digitalis-alairas: done
-  15-4-szerzodes-archivalas: done
-  epic-15-retrospective: done
+  # Epic 15: Rental Contracts (@kgc/rental-contract) - 4 stories
+  # CODE: InMemory repos done (41 tests) | PRISMA: ✅ Prisma repos complete with code review fixes
+  # Updated 2026-01-25: Prisma repos implemented, NestJS module with forRoot pattern
+  epic-15: in-progress
+  15-1-szerzodes-template-kezeles: done # Prisma repository complete
+  15-2-szerzodes-pdf-generalas: backlog
+  15-3-digitalis-alairas: backlog
+  15-4-szerzodes-archivalas: backlog
+  epic-15-retrospective: optional
 
-  # Epic 16: Deposit Management (@kgc/rental-checkout) - 5 stories ✅ COMPLETE
-  epic-16: done
-  16-1-kaucio-felvetel-keszpenz-kartya: done
-  16-2-mypos-pre-authorization: done
-  16-3-kaucio-visszaadas: done
-  16-4-kaucio-visszatartas-serules: done
-  16-5-kaucio-konyveles-es-riport: done
-  epic-16-retrospective: done
+  # Epic 16: Deposit Management (@kgc/rental-checkout) - 5 stories
+  # CODE: InMemory repos done (34 tests) | PRISMA: ✅ Prisma repos complete with code review fixes
+  # Updated 2026-01-25: Prisma repos implemented, NestJS module with forRoot pattern
+  epic-16: in-progress
+  16-1-kaucio-felvetel-keszpenz-kartya: done # Prisma repository complete
+  16-2-mypos-pre-authorization: backlog
+  16-3-kaucio-visszaadas: backlog
+  16-4-kaucio-visszatartas-serules: backlog
+  16-5-kaucio-konyveles-es-riport: backlog
+  epic-16-retrospective: optional
 
   # ============================================
   # SZERVIZ LAYER (4 epics) - MVP Sprint 7-8
   # ============================================
+  # STATUS: ⚠️ ALL BLOCKED - Waiting for Service Prisma models
 
-  # Epic 17: Work Orders (@kgc/service-worksheet) - 8 stories ✅ COMPLETE
-  epic-17: done
-  17-1-munkalap-crud: done
-  17-2-munkalap-statusz-workflow: done
-  17-3-diagnosztika-es-hibaok: done
-  17-4-alkatresz-felhasznalas: done
-  17-5-munkadij-kalkulacio: done
-  17-6-munkalap-berles-kapcsolat: done
-  17-7-prioritas-es-varakozasi-lista: done
-  17-8-tarolasi-dij-kezeles: done
-  epic-17-retrospective: done
+  # Epic 17: Work Orders (@kgc/service-worksheet) - 8 stories
+  # CODE: 18 ts files | PRISMA: ❌ Worksheet model MISSING
+  epic-17: blocked-prisma
+  17-1-munkalap-crud: blocked-prisma
+  17-2-munkalap-statusz-workflow: blocked-prisma
+  17-3-diagnosztika-es-hibaok: backlog
+  17-4-alkatresz-felhasznalas: backlog
+  17-5-munkadij-kalkulacio: backlog
+  17-6-munkalap-berles-kapcsolat: backlog
+  17-7-prioritas-es-varakozasi-lista: backlog
+  17-8-tarolasi-dij-kezeles: backlog
+  epic-17-retrospective: optional
 
-  # Epic 18: Quotations (@kgc/sales-quote) - 4 stories ✅ COMPLETE
-  epic-18: done
-  18-1-arajanlat-generalas: done
-  18-2-robbantott-abra-alapu-alkatresz-kivalasztas: done
-  18-3-arajanlat-pdf-es-email: done
-  18-4-arajanlat-elfogadas-munkalap: done
-  epic-18-retrospective: done
+  # Epic 18: Quotations (@kgc/sales-quote) - 4 stories
+  # CODE: 13 ts files | PRISMA: ❌ Quote model MISSING
+  epic-18: blocked-prisma
+  18-1-arajanlat-generalas: blocked-prisma
+  18-2-robbantott-abra-alapu-alkatresz-kivalasztas: backlog
+  18-3-arajanlat-pdf-es-email: backlog
+  18-4-arajanlat-elfogadas-munkalap: backlog
+  epic-18-retrospective: optional
 
-  # Epic 19: Warranty Claims (@kgc/service-warranty) - 4 stories ✅ COMPLETE
-  epic-19: done
-  19-1-garancialis-vs-fizetos-megkulonboztetes: done
-  19-2-warranty-claim-letrehozas: done
-  19-3-claim-statusz-tracking: done
-  19-4-claim-elszamolas: done
-  epic-19-retrospective: done
+  # Epic 19: Warranty Claims (@kgc/service-warranty) - 4 stories
+  # CODE: 9 ts files | PRISMA: ❌ WarrantyClaim model MISSING
+  epic-19: blocked-prisma
+  19-1-garancialis-vs-fizetos-megkulonboztetes: blocked-prisma
+  19-2-warranty-claim-letrehozas: blocked-prisma
+  19-3-claim-statusz-tracking: blocked-prisma
+  19-4-claim-elszamolas: blocked-prisma
+  epic-19-retrospective: optional
 
-  # Epic 20: Service Standards (@kgc/service-norma) - 3 stories ✅ COMPLETE
-  epic-20: done
-  20-1-norma-tetel-import: done
-  20-2-norma-alapu-munkadij: done
-  20-3-norma-lista-frissites: done
-  epic-20-retrospective: done
+  # Epic 20: Service Standards (@kgc/service-norma) - 3 stories
+  # CODE: 10 ts files | PRISMA: ❌ ServiceNorm model MISSING
+  epic-20: blocked-prisma
+  20-1-norma-tetel-import: blocked-prisma
+  20-2-norma-alapu-munkadij: backlog
+  20-3-norma-lista-frissites: backlog
+  epic-20-retrospective: optional
 
   # ============================================
   # ÁRUHÁZ LAYER (4 epics) - Post-MVP
   # ============================================
+  # STATUS: ⚠️ Shell implementations only
 
-  # Epic 21: Goods Receipt (@kgc/bevetelezes) - 3 stories ✅ COMPLETE
-  epic-21: done
-  21-1-avizo-kezeles: done
-  21-2-bevetelezes-workflow: done
-  21-3-bevetelezes-elteres-kezeles: done
-  epic-21-retrospective: done
+  # Epic 21: Goods Receipt (@kgc/bevetelezes) - 3 stories
+  # CODE: 12 ts files | Depends on Product model
+  epic-21: blocked-prisma
+  21-1-avizo-kezeles: blocked-prisma
+  21-2-bevetelezes-workflow: backlog
+  21-3-bevetelezes-elteres-kezeles: backlog
+  epic-21-retrospective: optional
 
-  # Epic 22: Point of Sale (@kgc/sales-pos) - 3 stories ✅ COMPLETE
-  epic-22: done
-  22-1-ertekesites-kasszabol: done
-  22-2-fizetesi-modok: done
-  22-3-napi-penztarzaras: done
-  epic-22-retrospective: done
+  # Epic 22: Point of Sale (@kgc/sales-pos) - 3 stories
+  # CODE: ❌ 0 ts files (EMPTY PACKAGE!)
+  epic-22: backlog
+  22-1-ertekesites-kasszabol: backlog
+  22-2-fizetesi-modok: backlog
+  22-3-napi-penztarzaras: backlog
+  epic-22-retrospective: optional
 
-  # Epic 23: Pricing & Margin (@kgc/arres) - 2 stories ✅ COMPLETE
-  epic-23: done
-  23-1-beszerzesi-ar-tracking: done
-  23-2-arres-kalkulacio-es-riport: done
-  epic-23-retrospective: done
+  # Epic 23: Pricing & Margin (@kgc/arres) - 2 stories
+  # CODE: 9 ts files | Depends on Product model
+  epic-23: blocked-prisma
+  23-1-beszerzesi-ar-tracking: blocked-prisma
+  23-2-arres-kalkulacio-es-riport: backlog
+  epic-23-retrospective: optional
 
-  # Epic 24: Stock Count (@kgc/leltar) - 3 stories ✅ COMPLETE
-  epic-24: done
-  24-1-leltar-inditas: done
-  24-2-leltar-rogzites: done
-  24-3-leltar-elteres-es-korrekcio: done
-  epic-24-retrospective: done
+  # Epic 24: Stock Count (@kgc/leltar) - 3 stories
+  # CODE: 11 ts files | Uses Inventory Prisma (exists)
+  epic-24: in-progress
+  24-1-leltar-inditas: in-progress
+  24-2-leltar-rogzites: backlog
+  24-3-leltar-elteres-es-korrekcio: backlog
+  epic-24-retrospective: optional
 
   # ============================================
   # INTEGRATION LAYER (3 epics) - Post-MVP
   # ============================================
+  # STATUS: ⚠️ Shell implementations, depend on domain models
 
-  # Epic 25: Equipment-Service Integration - 2 stories ✅ COMPLETE
-  epic-25: done
-  25-1-bergep-szervizbe-kuldes-automatizalas: done
-  25-2-szerviz-kesz-bergep-visszaall: done
-  epic-25-retrospective: done
+  # Epic 25: Equipment-Service Integration - 2 stories
+  # CODE: 8 ts files | Depends on Rental + Service models
+  epic-25: blocked-prisma
+  25-1-bergep-szervizbe-kuldes-automatizalas: blocked-prisma
+  25-2-szerviz-kesz-bergep-visszaall: blocked-prisma
+  epic-25-retrospective: optional
 
-  # Epic 26: Online Booking - 2 stories ✅ COMPLETE
-  epic-26: done
-  26-1-online-foglalas-felulet: done
-  26-2-foglalas-megerosites: done
-  epic-26-retrospective: done
+  # Epic 26: Online Booking - 2 stories
+  # CODE: 8 ts files | Depends on Rental models
+  epic-26: blocked-prisma
+  26-1-online-foglalas-felulet: blocked-prisma
+  26-2-foglalas-megerosites: blocked-prisma
+  epic-26-retrospective: optional
 
-  # Epic 27: Reporting Engine - 3 stories ✅ COMPLETE
-  epic-27: done
-  27-1-dashboard-widgetek: done
-  27-2-reszletes-riportok: done
-  27-3-cross-tenant-riportok: done
-  epic-27-retrospective: done
+  # Epic 27: Reporting Engine - 3 stories
+  # CODE: 11 ts files | Depends on all domain models
+  epic-27: blocked-prisma
+  27-1-dashboard-widgetek: blocked-prisma
+  27-2-reszletes-riportok: backlog
+  27-3-cross-tenant-riportok: backlog
+  epic-27-retrospective: optional
 
   # ============================================
   # PLUGIN LAYER (5 epics) - Post-MVP
   # ============================================
+  # STATUS: ⚠️ External integrations, shell implementations
 
-  # Epic 28: Twenty CRM Integration - 2 stories ✅ COMPLETE
-  epic-28: done
-  28-1-partner-szinkronizalas: done
-  28-2-crm-dashboard-embed: done
-  epic-28-retrospective: done
+  # Epic 28: Twenty CRM Integration - 2 stories
+  # CODE: 8 ts files | Depends on Partner model
+  epic-28: blocked-prisma
+  28-1-partner-szinkronizalas: blocked-prisma
+  28-2-crm-dashboard-embed: backlog
+  epic-28-retrospective: optional
 
-  # Epic 29: Chatwoot Integration - 2 stories ✅ COMPLETE
-  epic-29: done
-  29-1-support-ticket-integracio: done
-  29-2-ai-escalation-chatwoot-ba: done
-  epic-29-retrospective: done
+  # Epic 29: Chatwoot Integration - 2 stories
+  # CODE: 8 ts files | External API
+  epic-29: in-progress
+  29-1-support-ticket-integracio: in-progress
+  29-2-ai-escalation-chatwoot-ba: backlog
+  epic-29-retrospective: optional
 
-  # Epic 30: Horilla HR Integration - 1 story ✅ COMPLETE
-  epic-30: done
-  30-1-dolgozo-adatok-szinkronizalas: done
-  epic-30-retrospective: done
+  # Epic 30: Horilla HR Integration - 1 story
+  # CODE: 6 ts files | External API
+  epic-30: in-progress
+  30-1-dolgozo-adatok-szinkronizalas: in-progress
+  epic-30-retrospective: optional
 
-  # Epic 31: Koko AI Chatbot - 3 stories ✅ COMPLETE
-  epic-31: done
-  31-1-koko-chatbot-widget: done
-  31-2-intent-classification-es-routing: done
-  31-3-ai-quota-es-rate-limiting: done
-  epic-31-retrospective: done
+  # Epic 31: Koko AI Chatbot - 3 stories
+  # CODE: 10 ts files | External API
+  epic-31: in-progress
+  31-1-koko-chatbot-widget: in-progress
+  31-2-intent-classification-es-routing: backlog
+  31-3-ai-quota-es-rate-limiting: backlog
+  epic-31-retrospective: optional
 
-  # Epic 32: Internal Chat (@kgc/chat) - 4 stories - MVP! ✅ COMPLETE
+  # Epic 32: Internal Chat (@kgc/chat) - 4 stories ✅ COMPLETE
+  # CODE: 18 ts files | No Prisma needed (WebSocket)
   epic-32: done
   32-1-real-time-1-to-1-chat: done
   32-2-online-offline-statusz: done
@@ -347,7 +397,7 @@ development_status:
   # INFRASTRUCTURE LAYER (1 epic) - Post-MVP
   # ============================================
 
-  # Epic 33: Infrastructure & Deployment - 7 stories 🆕 NEW
+  # Epic 33: Infrastructure & Deployment - 7 stories
   epic-33: in-progress
   33-1-twenty-crm-docker-setup: review
   33-2-chatwoot-docker-setup: review
@@ -357,3 +407,79 @@ development_status:
   33-6-ci-cd-pipeline-setup: backlog
   33-7-monitoring-observability-stack: backlog
   epic-33-retrospective: optional
+
+  # ============================================
+  # VEHICLE LAYER (1 epic) - MVP
+  # ============================================
+  # STATUS: 🟢 NEW - Prisma models added, package created
+  # ADR-027: Járműnyilvántartás (Bérgép járművek + Céges gépkocsik)
+
+  # Epic 34: Vehicle Management (@kgc/vehicles) - 6 stories
+  # CODE: @kgc/vehicles package created | PRISMA: ✅ RentalVehicle, CompanyVehicle, VehicleDocumentReminder
+  # Added 2026-01-25: Epic, Prisma models, interfaces created
+  epic-34: in-progress
+  34-1-bergep-jarmu-crud: backlog
+  34-2-ceges-gepkocsi-crud: backlog
+  34-3-dokumentum-lejarat-kezeles: backlog
+  34-4-automatikus-emlekezteto: backlog
+  34-5-bergep-modul-kapcsolas: backlog
+  34-6-jogosultsagi-rendszer: backlog
+  epic-34-retrospective: optional
+
+# ============================================
+# PRISMA MODELS STATUS (Updated 2026-01-25 19:00)
+# ============================================
+# ✅ EXISTS (Core + Auth):
+#   - Tenant, TenantAuditLog, Location
+#   - User, RefreshToken, LoginAttempt, PasswordResetToken, TrustedDevice, PinAttempt
+#
+# ✅ EXISTS (Inventory - Epic 9):
+#   - Warehouse, StockLocation, InventoryItem, StockMovement, StockAlert
+#   - InventoryTransfer, TransferItem, StockLevelSetting, LocationStructure
+#
+# ✅ EXISTS (Partner - Epic 7) - Added 2026-01-25:
+#   - Partner, Representative, LoyaltyTier, LoyaltyHistory
+#
+# ✅ EXISTS (Product - Epic 8) - Added 2026-01-25:
+#   - Product, ProductCategory, Supplier, PriceRule
+#
+# ✅ EXISTS (Rental - Epic 13-16) - Added 2026-01-25:
+#   - RentalEquipment, RentalAccessory (Epic 13)
+#   - Rental, RentalItem, RentalExtension (Epic 14)
+#   - RentalContract, ContractTemplate (Epic 15)
+#   - Deposit, DepositTransaction (Epic 16)
+#
+# ✅ EXISTS (Vehicle - Epic 34) - Added 2026-01-25:
+#   - RentalVehicle, CompanyVehicle, VehicleDocumentReminder (ADR-027)
+#
+# ❌ MISSING (blocks 10 epics):
+#   - Worksheet, WorksheetItem, DiagnosticCode (Epic 17)
+#   - Quote, QuoteItem (Epic 18)
+#   - WarrantyClaim, ClaimItem (Epic 19)
+#   - ServiceNorm, NormItem (Epic 20)
+#   - Invoice, InvoiceItem (Epic 10)
+#   - GoodsReceipt, ReceiptItem (Epic 21)
+#   - Task, TaskList (Epic 12)
+
+# ============================================
+# SUMMARY (Updated 2026-01-25 19:30)
+# ============================================
+# ✅ DONE: 10 epics (1-6, 7, 8, 9, 11, 32)
+# 🟡 IN-PROGRESS: 10 epics (13-16, 24, 29-31, 33, 34)
+# 🔴 BLOCKED-PRISMA: 10 epics (10, 17-21, 23, 25-28)
+# ⚪ BACKLOG: 2 epics (12, 22)
+#
+# COMPLETED THIS SESSION:
+# - ✅ Rental Prisma Repositories (Epic 14-16): prisma-rental, prisma-deposit, prisma-contract
+# - ✅ BMAD Code Review with 12 issues found (3 Critical, 5 Medium, 4 Low)
+# - ✅ Auto-fixes applied: C1, C2, C3, M2, M3, L3
+# - ✅ NestJS Modules updated to forRoot pattern: Rental, Partners, Products
+# - ✅ AppModule updated with all new modules
+# - ✅ Epic 34 Járműnyilvántartás created (ADR-027)
+# - ✅ Vehicle Prisma models: RentalVehicle, CompanyVehicle, VehicleDocumentReminder
+# - ✅ @kgc/vehicles package with interfaces
+#
+# NEXT PRIORITY:
+# - Create Prisma repositories for Epic 13 (RentalEquipment, RentalAccessory)
+# - Create Prisma repositories for Epic 34 (Vehicle management)
+# - Add Prisma models for Service domain (Epic 17-20)
