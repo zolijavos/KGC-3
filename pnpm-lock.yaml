@@ -67,6 +67,9 @@ importers:
       '@kgc/rental-core':
         specifier: workspace:*
         version: link:../../packages/berles/rental-core
+      '@kgc/sales-invoice':
+        specifier: workspace:*
+        version: link:../../packages/aruhaz/sales-invoice
       '@kgc/tenant':
         specifier: workspace:*
         version: link:../../packages/core/tenant

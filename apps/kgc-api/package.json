@@ -31,6 +31,7 @@
     "@kgc/rental-checkout": "workspace:*",
     "@kgc/rental-contract": "workspace:*",
     "@kgc/rental-core": "workspace:*",
+    "@kgc/sales-invoice": "workspace:*",
     "@kgc/tenant": "workspace:*",
     "@kgc/users": "workspace:*",
     "@kgc/vehicles": "workspace:*",

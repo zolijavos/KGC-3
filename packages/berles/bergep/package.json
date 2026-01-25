@@ -2,12 +2,13 @@
   "name": "@kgc/bergep",
   "version": "0.0.1",
   "description": "KGC Rental Equipment module - bérgép törzs, státusz lifecycle, tartozék kezelés",
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "require": "./dist/index.js",
       "import": "./dist/index.mjs",
-      "types": "./dist/index.d.mts"
+      "types": "./dist/index.d.ts"
     }
   },
   "scripts": {

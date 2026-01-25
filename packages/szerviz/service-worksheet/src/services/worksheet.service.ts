@@ -7,18 +7,18 @@
 
 import { Injectable } from '@nestjs/common';
 import {
-  WorksheetStatus,
-  WorksheetPriority,
-  IWorksheet,
-  IWorksheetNumberResult,
-} from '../interfaces/worksheet.interface';
-import {
   CreateWorksheetDto,
   CreateWorksheetSchema,
   UpdateWorksheetDto,
   UpdateWorksheetSchema,
   WorksheetFilterDto,
 } from '../dto/worksheet.dto';
+import {
+  IWorksheet,
+  IWorksheetNumberResult,
+  WorksheetPriority,
+  WorksheetStatus,
+} from '../interfaces/worksheet.interface';
 
 /**
  * Priority ranking (lower = higher priority)
@@ -85,7 +85,7 @@ export class WorksheetService {
   constructor(
     private readonly worksheetRepository: IWorksheetRepository,
     private readonly partnerService: IPartnerService,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
   /**
@@ -121,7 +121,7 @@ export class WorksheetService {
     let priority = validInput.priority ?? WorksheetPriority.NORMAL;
     const isContracted = await this.partnerService.isContractedPartner(
       validInput.partnerId,
-      tenantId,
+      tenantId
     );
 
     if (isContracted) {
@@ -139,8 +139,8 @@ export class WorksheetService {
 
     const now = new Date();
 
-    // Create worksheet
-    const worksheet = await this.worksheetRepository.create({
+    // Build create data - only include defined optional properties
+    const createData: Partial<IWorksheet> = {
       tenantId,
       worksheetNumber: numberResult.worksheetNumber,
       type: validInput.type,
@@ -148,18 +148,35 @@ export class WorksheetService {
       priority,
       partnerId: validInput.partnerId,
       deviceName: validInput.deviceName,
-      deviceSerialNumber: validInput.deviceSerialNumber,
       faultDescription: validInput.faultDescription,
-      internalNote: validInput.internalNote,
-      assignedToId: validInput.assignedToId,
-      costLimit: validInput.costLimit,
-      estimatedCompletionDate: validInput.estimatedCompletionDate,
-      rentalId: validInput.rentalId,
       receivedAt: now,
       createdBy: userId,
       createdAt: now,
       updatedAt: now,
-    });
+    };
+
+    // Add optional properties only if defined (exactOptionalPropertyTypes compliance)
+    if (validInput.deviceSerialNumber !== undefined) {
+      createData.deviceSerialNumber = validInput.deviceSerialNumber;
+    }
+    if (validInput.internalNote !== undefined) {
+      createData.internalNote = validInput.internalNote;
+    }
+    if (validInput.assignedToId !== undefined) {
+      createData.assignedToId = validInput.assignedToId;
+    }
+    if (validInput.costLimit !== undefined) {
+      createData.costLimit = validInput.costLimit;
+    }
+    if (validInput.estimatedCompletionDate !== undefined) {
+      createData.estimatedCompletionDate = validInput.estimatedCompletionDate;
+    }
+    if (validInput.rentalId !== undefined) {
+      createData.rentalId = validInput.rentalId;
+    }
+
+    // Create worksheet
+    const worksheet = await this.worksheetRepository.create(createData);
 
     // Audit log
     await this.auditService.log({
@@ -211,7 +228,7 @@ export class WorksheetService {
    */
   async findAll(
     tenantId: string,
-    filter: Partial<WorksheetFilterDto>,
+    filter: Partial<WorksheetFilterDto>
   ): Promise<IPaginatedResult<IWorksheet>> {
     const items = await this.worksheetRepository.findAll(tenantId, filter);
     const total = await this.worksheetRepository.countByTenant(tenantId, filter);
@@ -237,7 +254,7 @@ export class WorksheetService {
     id: string,
     input: UpdateWorksheetDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IWorksheet> {
     // Validate input with Zod
     const validationResult = UpdateWorksheetSchema.safeParse(input);
@@ -264,11 +281,48 @@ export class WorksheetService {
       throw new Error('Lezárt munkalap nem módosítható');
     }
 
-    // Update worksheet
-    const updatedWorksheet = await this.worksheetRepository.update(id, {
-      ...validInput,
+    // Build update data - only include defined properties (exactOptionalPropertyTypes compliance)
+    const updateData: Partial<IWorksheet> = {
       updatedAt: new Date(),
-    });
+    };
+
+    if (validInput.priority !== undefined) {
+      updateData.priority = validInput.priority;
+    }
+    if (validInput.deviceName !== undefined) {
+      updateData.deviceName = validInput.deviceName;
+    }
+    if (validInput.deviceSerialNumber !== undefined) {
+      updateData.deviceSerialNumber = validInput.deviceSerialNumber;
+    }
+    if (validInput.faultDescription !== undefined) {
+      updateData.faultDescription = validInput.faultDescription;
+    }
+    if (validInput.diagnosis !== undefined) {
+      updateData.diagnosis = validInput.diagnosis;
+    }
+    if (validInput.workPerformed !== undefined) {
+      updateData.workPerformed = validInput.workPerformed;
+    }
+    if (validInput.internalNote !== undefined) {
+      updateData.internalNote = validInput.internalNote;
+    }
+    // Handle nullable fields - only set if not null (exactOptionalPropertyTypes compliance)
+    if (validInput.assignedToId !== undefined && validInput.assignedToId !== null) {
+      updateData.assignedToId = validInput.assignedToId;
+    }
+    if (validInput.costLimit !== undefined && validInput.costLimit !== null) {
+      updateData.costLimit = validInput.costLimit;
+    }
+    if (
+      validInput.estimatedCompletionDate !== undefined &&
+      validInput.estimatedCompletionDate !== null
+    ) {
+      updateData.estimatedCompletionDate = validInput.estimatedCompletionDate;
+    }
+
+    // Update worksheet
+    const updatedWorksheet = await this.worksheetRepository.update(id, updateData);
 
     // Audit log
     await this.auditService.log({

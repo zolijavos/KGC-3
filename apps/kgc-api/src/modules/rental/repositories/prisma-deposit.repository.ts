@@ -693,4 +693,579 @@ export class PrismaDepositRepository implements IDepositRepository {
       },
     });
   }
+
+  // ============================================
+  // ACCOUNTING & REPORTING (Epic 16-5)
+  // ============================================
+
+  /**
+   * Get deposit accounting summary for a period
+   * Used for month-end closing and financial reports
+   * @param tenantId Tenant ID
+   * @param startDate Start of period
+   * @param endDate End of period
+   * @param locationId Optional location filter
+   */
+  async getAccountingSummary(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+    locationId?: string
+  ): Promise<{
+    period: { start: Date; end: Date };
+    received: { count: number; amount: number };
+    released: { count: number; amount: number };
+    retained: { count: number; amount: number };
+    partiallyRetained: { count: number; retained: number; released: number };
+    outstanding: { count: number; amount: number };
+    byPaymentMethod: Record<string, { received: number; released: number; retained: number }>;
+    byRetentionReason: Record<string, { count: number; amount: number }>;
+    netChange: number;
+  }> {
+    // Build base filter
+    const baseWhere: Prisma.DepositWhereInput = {
+      tenantId,
+    };
+
+    if (locationId) {
+      baseWhere.rental = { warehouseId: locationId };
+    }
+
+    // Get deposits received in period
+    const receivedDeposits = await this.prisma.deposit.findMany({
+      where: {
+        ...baseWhere,
+        receivedAt: { gte: startDate, lte: endDate },
+      },
+      select: {
+        id: true,
+        type: true,
+        amount: true,
+      },
+    });
+
+    // Get deposits released/retained in period
+    const settledDeposits = await this.prisma.deposit.findMany({
+      where: {
+        ...baseWhere,
+        returnedAt: { gte: startDate, lte: endDate },
+        status: { in: ['RELEASED', 'RETAINED', 'PARTIAL'] },
+      },
+      select: {
+        id: true,
+        type: true,
+        status: true,
+        amount: true,
+        retainedAmount: true,
+        returnedAmount: true,
+        retentionReason: true,
+      },
+    });
+
+    // Get outstanding deposits at end of period
+    const outstandingDeposits = await this.prisma.deposit.aggregate({
+      where: {
+        ...baseWhere,
+        status: { in: ['PENDING', 'RECEIVED', 'HELD'] },
+        receivedAt: { lte: endDate },
+      },
+      _count: true,
+      _sum: { amount: true },
+    });
+
+    // Calculate totals
+    let receivedCount = receivedDeposits.length;
+    let receivedAmount = 0;
+    const byPaymentMethod: Record<
+      string,
+      { received: number; released: number; retained: number }
+    > = {};
+
+    for (const d of receivedDeposits) {
+      const amount = Number(d.amount);
+      receivedAmount += amount;
+
+      const method = d.type;
+      if (!byPaymentMethod[method]) {
+        byPaymentMethod[method] = { received: 0, released: 0, retained: 0 };
+      }
+      byPaymentMethod[method].received += amount;
+    }
+
+    let releasedCount = 0;
+    let releasedAmount = 0;
+    let retainedCount = 0;
+    let retainedAmount = 0;
+    let partialCount = 0;
+    let partialRetained = 0;
+    let partialReleased = 0;
+    const byRetentionReason: Record<string, { count: number; amount: number }> = {};
+
+    for (const d of settledDeposits) {
+      const method = d.type;
+      if (!byPaymentMethod[method]) {
+        byPaymentMethod[method] = { received: 0, released: 0, retained: 0 };
+      }
+
+      if (d.status === 'RELEASED') {
+        releasedCount++;
+        const amount = Number(d.amount);
+        releasedAmount += amount;
+        byPaymentMethod[method].released += amount;
+      } else if (d.status === 'RETAINED') {
+        retainedCount++;
+        const amount = Number(d.retainedAmount ?? d.amount);
+        retainedAmount += amount;
+        byPaymentMethod[method].retained += amount;
+
+        // Track by retention reason
+        const reason = d.retentionReason?.split(':')[0] ?? 'OTHER';
+        if (!byRetentionReason[reason]) {
+          byRetentionReason[reason] = { count: 0, amount: 0 };
+        }
+        byRetentionReason[reason].count++;
+        byRetentionReason[reason].amount += amount;
+      } else if (d.status === 'PARTIAL') {
+        partialCount++;
+        const retained = Number(d.retainedAmount ?? 0);
+        const released = Number(d.returnedAmount ?? 0);
+        partialRetained += retained;
+        partialReleased += released;
+        byPaymentMethod[method].retained += retained;
+        byPaymentMethod[method].released += released;
+
+        // Track by retention reason
+        const reason = d.retentionReason?.split(':')[0] ?? 'OTHER';
+        if (!byRetentionReason[reason]) {
+          byRetentionReason[reason] = { count: 0, amount: 0 };
+        }
+        byRetentionReason[reason].count++;
+        byRetentionReason[reason].amount += retained;
+      }
+    }
+
+    // Net change = received - (released + partial released)
+    const totalReleased = releasedAmount + partialReleased;
+    const netChange = receivedAmount - totalReleased;
+
+    return {
+      period: { start: startDate, end: endDate },
+      received: { count: receivedCount, amount: receivedAmount },
+      released: { count: releasedCount, amount: releasedAmount },
+      retained: { count: retainedCount, amount: retainedAmount },
+      partiallyRetained: {
+        count: partialCount,
+        retained: partialRetained,
+        released: partialReleased,
+      },
+      outstanding: {
+        count: outstandingDeposits._count,
+        amount: Number(outstandingDeposits._sum.amount ?? 0),
+      },
+      byPaymentMethod,
+      byRetentionReason,
+      netChange,
+    };
+  }
+
+  /**
+   * Get daily deposit movement report
+   * @param tenantId Tenant ID
+   * @param date Date to report on
+   * @param locationId Optional location filter
+   */
+  async getDailyReport(
+    tenantId: string,
+    date: Date,
+    locationId?: string
+  ): Promise<{
+    date: Date;
+    openingBalance: { count: number; amount: number };
+    received: Array<{
+      depositId: string;
+      rentalCode: string;
+      amount: number;
+      method: string;
+      receivedAt: Date;
+    }>;
+    released: Array<{ depositId: string; rentalCode: string; amount: number; releasedAt: Date }>;
+    retained: Array<{
+      depositId: string;
+      rentalCode: string;
+      amount: number;
+      reason: string;
+      retainedAt: Date;
+    }>;
+    closingBalance: { count: number; amount: number };
+    cashMovement: { in: number; out: number; net: number };
+    cardMovement: { in: number; out: number; net: number };
+  }> {
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const baseWhere: Prisma.DepositWhereInput = { tenantId };
+    if (locationId) {
+      baseWhere.rental = { warehouseId: locationId };
+    }
+
+    // Opening balance (deposits active at start of day)
+    const openingBalance = await this.prisma.deposit.aggregate({
+      where: {
+        ...baseWhere,
+        receivedAt: { lt: dayStart },
+        OR: [
+          { status: { in: ['PENDING', 'RECEIVED', 'HELD'] } },
+          { returnedAt: { gte: dayStart } },
+        ],
+      },
+      _count: true,
+      _sum: { amount: true },
+    });
+
+    // Deposits received today
+    const receivedToday = await this.prisma.deposit.findMany({
+      where: {
+        ...baseWhere,
+        receivedAt: { gte: dayStart, lte: dayEnd },
+      },
+      include: { rental: { select: { rentalCode: true } } },
+    });
+
+    // Deposits released today
+    const releasedToday = await this.prisma.deposit.findMany({
+      where: {
+        ...baseWhere,
+        returnedAt: { gte: dayStart, lte: dayEnd },
+        status: 'RELEASED',
+      },
+      include: { rental: { select: { rentalCode: true } } },
+    });
+
+    // Deposits retained today
+    const retainedToday = await this.prisma.deposit.findMany({
+      where: {
+        ...baseWhere,
+        returnedAt: { gte: dayStart, lte: dayEnd },
+        status: { in: ['RETAINED', 'PARTIAL'] },
+      },
+      include: { rental: { select: { rentalCode: true } } },
+    });
+
+    // Closing balance
+    const closingBalance = await this.prisma.deposit.aggregate({
+      where: {
+        ...baseWhere,
+        receivedAt: { lte: dayEnd },
+        status: { in: ['PENDING', 'RECEIVED', 'HELD'] },
+      },
+      _count: true,
+      _sum: { amount: true },
+    });
+
+    // Calculate cash and card movements
+    let cashIn = 0;
+    let cashOut = 0;
+    let cardIn = 0;
+    let cardOut = 0;
+
+    for (const d of receivedToday) {
+      const amount = Number(d.amount);
+      if (d.type === 'CASH') cashIn += amount;
+      if (d.type === 'CARD') cardIn += amount;
+    }
+
+    for (const d of releasedToday) {
+      const amount = Number(d.amount);
+      if (d.type === 'CASH') cashOut += amount;
+      if (d.type === 'CARD') cardOut += amount;
+    }
+
+    // For partial returns, only the returned portion is an out
+    for (const d of retainedToday) {
+      if (d.status === 'PARTIAL') {
+        const returned = Number(d.returnedAmount ?? 0);
+        if (d.type === 'CASH') cashOut += returned;
+        if (d.type === 'CARD') cardOut += returned;
+      }
+      // Full retentions don't have cash out (money kept)
+    }
+
+    return {
+      date,
+      openingBalance: {
+        count: openingBalance._count,
+        amount: Number(openingBalance._sum.amount ?? 0),
+      },
+      received: receivedToday.map(d => ({
+        depositId: d.id,
+        rentalCode: d.rental?.rentalCode ?? '',
+        amount: Number(d.amount),
+        method: d.type,
+        receivedAt: d.receivedAt,
+      })),
+      released: releasedToday.map(d => ({
+        depositId: d.id,
+        rentalCode: d.rental?.rentalCode ?? '',
+        amount: Number(d.amount),
+        releasedAt: d.returnedAt ?? new Date(),
+      })),
+      retained: retainedToday.map(d => ({
+        depositId: d.id,
+        rentalCode: d.rental?.rentalCode ?? '',
+        amount: Number(d.retainedAmount ?? d.amount),
+        reason: d.retentionReason ?? 'N/A',
+        retainedAt: d.returnedAt ?? new Date(),
+      })),
+      closingBalance: {
+        count: closingBalance._count,
+        amount: Number(closingBalance._sum.amount ?? 0),
+      },
+      cashMovement: { in: cashIn, out: cashOut, net: cashIn - cashOut },
+      cardMovement: { in: cardIn, out: cardOut, net: cardIn - cardOut },
+    };
+  }
+
+  /**
+   * Reconcile deposits with returned rentals
+   * Finds discrepancies between deposit and rental records
+   * @param tenantId Tenant ID
+   * @param startDate Start of period
+   * @param endDate End of period
+   */
+  async reconcileDeposits(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<{
+    matched: number;
+    missingDeposit: Array<{ rentalId: string; rentalCode: string; expectedAmount: number }>;
+    missingReturn: Array<{
+      depositId: string;
+      rentalCode: string;
+      depositAmount: number;
+      daysHeld: number;
+    }>;
+    amountMismatch: Array<{
+      rentalId: string;
+      rentalCode: string;
+      expectedAmount: number;
+      actualAmount: number;
+    }>;
+  }> {
+    // Get returned rentals in period
+    const returnedRentals = await this.prisma.rental.findMany({
+      where: {
+        tenantId,
+        returnedAt: { gte: startDate, lte: endDate },
+        status: 'RETURNED',
+      },
+      select: {
+        id: true,
+        rentalCode: true,
+        depositRequired: true,
+        depositReturned: true,
+        depositRetained: true,
+      },
+    });
+
+    // Get deposits for these rentals
+    const rentalIds = returnedRentals.map(r => r.id);
+    const deposits = await this.prisma.deposit.findMany({
+      where: {
+        tenantId,
+        rentalId: { in: rentalIds },
+      },
+    });
+
+    const depositByRentalId = new Map(deposits.map(d => [d.rentalId, d]));
+
+    let matched = 0;
+    const missingDeposit: Array<{ rentalId: string; rentalCode: string; expectedAmount: number }> =
+      [];
+    const amountMismatch: Array<{
+      rentalId: string;
+      rentalCode: string;
+      expectedAmount: number;
+      actualAmount: number;
+    }> = [];
+
+    for (const rental of returnedRentals) {
+      const deposit = depositByRentalId.get(rental.id);
+      const expectedAmount = Number(rental.depositRequired);
+
+      if (!deposit && expectedAmount > 0) {
+        // Rental required deposit but none found
+        missingDeposit.push({
+          rentalId: rental.id,
+          rentalCode: rental.rentalCode,
+          expectedAmount,
+        });
+      } else if (deposit) {
+        const actualAmount = Number(deposit.amount);
+        if (actualAmount !== expectedAmount) {
+          // Amount mismatch
+          amountMismatch.push({
+            rentalId: rental.id,
+            rentalCode: rental.rentalCode,
+            expectedAmount,
+            actualAmount,
+          });
+        } else {
+          matched++;
+        }
+      } else {
+        // No deposit required and none exists - OK
+        matched++;
+      }
+    }
+
+    // Find deposits held too long (rental returned but deposit not settled)
+    const now = new Date();
+    const overdueDeposits = await this.prisma.deposit.findMany({
+      where: {
+        tenantId,
+        status: { in: ['PENDING', 'RECEIVED', 'HELD'] },
+        rental: {
+          returnedAt: { lt: startDate }, // Rental returned before period
+        },
+      },
+      include: {
+        rental: { select: { rentalCode: true, returnedAt: true } },
+      },
+    });
+
+    const missingReturn = overdueDeposits.map(d => ({
+      depositId: d.id,
+      rentalCode: d.rental?.rentalCode ?? '',
+      depositAmount: Number(d.amount),
+      daysHeld: Math.floor((now.getTime() - d.receivedAt.getTime()) / (1000 * 60 * 60 * 24)),
+    }));
+
+    return {
+      matched,
+      missingDeposit,
+      missingReturn,
+      amountMismatch,
+    };
+  }
+
+  /**
+   * Get deposit aging report
+   * Shows deposits by how long they've been held
+   * @param tenantId Tenant ID
+   * @param asOfDate Date to calculate aging from
+   */
+  async getAgingReport(
+    tenantId: string,
+    asOfDate: Date
+  ): Promise<{
+    asOfDate: Date;
+    current: { count: number; amount: number }; // 0-7 days
+    week1: { count: number; amount: number }; // 8-14 days
+    week2: { count: number; amount: number }; // 15-21 days
+    week3: { count: number; amount: number }; // 22-28 days
+    over28Days: { count: number; amount: number };
+    total: { count: number; amount: number };
+    details: Array<{
+      depositId: string;
+      rentalCode: string;
+      amount: number;
+      daysHeld: number;
+      bucket: 'current' | 'week1' | 'week2' | 'week3' | 'over28';
+    }>;
+  }> {
+    const activeDeposits = await this.prisma.deposit.findMany({
+      where: {
+        tenantId,
+        status: { in: ['PENDING', 'RECEIVED', 'HELD'] },
+        receivedAt: { lte: asOfDate },
+      },
+      include: {
+        rental: { select: { rentalCode: true } },
+      },
+    });
+
+    const buckets = {
+      current: { count: 0, amount: 0 },
+      week1: { count: 0, amount: 0 },
+      week2: { count: 0, amount: 0 },
+      week3: { count: 0, amount: 0 },
+      over28Days: { count: 0, amount: 0 },
+    };
+
+    const details: Array<{
+      depositId: string;
+      rentalCode: string;
+      amount: number;
+      daysHeld: number;
+      bucket: 'current' | 'week1' | 'week2' | 'week3' | 'over28';
+    }> = [];
+
+    for (const d of activeDeposits) {
+      const daysHeld = Math.floor(
+        (asOfDate.getTime() - d.receivedAt.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const amount = Number(d.amount);
+
+      let bucket: 'current' | 'week1' | 'week2' | 'week3' | 'over28';
+      if (daysHeld <= 7) {
+        bucket = 'current';
+        buckets.current.count++;
+        buckets.current.amount += amount;
+      } else if (daysHeld <= 14) {
+        bucket = 'week1';
+        buckets.week1.count++;
+        buckets.week1.amount += amount;
+      } else if (daysHeld <= 21) {
+        bucket = 'week2';
+        buckets.week2.count++;
+        buckets.week2.amount += amount;
+      } else if (daysHeld <= 28) {
+        bucket = 'week3';
+        buckets.week3.count++;
+        buckets.week3.amount += amount;
+      } else {
+        bucket = 'over28';
+        buckets.over28Days.count++;
+        buckets.over28Days.amount += amount;
+      }
+
+      details.push({
+        depositId: d.id,
+        rentalCode: d.rental?.rentalCode ?? '',
+        amount,
+        daysHeld,
+        bucket,
+      });
+    }
+
+    // Sort details by days held descending
+    details.sort((a, b) => b.daysHeld - a.daysHeld);
+
+    const totalCount =
+      buckets.current.count +
+      buckets.week1.count +
+      buckets.week2.count +
+      buckets.week3.count +
+      buckets.over28Days.count;
+    const totalAmount =
+      buckets.current.amount +
+      buckets.week1.amount +
+      buckets.week2.amount +
+      buckets.week3.amount +
+      buckets.over28Days.amount;
+
+    return {
+      asOfDate,
+      current: buckets.current,
+      week1: buckets.week1,
+      week2: buckets.week2,
+      week3: buckets.week3,
+      over28Days: buckets.over28Days,
+      total: { count: totalCount, amount: totalAmount },
+      details: details.slice(0, 100), // Limit to top 100
+    };
+  }
 }
