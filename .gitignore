@@ -80,3 +80,6 @@ storybook-static/
 
 # BMAD user memory (personal)
 .bmad-user-memory/
+infra/docker/twenty-crm/.env
+infra/docker/chatwoot/.env
+infra/docker/horilla-hr/.env

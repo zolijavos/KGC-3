@@ -12,10 +12,22 @@ services:
     image: horilla/horilla:1.4
     container_name: kgc-horilla-app
     ports:
-      - "${HORILLA_PORT:-3003}:8000"
+      - '${HORILLA_PORT:-3003}:8000'
     depends_on:
       horilla-db:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
     environment:
       # Django Settings
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY is required}
@@ -48,9 +60,10 @@ services:
       - horilla-static:/app/staticfiles
       - horilla-media:/app/media
       - ./entrypoint-override.sh:/app/entrypoint-kgc.sh:ro
-    entrypoint: ["/bin/bash", "/app/entrypoint-kgc.sh"]
+    entrypoint: ['/bin/bash', '/app/entrypoint-kgc.sh']
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/", "||", "curl", "-f", "http://localhost:8000/"]
+      test:
+        ['CMD', 'curl', '-fL', '-o', '/dev/null', '-w', '%{http_code}', 'http://localhost:8000/']
       interval: 30s
       timeout: 10s
       retries: 5
@@ -66,15 +79,27 @@ services:
     image: postgres:16-alpine
     container_name: kgc-horilla-db
     ports:
-      - "${HORILLA_DB_PORT:-5434}:5432"
+      - '${HORILLA_DB_PORT:-5434}:5432'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-horilla}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-horilla}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required - set in .env file}
       POSTGRES_DB: ${POSTGRES_DB:-horilla}
     volumes:
       - horilla-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-horilla} -d ${POSTGRES_DB:-horilla}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-horilla} -d ${POSTGRES_DB:-horilla}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -100,4 +125,4 @@ volumes:
 networks:
   kgc-network:
     name: kgc-network
-    external: true  # Connect to existing KGC network for API integration
+    external: true # Connect to existing KGC network for API integration
