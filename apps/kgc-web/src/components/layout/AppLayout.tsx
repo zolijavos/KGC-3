@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { FloatingChat } from '../chat';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 
@@ -14,6 +15,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <Header />
         <main className="flex-1 overflow-y-auto kgc-bg">{children}</main>
       </div>
+      <FloatingChat />
     </div>
   );
 }
