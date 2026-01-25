@@ -7,23 +7,23 @@
 export { ReportingModule } from './reporting.module';
 
 // Services
-export {
-  DashboardWidgetService,
+export { DashboardWidgetService } from './services/dashboard-widget.service';
+export type {
   IWidgetRepository,
   IDataSourceProvider,
   IAuditService as IWidgetAuditService,
 } from './services/dashboard-widget.service';
 
-export {
-  ReportService,
+export { ReportService } from './services/report.service';
+export type {
   IReportRepository,
   IReportDataProvider,
   IReportExporter,
   IAuditService as IReportAuditService,
 } from './services/report.service';
 
-export {
-  CrossTenantReportService,
+export { CrossTenantReportService } from './services/cross-tenant-report.service';
+export type {
   ITenantRepository,
   ICrossReportDataProvider,
   IAuthorizationService,
@@ -31,11 +31,8 @@ export {
 } from './services/cross-tenant-report.service';
 
 // Interfaces
-export {
-  WidgetType,
-  ReportType,
-  ReportFormat,
-  DateRange,
+export { WidgetType, ReportType, ReportFormat, DateRange } from './interfaces/reporting.interface';
+export type {
   IWidgetConfig,
   IWidgetData,
   IChartSeries,
@@ -61,6 +58,8 @@ export {
   GenerateReportSchema,
   CrossTenantReportSchema,
   ScheduleReportSchema,
+} from './dto/reporting.dto';
+export type {
   CreateWidgetDto,
   UpdateWidgetDto,
   GetWidgetDataDto,

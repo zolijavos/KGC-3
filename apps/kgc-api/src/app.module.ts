@@ -14,10 +14,13 @@ import { Body, Controller, Get, Logger, Module, OnModuleInit, Post } from '@nest
 import { ConfigModule } from '@nestjs/config';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PrismaClient } from '@prisma/client';
+import { BergepModule } from './modules/bergep/bergep.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
+import { InvoiceModule } from './modules/invoice/invoice.module';
 import { PartnersModule } from './modules/partners/partners.module';
 import { ProductsModule } from './modules/products/products.module';
 import { RentalModule } from './modules/rental/rental.module';
+import { TasksModule } from './modules/tasks/tasks.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 
 // Create singleton PrismaClient
@@ -124,6 +127,15 @@ class WebhookController {
 
     // VehiclesModule - Járműnyilvántartás (Epic 34, ADR-027)
     VehiclesModule.forRoot({ prisma }),
+
+    // TasksModule - Feladatlista Widget (Epic 12, ADR-040)
+    TasksModule.forRoot({ prisma }),
+
+    // InvoiceModule - Számlázás (Epic 10)
+    InvoiceModule.forRoot({ prisma }),
+
+    // BergepModule - Bérgép kezelés (Epic 13)
+    BergepModule.forRoot({ prisma }),
   ],
   controllers: [AppController, WebhookController],
   providers: [

@@ -3,15 +3,15 @@
  */
 
 import { Inject } from '@nestjs/common';
-import type {
-  ICashReconciliationService,
-  ICashRegisterSession,
-  IDailyCashReport,
-  IDailyPaymentSummary,
-  ICashCountInput,
-  IOpenRegisterInput,
-  RegisterStatus,
+import {
   VarianceType,
+  type ICashReconciliationService,
+  type ICashRegisterSession,
+  type IDailyCashReport,
+  type IDailyPaymentSummary,
+  type ICashCountInput,
+  type IOpenRegisterInput,
+  type RegisterStatus,
 } from '../interfaces/cash-reconciliation.interface';
 import type { IPosTransaction, PaymentMethod } from '../interfaces/pos-transaction.interface';
 import { OpenRegisterSchema, CashCountSchema, DocumentVarianceSchema } from '../dto/cash-reconciliation.dto';
@@ -157,11 +157,11 @@ export class CashReconciliationService implements ICashReconciliationService {
 
     // Eltérés számítás
     const variance = closingCash - expectedCash;
-    let varianceType: VarianceType = 'MATCH';
+    let varianceType: VarianceType = VarianceType.MATCH;
     if (variance < 0) {
-      varianceType = 'SHORTAGE';
+      varianceType = VarianceType.SHORTAGE;
     } else if (variance > 0) {
-      varianceType = 'OVERAGE';
+      varianceType = VarianceType.OVERAGE;
     }
 
     const updated = await this.sessionRepository.update(sessionId, {
@@ -192,7 +192,7 @@ export class CashReconciliationService implements ICashReconciliationService {
       throw new Error('Session nem található');
     }
 
-    if (session.varianceType === 'MATCH') {
+    if (session.varianceType === VarianceType.MATCH) {
       throw new Error('Nincs eltérés a dokumentáláshoz');
     }
 
@@ -228,7 +228,7 @@ export class CashReconciliationService implements ICashReconciliationService {
     }
 
     // Eltérés dokumentálás kötelező ha nem egyezik
-    if (session.varianceType !== 'MATCH' && !session.varianceExplanation) {
+    if (session.varianceType !== VarianceType.MATCH && !session.varianceExplanation) {
       throw new Error('Eltérés dokumentálása kötelező');
     }
 
@@ -307,7 +307,7 @@ export class CashReconciliationService implements ICashReconciliationService {
       cancelledTotal,
       cancelledCount: cancelledTransactions.length,
       cashVariance: session.variance ?? 0,
-      varianceType: session.varianceType ?? ('MATCH' as VarianceType),
+      varianceType: session.varianceType ?? VarianceType.MATCH,
       createdAt: new Date(),
     };
 

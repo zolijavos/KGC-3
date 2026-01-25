@@ -137,17 +137,17 @@ export class EscalationService {
     const escalation = await this.escalationRepository.create({
       tenantId,
       ticketId: validInput.ticketId,
-      fromAgentId: ticket.assignedAgentId,
-      toAgentId: targetAgentId,
+      ...(ticket.assignedAgentId !== undefined && { fromAgentId: ticket.assignedAgentId }),
+      ...(targetAgentId !== undefined && { toAgentId: targetAgentId }),
       reason: validInput.reason as EscalationReason,
-      notes: validInput.notes,
+      ...(validInput.notes !== undefined && { notes: validInput.notes }),
     });
 
     // Update ticket assignment
     if (targetAgentId) {
       await this.ticketRepository.update(validInput.ticketId, {
         assignedAgentId: targetAgentId,
-        assignedAgentName: targetAgentName,
+        ...(targetAgentName !== undefined && { assignedAgentName: targetAgentName }),
         priority: this.upgradePriorityIfNeeded(ticket.priority, validInput.reason as EscalationReason),
       });
 
@@ -257,9 +257,9 @@ export class EscalationService {
 
     return {
       shouldEscalate,
-      reason,
+      ...(reason !== undefined && { reason }),
       analysis,
-      suggestedAgentId,
+      ...(suggestedAgentId !== undefined && { suggestedAgentId }),
     };
   }
 

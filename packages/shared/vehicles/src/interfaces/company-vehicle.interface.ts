@@ -125,6 +125,8 @@ export interface CompanyVehicleFilter {
 /** Céges jármű repository token */
 export const COMPANY_VEHICLE_REPOSITORY = Symbol('COMPANY_VEHICLE_REPOSITORY');
 
+import type { IExpiringDocument } from './vehicle-reminder.interface';
+
 /** Céges jármű repository interfész */
 export interface ICompanyVehicleRepository {
   findAll(filter?: CompanyVehicleFilter): Promise<ICompanyVehicle[]>;
@@ -135,4 +137,10 @@ export interface ICompanyVehicleRepository {
   delete(id: string): Promise<void>;
   assign(id: string, data: AssignCompanyVehicleInput): Promise<ICompanyVehicle>;
   findExpiringDocuments(withinDays: number): Promise<ICompanyVehicle[]>;
+  /**
+   * Részletes lejáró dokumentumok lekérdezése
+   * @param withinDays - Napon belül lejáró dokumentumok
+   * @returns Strukturált lejáró dokumentum információk (KGFB, CASCO, műszaki vizsga, pályamatrica)
+   */
+  findExpiringDocumentsDetailed(withinDays: number): Promise<IExpiringDocument[]>;
 }

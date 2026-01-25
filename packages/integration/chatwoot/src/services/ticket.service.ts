@@ -122,12 +122,12 @@ export class TicketService {
       status: TicketStatus.OPEN,
       priority: validInput.priority as TicketPriority,
       source: validInput.source as TicketSource,
-      customerId,
+      ...(customerId !== undefined && { customerId }),
       customerName: validInput.customerName,
-      customerEmail: validInput.customerEmail,
-      customerPhone: validInput.customerPhone,
+      ...(validInput.customerEmail !== undefined && { customerEmail: validInput.customerEmail }),
+      ...(validInput.customerPhone !== undefined && { customerPhone: validInput.customerPhone }),
       tags: validInput.tags,
-      metadata: validInput.metadata,
+      ...(validInput.metadata !== undefined && { metadata: validInput.metadata }),
     });
 
     // Add label in Chatwoot
@@ -177,8 +177,8 @@ export class TicketService {
     if (validInput.priority) updateData.priority = validInput.priority as TicketPriority;
     if (validInput.tags) updateData.tags = validInput.tags;
     if (validInput.metadata) updateData.metadata = validInput.metadata;
-    if (validInput.assignedAgentId !== undefined) {
-      updateData.assignedAgentId = validInput.assignedAgentId || undefined;
+    if (validInput.assignedAgentId !== undefined && validInput.assignedAgentId !== null && validInput.assignedAgentId !== '') {
+      updateData.assignedAgentId = validInput.assignedAgentId;
     }
 
     // Handle status change

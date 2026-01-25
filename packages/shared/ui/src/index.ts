@@ -9,12 +9,12 @@ export { cn } from './lib/utils';
 // =============================================================================
 // Hooks
 // =============================================================================
-export { useTheme, initializeTheme } from './hooks/use-theme';
-export type { Theme, ResolvedTheme, UseThemeReturn } from './hooks/use-theme';
+export { initializeTheme, useTheme } from './hooks/use-theme';
+export type { ResolvedTheme, Theme, UseThemeReturn } from './hooks/use-theme';
 
-export { useMobile, MOBILE_BREAKPOINT } from './hooks/use-mobile';
+export { MOBILE_BREAKPOINT, useMobile } from './hooks/use-mobile';
 
-export { useSidebar, SidebarProvider, SidebarContext } from './hooks/use-sidebar';
+export { SidebarContext, SidebarProvider, useSidebar } from './hooks/use-sidebar';
 export type { SidebarContextValue, SidebarProviderProps } from './hooks/use-sidebar';
 
 export { useOnlineStatus } from './hooks/use-online-status';
@@ -28,22 +28,13 @@ export type {
 } from './hooks/use-service-worker';
 
 export { useInstallPrompt } from './hooks/use-install-prompt';
-export type {
-  BeforeInstallPromptEvent,
-  UseInstallPromptReturn,
-} from './hooks/use-install-prompt';
+export type { BeforeInstallPromptEvent, UseInstallPromptReturn } from './hooks/use-install-prompt';
 
 export { useIndexedDB } from './hooks/use-indexed-db';
-export type {
-  UseIndexedDBState,
-  UseIndexedDBReturn,
-} from './hooks/use-indexed-db';
+export type { UseIndexedDBReturn, UseIndexedDBState } from './hooks/use-indexed-db';
 
 export { useOfflineCache } from './hooks/use-offline-cache';
-export type {
-  UseOfflineCacheOptions,
-  UseOfflineCacheReturn,
-} from './hooks/use-offline-cache';
+export type { UseOfflineCacheOptions, UseOfflineCacheReturn } from './hooks/use-offline-cache';
 
 export { useSyncQueue } from './hooks/use-sync-queue';
 export type { UseSyncQueueReturn } from './hooks/use-sync-queue';
@@ -59,12 +50,12 @@ export type {
 // =============================================================================
 export { IndexedDBStore } from './lib/indexeddb';
 export type {
+  CacheOptions,
+  CacheRecord,
+  IndexDefinition,
+  QueryOptions,
   StoreConfig,
   StoreDefinition,
-  IndexDefinition,
-  CacheRecord,
-  CacheOptions,
-  QueryOptions,
   TransactionMode,
 } from './lib/indexeddb';
 
@@ -73,19 +64,19 @@ export type {
 // =============================================================================
 export { SyncQueue, createConflictInfo, lastWriteWins, resolveConflict } from './lib/sync';
 export type {
-  SyncMethod,
-  SyncStatus,
-  SyncPriority,
-  SyncOperation,
-  SyncOperationMetadata,
   ConflictInfo,
   ConflictResolution,
-  SyncResult,
-  SyncQueueConfig,
-  SyncProgress,
-  SyncExecutor,
-  ConflictResolver,
   ConflictResolutionResult,
+  ConflictResolver,
+  SyncExecutor,
+  SyncMethod,
+  SyncOperation,
+  SyncOperationMetadata,
+  SyncPriority,
+  SyncProgress as SyncProgressState,
+  SyncQueueConfig,
+  SyncResult,
+  SyncStatus,
 } from './lib/sync';
 
 // =============================================================================
@@ -98,15 +89,15 @@ export { Input } from './components/ui/input';
 
 export {
   Select,
-  SelectGroup,
-  SelectValue,
-  SelectTrigger,
   SelectContent,
-  SelectLabel,
+  SelectGroup,
   SelectItem,
-  SelectSeparator,
-  SelectScrollUpButton,
+  SelectLabel,
   SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
 } from './components/ui/select';
 
 export { Checkbox } from './components/ui/checkbox';
@@ -124,11 +115,11 @@ export { Progress } from './components/ui/progress';
 
 export {
   Form,
+  FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
-  FormDescription,
   FormMessage,
   useFormField,
 } from './components/ui/form';
@@ -136,12 +127,7 @@ export {
 // =============================================================================
 // Validation
 // =============================================================================
-export {
-  z,
-  hungarianErrorMap,
-  commonSchemas,
-  createValidationSchema,
-} from './lib/validation';
+export { commonSchemas, createValidationSchema, hungarianErrorMap, z } from './lib/validation';
 export type { InferSchema } from './lib/validation';
 
 // =============================================================================
@@ -149,11 +135,11 @@ export type { InferSchema } from './lib/validation';
 // =============================================================================
 export {
   Card,
-  CardHeader,
-  CardFooter,
-  CardTitle,
-  CardDescription,
   CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from './components/ui/card';
 
 export { Separator } from './components/ui/separator';
@@ -161,73 +147,66 @@ export { Separator } from './components/ui/separator';
 // Sheet (drawer/modal overlay)
 export {
   Sheet,
-  SheetPortal,
-  SheetOverlay,
-  SheetTrigger,
   SheetClose,
   SheetContent,
-  SheetHeader,
-  SheetFooter,
-  SheetTitle,
   SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetOverlay,
+  SheetPortal,
+  SheetTitle,
+  SheetTrigger,
 } from './components/ui/sheet';
 export type { SheetContentProps } from './components/ui/sheet';
 
 // App Layout Components
 export {
   Sidebar,
-  SidebarGroup,
   SidebarCollapsible,
+  SidebarGroup,
   SidebarItem,
   SidebarSeparator,
 } from './components/layout/sidebar';
 export type {
-  SidebarProps,
-  SidebarGroupProps,
   SidebarCollapsibleProps,
+  SidebarGroupProps,
   SidebarItemProps,
+  SidebarProps,
 } from './components/layout/sidebar';
 
-export {
-  Header,
-  HeaderTitle,
-  HeaderActions,
-} from './components/layout/header';
+export { Header, HeaderActions, HeaderTitle } from './components/layout/header';
 export type { HeaderProps, HeaderTitleProps } from './components/layout/header';
 
 export {
   Breadcrumb,
-  BreadcrumbList,
+  BreadcrumbEllipsis,
   BreadcrumbItem,
   BreadcrumbLink,
+  BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-  BreadcrumbEllipsis,
 } from './components/layout/breadcrumb';
 export type {
-  BreadcrumbProps,
   BreadcrumbLinkProps,
+  BreadcrumbProps,
   BreadcrumbSeparatorProps,
 } from './components/layout/breadcrumb';
 
-export {
-  AppShell,
-  AppShellPage,
-} from './components/layout/app-shell';
-export type { AppShellProps, AppShellPageProps } from './components/layout/app-shell';
+export { AppShell, AppShellPage } from './components/layout/app-shell';
+export type { AppShellPageProps, AppShellProps } from './components/layout/app-shell';
 
 // =============================================================================
 // Data Display Components
 // =============================================================================
 export {
   Table,
-  TableHeader,
   TableBody,
+  TableCaption,
+  TableCell,
   TableFooter,
   TableHead,
+  TableHeader,
   TableRow,
-  TableCell,
-  TableCaption,
 } from './components/ui/table';
 
 export { Badge, badgeVariants } from './components/ui/badge';
@@ -238,15 +217,15 @@ export type { BadgeProps } from './components/ui/badge';
 // =============================================================================
 export {
   Dialog,
-  DialogPortal,
-  DialogOverlay,
-  DialogTrigger,
   DialogClose,
   DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
 } from './components/ui/dialog';
 
 // =============================================================================
@@ -256,7 +235,7 @@ export { Toaster, toast } from './components/ui/sonner';
 
 export { Skeleton } from './components/ui/skeleton';
 
-export { Alert, AlertTitle, AlertDescription } from './components/ui/alert';
+export { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
 
 // =============================================================================
 // PWA Components
@@ -295,26 +274,23 @@ export type { CameraScannerProps } from './components/scanner/camera-scanner';
 // Scanner Hooks
 // =============================================================================
 export { useBarcodeScanner } from './hooks/use-barcode-scanner';
-export type { UseBarcodeScanner, KeyboardScannerConfig } from './hooks/use-barcode-scanner';
+export type { KeyboardScannerConfig, UseBarcodeScanner } from './hooks/use-barcode-scanner';
 
 export { useCameraScanner } from './hooks/use-camera-scanner';
-export type { UseCameraScanner, CameraScannerConfig } from './hooks/use-camera-scanner';
+export type { CameraScannerConfig, UseCameraScanner } from './hooks/use-camera-scanner';
 
 // =============================================================================
 // Scanner Types & Utilities
 // =============================================================================
-export {
-  parseScanResult,
-  playAudioFeedback,
-} from './lib/scanner';
+export { parseScanResult, playAudioFeedback } from './lib/scanner';
 export type {
   BarcodeFormat,
+  OnErrorCallback,
+  OnScanCallback,
   ScanResult,
   ScannerError,
   ScannerErrorType,
   ScannerState,
-  OnScanCallback,
-  OnErrorCallback,
 } from './lib/scanner';
 
 // =============================================================================
@@ -323,26 +299,45 @@ export type {
 export { usePushNotifications } from './hooks/use-push-notifications';
 export type { UsePushNotifications } from './hooks/use-push-notifications';
 
+export { useFavorites } from './hooks/use-favorites';
+export type { PendingChange, UserFavorite } from './hooks/use-favorites';
+
 // =============================================================================
 // Notification Types & Utilities
 // =============================================================================
 export {
-  isNotificationSupported,
-  getCurrentPermission,
-  generateNotificationId,
   DEFAULT_NOTIFICATION_PREFERENCES,
+  generateNotificationId,
+  getCurrentPermission,
+  isNotificationSupported,
 } from './lib/notifications';
 export type {
-  NotificationPermission,
-  NotificationPriority,
-  NotificationCategory,
   NotificationAction,
+  NotificationCategory,
   NotificationData,
   NotificationOptions,
-  QueuedNotification,
+  NotificationPermission,
   NotificationPreferences,
+  NotificationPriority,
   NotificationState,
   OnNotificationClick,
   OnNotificationClose,
   OnPermissionChange,
+  QueuedNotification,
 } from './lib/notifications';
+
+// =============================================================================
+// Stores
+// =============================================================================
+export {
+  MAX_FAVORITES,
+  selectPendingChangesCount,
+  selectSortedFavorites,
+  useFavoritesStore,
+} from './stores/favorites.store';
+
+// =============================================================================
+// Favorites Components
+// =============================================================================
+export { FavoriteButton, FavoritesSidebar } from './components/favorites';
+export type { FavoriteButtonProps, FavoritesSidebarProps } from './components/favorites';

@@ -52,6 +52,7 @@ A **KGC ERP v7.0** egy átfogó SaaS B2B platform építőipari és mezőgazdas�
 ### Célközönség
 
 A rendszer három fő felhasználói csoportra fókuszál:
+
 - **Pultos / Értékesítő** - Napi árumozgatás, bérlés kiadás/visszavétel, raktári műveletek
 - **Boltvezető** - Köztes szerepkör: korlátozott vezetői jogok, napi forgalom figyelés, dolgozó felvétel
 - **Központi admin** - Inventory oversight, multi-warehouse kezelés, franchise koordináció
@@ -59,6 +60,7 @@ A rendszer három fő felhasználói csoportra fókuszál:
 ### Fő Üzleti Probléma
 
 **Áruk nyomon követésének hiányosságai** a meglévő rendszerben:
+
 - Nehézkes árumozgatás nyilvántartása mindhárom Core modulban (Bérlés, Szerviz, Értékesítés)
 - Raktározási rendszer nem támogatja megfelelően a real-time inventory tracking-et
 - Multi-warehouse környezetben bizonytalan az áruk pontos helyzete
@@ -108,6 +110,7 @@ A rendszer három fő felhasználói csoportra fókuszál:
 ### Meglévő Rendszer Kontextus
 
 **Jelenlegi rendszer (Ver:1.33z):**
+
 - 10+ év működési tapasztalat
 - Részletes üzleti folyamatok dokumentálva
 - Ismert problémák: duplikált ügyfelek, árumozgatás nehézkes nyilvántartása, multi-warehouse kezelés hiányosságai
@@ -137,6 +140,7 @@ A rendszer három fő felhasználói csoportra fókuszál:
 ### Moduláris Architektúra Áttekintés
 
 **🔷 CORE Modulok** (kötelező komponensek):
+
 1. **Bérlés Modul** - E2E workflow, kaució, késedelmi díj
 2. **Szerviz Modul** - Munkalap, garanciális javítás, sérülésdetektálás
 3. **Értékesítés Modul** - Termékeladás, készlet csökkentés
@@ -145,6 +149,7 @@ A rendszer három fő felhasználói csoportra fókuszál:
 6. **Gyártás Modul** - BOM, gyártási rendelés, fázisok, selejt (Fázis 2)
 
 **🔌 PLUGIN Modulok** (opcionális, ki-bekapcsolható):
+
 1. **Support Modul** (Chatwoot + Koko AI) - 24/7 chatbot, multi-channel support
 2. **CRM Modul** (Twenty) - Lead tracking, marketing automation
 3. **HR Modul** (Horilla HRMS) - Jelenlét, szabadság kezelés
@@ -170,6 +175,7 @@ Az első reggel az új rendszerrel: Beolvas egy vonalkódot. A rendszer azonnal 
 Két hét múlva már olyan gyors, hogy **15 másodperc alatt** rögzít egy gépet. Kolléganője megkérdezi: "Hogy csinálod?" Kata mosolyog: "Végre van egy rendszer ami nem dolgoztat, hanem segít."
 
 **Kritikus funkciók Kata journey-jéből:**
+
 - Vonalkód scan → azonnali K-P-D bevitel egy képernyőn
 - Nincs képernyőváltás, nincs Excel hacking
 - Real-time mentés (nincs "Save" gomb mashing)
@@ -183,6 +189,7 @@ Két hét múlva már olyan gyors, hogy **15 másodperc alatt** rögzít egy gé
 **Szereplő: László (45)** - Központi admin, Budapest HQ
 
 László 6 franchise boltot koordinál országosan (Budapest, Debrecen, Szeged, Pécs, Győr, Miskolc). Reggel 9-kor megnyitja a régi rendszert, és elkezdi a napi inventory checklistet:
+
 - "Hány db Bosch fúrógép van Debrecenben?" → 3 perc keresgélés
 - "Melyik polcon van a Makita bontókalapács Szegeden?" → Excel tábla + telefonhívás → 8 perc
 
@@ -195,6 +202,7 @@ A breakthrough pillanat: Délután 3-kor hívja a Szegedi bolt: "Kell egy pótg�
 **15 másodperc alatt megoldott** egy cross-warehouse koordinációt, ami régen fél órát vett igénybe.
 
 **Kritikus funkciók László journey-jéből:**
+
 - Real-time multi-warehouse inventory dashboard
 - Szűrés: warehouse, termék, státusz, serial number
 - K-P-D kód egy kattintással látható
@@ -213,6 +221,7 @@ Péter 2 éve üzemelteti a Szegedi KGC franchise boltot. A pénz jön-megy, de 
 A régi rendszerben havonta kap egy Excel-t a központtól a bevételekről. **Reaktív üzletvezetés** - mindig utólag tudja meg, hogy mi történt.
 
 Az új v7.0-val kap egy franchise partner dashboard-ot. Belép, és látja:
+
 - **Real-time bevétel:** Mai nap, heti, havi tranzakciók
 - **Top 5 bérlési termék:** Melyik gép hozza a legtöbb pénzt
 - **Készlet forgási sebesség:** Melyik gépek állnak bent 30+ napja
@@ -223,6 +232,7 @@ A nagy "aha!" pillanat: Látja, hogy a Makita fúrógépek **40%-kal többet** b
 3 hónap múlva **22%-os bevétel növekedés** - csak azért, mert végre **látja a valós számokat valós időben**.
 
 **Kritikus funkciók Péter journey-jéből:**
+
 - Franchise partner dashboard (role-based access)
 - Real-time revenue tracking
 - Készlet analytics (forgási sebesség, ROI per termék)
@@ -237,6 +247,7 @@ A nagy "aha!" pillanat: Látja, hogy a Makita fúrógépek **40%-kal többet** b
 **Szereplő: Anna (32)** - DevOps/IT admin, KGC központ
 
 Anna felelős az új franchise partnerek technical onboarding-jáért. A régi rendszerben ez egy **3 napos manual process** volt:
+
 - DB schema setup manuálisan
 - User account létrehozás
 - Warehouse konfigurálás
@@ -246,6 +257,7 @@ Anna felelős az új franchise partnerek technical onboarding-jáért. A régi r
 Egy új partner onboarding = **24 óra munka** (több nap alatt).
 
 Az új v7.0-val Anna kap egy **Franchise Onboarding Wizard**-ot:
+
 1. Partner info bevitel (név, cím, VAT number)
 2. Warehouse konfig (címek, K-P-D rendszer generálás)
 3. Initial inventory import (CSV upload vagy választás központi katalógusból)
@@ -260,6 +272,7 @@ Az új v7.0-val Anna kap egy **Franchise Onboarding Wizard**-ot:
 A CEO bejelenti: "3 hónapon belül 10 új partnert akarunk." Anna mosolyog: "Egyik délután megcsinálom mindet."
 
 **Kritikus funkciók Anna journey-jéből:**
+
 - Franchise onboarding wizard (self-service vagy admin-driven)
 - Automated RLS schema creation
 - Warehouse config builder (K-P-D generálás)
@@ -277,11 +290,13 @@ A CEO bejelenti: "3 hónapon belül 10 új partnert akarunk." Anna mosolyog: "Eg
 Tamás 3 éve dolgozik a KGC hálózatban, és nemrég léptették elő boltvezetőnek. A szerepköre egyedi: több jogosultsága van, mint egy pultosnak, de kevesebb, mint a franchise tulajdonosnak. A **köztes pozíció** nagy felelősséggel jár.
 
 A régi rendszerben Tamásnak minden döntéshez a tulajdonost kellett hívnia:
+
 - "Adhatunk 15% kedvezményt?" → Telefon a tulajdonosnak
 - "Felvehetjük ezt az új kollégát?" → Email a tulajdonosnak
 - "Mennyi volt a mai forgalom?" → Nem tudta, csak a hónap végén Excel-ből
 
 Az új v7.0-val Tamás kap egy **Boltvezető dashboard**-ot. Belép és látja:
+
 - **Napi forgalom real-time:** Mai bevétel, tranzakciószám, átlag kosárérték
 - **Kedvezmény kezelő:** Ár módosítás max ±20% keretben (tulajdonosi jóváhagyás nélkül)
 - **HR alapfunkciók:** Új dolgozó felvétele (elbocsátás NEM - az tulajdonosi jog marad)
@@ -290,6 +305,7 @@ Az új v7.0-val Tamás kap egy **Boltvezető dashboard**-ot. Belép és látja:
 A nagy "aha!" pillanat: Egy állandó ügyfél kér 18% kedvezményt egy nagy rendelésnél. Tamás **azonnal dönthet**: megadja, mert a ±20%-os keretben van. Nem kell telefonálnia, nem kell várnia. Az ügyfél boldog, a tranzakció megtörténik.
 
 **Kritikus funkciók Tamás journey-jéből:**
+
 - Boltvezető dashboard (role-based access, köztes jogosultságok)
 - Korlátozott árazási jog (max ±20% kedvezmény/felár)
 - Dolgozó felvétel (de elbocsátás NEM - tulajdonosi jog)
@@ -304,6 +320,7 @@ A nagy "aha!" pillanat: Egy állandó ügyfél kér 18% kedvezményt egy nagy re
 A 5 user journey feltárta a következő kritikus capability területeket:
 
 **1. Inventory Core Capabilities**
+
 - Real-time multi-warehouse tracking minden warehouse-ra
 - K-P-D (Kommandó-Polc-Doboz) helykód rendszer automatizált generálással
 - Vonalkód/QR integráció gyors rögzítéshez (< 30 másodperc target)
@@ -312,6 +329,7 @@ A 5 user journey feltárta a következő kritikus capability területeket:
 - Serial number tracking minden bérgéphez
 
 **2. User Experience Requirements**
+
 - Mobile-first UI (tablet/telefon támogatás raktárban)
 - Egy képernyős workflow (nincs tab/window switching, nincs Excel integráció)
 - Real-time auto-save (nincs explicit Save gomb, minden Enter után mentés)
@@ -320,6 +338,7 @@ A 5 user journey feltárta a következő kritikus capability területeket:
 - < 30 másodperc árumozgatás rögzítés (vs. régi 3-5 perc)
 
 **3. Franchise Multi-Tenancy Requirements**
+
 - Franchise onboarding wizard (partner info → warehouse → users → deploy)
 - Automated RLS (Row Level Security) provisioning PostgreSQL-ben
 - Partner-specifikus analytics dashboard (bevétel, készlet ROI, transaction costs)
@@ -328,6 +347,7 @@ A 5 user journey feltárta a következő kritikus capability területeket:
 - 15 perces onboarding target (vs. régi 24 órás manual process)
 
 **4. Integration & Automation Requirements**
+
 - Slack/email notification integráció (cross-warehouse koordinációhoz)
 - Bulk import/export (CSV) initial data seeding-hez
 - Automated schema creation (új partner RLS tenant létrehozás)
@@ -335,6 +355,7 @@ A 5 user journey feltárta a következő kritikus capability területeket:
 - Email automation (új partner onboarding, password reset, stb.)
 
 **5. Business Intelligence & Analytics**
+
 - Real-time revenue tracking (napi/heti/havi aggregálás)
 - Készlet forgási sebesség analitika (30+ nap bent álló gépek azonosítása)
 - Top performer termékek (legtöbb bérlés, legnagyobb bevétel)
@@ -385,13 +406,14 @@ A KGC ERP v7.0 **hibrid árazási modellt** vezet be franchise partnerek számá
 
 **Tradicionális ERP árazás vs. KGC modell:**
 
-| Tradicionális ERP | KGC ERP v7.0 Hibrid Árazás |
-|-------------------|---------------------------------|
-| Magas fix user-based licensing (pl. 10 felhasználó = 500k Ft/hó) | Alacsony alap díj + skálázódó user licensz (pl. 50k alap + 6 user × 4k = 74k Ft/hó) |
-| Skálázás = több user = lineáris költségnövekedés | Skálázás = több user = degresziós user licensz (kedvezmények nagyobb csomagokra) |
-| Partner nem látja a közvetlen kapcsolatot költség-használat között | Transparent breakdown: Alap díj + aktív userek száma |
+| Tradicionális ERP                                                  | KGC ERP v7.0 Hibrid Árazás                                                          |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Magas fix user-based licensing (pl. 10 felhasználó = 500k Ft/hó)   | Alacsony alap díj + skálázódó user licensz (pl. 50k alap + 6 user × 4k = 74k Ft/hó) |
+| Skálázás = több user = lineáris költségnövekedés                   | Skálázás = több user = degresziós user licensz (kedvezmények nagyobb csomagokra)    |
+| Partner nem látja a közvetlen kapcsolatot költség-használat között | Transparent breakdown: Alap díj + aktív userek száma                                |
 
 **Üzleti előny:**
+
 - Kis franchise partnerek (kevés user) **alacsony belépési költség** (Startup: 25k Ft alap + 1-3 user)
 - Nagy partnerek (sok user) **kedvezményes user licensz** Enterprise tier-ben
 - Transparent cost structure - partner látja: "Alap díj: 50k + 6 user = 74k Ft/hó"
@@ -430,6 +452,7 @@ Az új franchise partner technikai onboarding-ja **15 perc alatt** megtörténik
 A KGC ERP v7.0 **minden modulja (Bérlés, Szerviz, Értékesítés) központi inventory tracking-re épül**, szemben a tradicionális ERP-k modul-elsőbbségű architektúrájával.
 
 **K-P-D (Kommandó-Polc-Doboz) Location Tracking rendszer (ADR-021):**
+
 - **Kommandó (K)** - Raktár logikai zóna (pl. K1 = Bosch terület, K2 = Makita terület)
 - **Polc (P)** - Fizikai polc azonosító (P1-P20)
 - **Doboz (D)** - Doboz/konténer azonosító a polcon (D1-D50)
@@ -437,6 +460,7 @@ A KGC ERP v7.0 **minden modulja (Bérlés, Szerviz, Értékesítés) központi i
 **Példa:** `K2-P5-D3` = Makita zóna, 5-ös polc, 3-as doboz → Serial number alapú bérgép pontosan lokalizálható.
 
 **Multi-Warehouse Real-Time Sync:**
+
 - 6 franchise bolt országosan (Budapest, Debrecen, Szeged, Pécs, Győr, Miskolc)
 - Központi admin (László journey) **5 másodperc alatt** látja: "Hol van az összes Bosch fúrógép?"
 - Cross-warehouse transfer workflow (Debrecenből Szegedre átküldés koordinálás)
@@ -451,19 +475,22 @@ A KGC ERP v7.0 **minden modulja (Bérlés, Szerviz, Értékesítés) központi i
 A régi Ver:1.33z rendszer **cikkszám-centrikus** volt (manuális begépelés, Excel lookup). Az új v7.0 **vonalkód/QR-centrikus** működésre vált:
 
 **Régi workflow (cikkszám):**
+
 1. Pultos lát egy bérgépet
 2. Megkeresi a cikkszámot (papír lista vagy Excel)
 3. Begépeli az ERP-be: "BOSCH-FUR-12345"
 4. Keres, megerősít, tovább...
-**Idő:** 2-3 perc
+   **Idő:** 2-3 perc
 
 **Új workflow (vonalkód/QR):**
+
 1. Pultos beolvas vonalkódot (gyári vagy rendszer-generált)
 2. Rendszer azonnal azonosítja a bérgépet (serial number lookup)
 3. Egy képernyőn: K-P-D helykód bevitel, státusz frissítés
-**Idő:** 15-30 másodperc (Kata journey alapján)
+   **Idő:** 15-30 másodperc (Kata journey alapján)
 
 **Hibrid stratégia (ADR-022):**
+
 - **Gyári vonalkód VAN** → használjuk (Bosch, Makita gépeken)
 - **Gyári vonalkód NINCS** → rendszer generál egyedi QR kódot serial number alapján
 - Nyomtatható QR kód címkék (eszköz leltárszámmal + K-P-D kóddal)
@@ -476,6 +503,7 @@ A régi Ver:1.33z rendszer **cikkszám-centrikus** volt (manuális begépelés, 
 
 **Innováció leírás (ADR-006):**
 **Minden bérlési, szerviz és értékesítési művelet immutable audit trail-lel rendelkezik**, amely rögzíti:
+
 - **KI** (user ID + név)
 - **MIT** (action type: bérlés kiadás, visszavétel, K-P-D módosítás, státusz változás, ár override, stb.)
 - **MIKOR** (timestamp UTC + local timezone)
@@ -483,6 +511,7 @@ A régi Ver:1.33z rendszer **cikkszám-centrikus** volt (manuális begépelés, 
 - **VÁLTOZÁS ELŐTTE/UTÁNA** (JSON diff)
 
 **Compliance & transparency előnyök:**
+
 - **NAV audit compliance** - Számlázási műveletek visszakövethetőek
 - **Franchise partner transparency** - Partner látja: ki módosította a bérlési díjat
 - **Hibadetektálás** - "Ki törölte a készletből ezt a bérgépet?" → audit log válaszol
@@ -519,6 +548,7 @@ A KGC ERP v7.0 **beszállító API adapter pattern-t** vezet be automatikus kés
 ```
 
 **Automatizált workflow:**
+
 1. **Napi sync job** (cron) meghívja az adaptereket
 2. Adapter lekéri a beszállító API-ból: új termékek, ár változások, készlet elérhetőség
 3. Adapter normalizálja a formátumot (unified schema: product_code, name, price, availability)
@@ -526,6 +556,7 @@ A KGC ERP v7.0 **beszállító API adapter pattern-t** vezet be automatikus kés
 5. **Fallback:** Ha API nem elérhető → manuális CSV import vagy admin override
 
 **Garanciális javítás integráció (Makita Norma - ADR-019):**
+
 - Makita garanciális javítás munkalap automatikusan szinkronizálódik Makita szerviz rendszerrel
 - Automata elszámolás: munkaóra + alkatrész költség vissza a Makita-tól
 
@@ -540,9 +571,11 @@ A KGC ERP v7.0 **beszállító API adapter pattern-t** vezet be automatikus kés
 #### Magyar Piac Elemzés
 
 **Közvetlen versenytársak:**
+
 - ❌ **Nincs** olyan magyar rendszer, amely integrált ERP + Bérlés + Szerviz + CRM-et kínál építőipari/mezőgazdasági gépbérlők számára
 
 **Részleges átfedés:**
+
 1. **ION Rent** - Kölcsönző szoftver, opcionális ERP integráció
    - ✅ Van: Bérlés tervezés, foglalás kezelés, vonalkódos azonosítás
    - ❌ Nincs: Beépített szerviz modul, CRM, pénzügyi modul, **AI funkciók**, **K-P-D helykód**, **transaction-based pricing**
@@ -560,6 +593,7 @@ A KGC ERP v7.0 **beszállító API adapter pattern-t** vezet be automatikus kés
    - ❌ Nincs: **Bérlés modul** (e-commerce fókusz, NEM releváns versenytárs)
 
 **Következtetés:** Egy magyar gépbérlő cégnek **MA** válogatnia kell:
+
 - **Opció A:** Veszek egy kölcsönző szoftvert (ION Rent, wSoft) + külön Excel a készlethez + külön szerviz program
 - **Opció B:** Veszek egy általános ERP-t (Cégmenedzser) + customizálom bérléshez (drága, lassú)
 - **Opció C:** Használom a KGC ERP v7.0-t (integrált platform, AI funkciók, franchise-ready)
@@ -569,6 +603,7 @@ A KGC ERP v7.0 **beszállító API adapter pattern-t** vezet be automatikus kés
 #### Nemzetközi Piac Elemzés
 
 **Enterprise szintű konkurensek:**
+
 1. **Wynne Systems (Point of Rental / RentalMan)** - USA, enterprise bérlés ERP
    - ✅ Van: Teljes bérlés lifecycle, telematika, flotta kezelés
    - ❌ Gyengeség: **Drága** (100k+ EUR), angol nyelvű, nagyvállalati fókusz (KKV-nak túlméretezett)
@@ -620,10 +655,12 @@ Az innovációk validálása **három forrásból** történt:
 #### 1. Piaci Kutatás (Desk Research)
 
 **Források:**
+
 - **konkurencia-elemzes-gepberles-erp-2025-12-15.md** - Magyar és nemzetközi versenytársak funkció-összehasonlítása
 - **KGC-Verzio-Elemzes-2025-12-30.md** - Ver:1.33z vs. v7.0 innovációs gap elemzés
 
 **Validációs kérdések:**
+
 1. Van-e magyar rendszer, amely ezt csinálja? → **NEM**
 2. Van-e nemzetközi rendszer KKV áron? → **NEM**
 3. Van-e 4 AI funkció integrálva egyetlen platformon? → **NEM**
@@ -636,12 +673,12 @@ Az innovációk validálása **három forrásból** történt:
 
 A 4 user journey konkrét **mérhető eredményeket** mutatott:
 
-| Journey | Metrika | Régi rendszer | Új rendszer (v7.0) | Innováció validáció |
-|---------|---------|---------------|--------------------|---------------------|
-| **Kata (Pultos)** | Árumozgatás rögzítési idő | 3-5 perc/gép | 15-30 másodperc | ✅ Vonalkód/QR + K-P-D gyorsítás (10x) |
-| **László (Admin)** | Inventory lookup idő | 3-8 perc | 5 másodperc | ✅ Real-time multi-warehouse dashboard |
-| **Péter (Partner)** | Bevétel növekedés készlet optimalizálással | Nincs adat | +22% (3 hónap) | ✅ Business intelligence + analytics |
-| **Anna (DevOps)** | Franchise onboarding idő | 24 óra | 15 perc | ✅ Automated RLS provisioning (96x) |
+| Journey             | Metrika                                    | Régi rendszer | Új rendszer (v7.0) | Innováció validáció                    |
+| ------------------- | ------------------------------------------ | ------------- | ------------------ | -------------------------------------- |
+| **Kata (Pultos)**   | Árumozgatás rögzítési idő                  | 3-5 perc/gép  | 15-30 másodperc    | ✅ Vonalkód/QR + K-P-D gyorsítás (10x) |
+| **László (Admin)**  | Inventory lookup idő                       | 3-8 perc      | 5 másodperc        | ✅ Real-time multi-warehouse dashboard |
+| **Péter (Partner)** | Bevétel növekedés készlet optimalizálással | Nincs adat    | +22% (3 hónap)     | ✅ Business intelligence + analytics   |
+| **Anna (DevOps)**   | Franchise onboarding idő                   | 24 óra        | 15 perc            | ✅ Automated RLS provisioning (96x)    |
 
 **Következtetés:** User journey-k **számszerűsítik az innováció hatását** (nem csak "gyorsabb", hanem "10x gyorsabb konkrét idővel").
 
@@ -651,15 +688,15 @@ A 4 user journey konkrét **mérhető eredményeket** mutatott:
 
 **ADR-ek (Architecture Decision Records) igazolják a megvalósíthatóságot:**
 
-| Innováció | ADR | Technológia | Feasibility |
-|-----------|-----|-------------|-------------|
-| AI Multi-Function Automation | ADR-016 (Koko), ADR-019 (OCR), ADR-020 (Vision), ADR-018 (Email) | Google Gemini Flash API | ✅ Proven (Gemini API public, dokumentált) |
-| Transaction-Based Pricing | ADR-003 (White-label), ADR-001 (Multi-tenancy) | PostgreSQL RLS + metering service | ✅ Standard SaaS pattern |
-| Franchise Onboarding | ADR-001 (RLS automation) | Automated schema creation scripts | ✅ Implementálható (RLS tenant provisioning) |
-| K-P-D Helykód Rendszer | ADR-021 (Location Hierarchy) | 3-tier location schema (K-P-D) | ✅ Standard inventory management pattern |
-| Vonalkód/QR Paradigm | ADR-022 (Barcode/QR Strategy) | Hibrid stratégia (gyári + generált QR) | ✅ Off-the-shelf QR libraries |
-| Audit Trail | ADR-006 (Audit Logging) | Immutable append-only log táblák | ✅ Standard compliance pattern |
-| Beszállító API | ADR-017 (Supplier Adapter Pattern) | REST/SOAP/CSV adapter architektúra | ✅ Standard integration pattern |
+| Innováció                    | ADR                                                              | Technológia                            | Feasibility                                  |
+| ---------------------------- | ---------------------------------------------------------------- | -------------------------------------- | -------------------------------------------- |
+| AI Multi-Function Automation | ADR-016 (Koko), ADR-019 (OCR), ADR-020 (Vision), ADR-018 (Email) | Google Gemini Flash API                | ✅ Proven (Gemini API public, dokumentált)   |
+| Transaction-Based Pricing    | ADR-003 (White-label), ADR-001 (Multi-tenancy)                   | PostgreSQL RLS + metering service      | ✅ Standard SaaS pattern                     |
+| Franchise Onboarding         | ADR-001 (RLS automation)                                         | Automated schema creation scripts      | ✅ Implementálható (RLS tenant provisioning) |
+| K-P-D Helykód Rendszer       | ADR-021 (Location Hierarchy)                                     | 3-tier location schema (K-P-D)         | ✅ Standard inventory management pattern     |
+| Vonalkód/QR Paradigm         | ADR-022 (Barcode/QR Strategy)                                    | Hibrid stratégia (gyári + generált QR) | ✅ Off-the-shelf QR libraries                |
+| Audit Trail                  | ADR-006 (Audit Logging)                                          | Immutable append-only log táblák       | ✅ Standard compliance pattern               |
+| Beszállító API               | ADR-017 (Supplier Adapter Pattern)                               | REST/SOAP/CSV adapter architektúra     | ✅ Standard integration pattern              |
 
 **Következtetés:** Mind a 7 innováció **technológiailag megvalósítható** off-the-shelf technológiákkal (nincs R&D kockázat).
 
@@ -674,6 +711,7 @@ Az innovációk kockázatai és fallback stratégiák:
 **Kockázat:** Google Gemini API költség skálázódik nagy tranzakciószámnál (1000+ chatbot interakció/nap)
 
 **Mitigáció:**
+
 - **Tier-based AI usage limits** - Startup tier: 100 AI query/hó ingyen, Standard tier: 1000 AI query/hó, Enterprise tier: unlimited
 - **Fallback:** AI quota túllépés → human escalation (Chatwoot support agent veszi át)
 - **Cost monitoring:** Real-time Gemini API költség tracking, alert ha meghaladja a tier limitet
@@ -681,6 +719,7 @@ Az innovációk kockázatai és fallback stratégiák:
 **Kockázat:** Gemini API downtime → Koko chatbot nem működik
 
 **Mitigáció:**
+
 - **Fallback:** Chatbot offline → automatic redirect Chatwoot support tickethez
 - **Status page:** Gemini API health check, user értesítés ha AI service unavailable
 
@@ -691,12 +730,14 @@ Az innovációk kockázatai és fallback stratégiák:
 **Kockázat:** Partner "gaming the system" - sok apró tranzakció helyett egy nagy batch (csökkenteni SaaS költséget)
 
 **Mitigáció:**
+
 - **Fair use policy:** Batch tranzakció (10+ tétel egy számlán) = 10 tranzakció díj (nem 1)
 - **Monitoring:** Anomália detektálás (partner hirtelen batch-el mindent)
 
 **Kockázat:** Partner nem érti a hibrid árazást (alap díj + user licensz) → dispute
 
 **Mitigáció:**
+
 - **Transparent dashboard:** Partner látja real-time: "Eddig havi 47 tranzakció = 23.5k Ft költség"
 - **Email notification:** Heti összefoglaló email tranzakció breakdown-nal
 - **Pricing calculator:** Partner előre kalkulálhatja: "Ha 200 bérlés/hó lesz, mennyi a költség?"
@@ -708,6 +749,7 @@ Az innovációk kockázatai és fallback stratégiák:
 **Kockázat:** Automated RLS schema creation elromlik → új partner nem tud belépni
 
 **Mitigáció:**
+
 - **Pre-flight validation:** Wizard "Deploy" gomb előtt schema creation teszt futtatása staging DB-n
 - **Rollback mechanism:** Ha deploy fail → automatic rollback, admin notification
 - **Manual fallback:** DevOps admin manuálisan létrehozhatja a tenant-ot (régi 24 órás process)
@@ -715,6 +757,7 @@ Az innovációk kockázatai és fallback stratégiák:
 **Kockázat:** Partner rossz warehouse config-ot ad meg (pl. 1000 polc, de tényleg csak 50 van)
 
 **Mitigáció:**
+
 - **Warehouse config wizard validációk:** Polc szám max 100, doboz szám max 200 (gyakorlati limitek)
 - **Post-onboarding edit:** Partner később módosíthatja a K-P-D konfigot (új polcok hozzáadása)
 
@@ -725,6 +768,7 @@ Az innovációk kockázatai és fallback stratégiák:
 **Kockázat:** Pultos rossz K-P-D kódot rögzít → bérgép "elvész" a raktárban
 
 **Mitigáció:**
+
 - **Validációs szabályok:** K-P-D kód létezik-e a warehouse config-ban (nem lehet `K99-P999-D999` ha nincs ilyen polc)
 - **Recent locations autocomplete:** Utoljára használt K-P-D kódok gyors kiválasztása (csökkenti elgépelést)
 - **Audit trail + correction:** Admin látja: ki, mikor rögzítette a K-P-D kódot → javíthatja ha hiba
@@ -732,6 +776,7 @@ Az innovációk kockázatai és fallback stratégiák:
 **Kockázat:** Fizikai raktár átrendezés → K-P-D kódok elavulnak
 
 **Mitigáció:**
+
 - **Bulk K-P-D update:** Admin átnevezheti a polcokat (pl. régi P1-P10 → új P11-P20)
 - **Migration wizard:** "Átköltöztettük a Bosch zónát K1-ről K3-ra" → bulk update
 
@@ -742,12 +787,14 @@ Az innovációk kockázatai és fallback stratégiák:
 **Kockázat:** Gyári vonalkód olvashatatlan (lekopott, sérült) → bérgép nem azonosítható
 
 **Mitigáció:**
+
 - **Manual serial number lookup:** Ha vonalkód scan fail → pultos begépelheti a serial number-t manuálisan
 - **QR kód újranyomtatás:** Rendszer-generált QR kód címke újranyomtatása (serial number + K-P-D)
 
 **Kockázat:** Partner nem akarja kinyomtatni a QR kód címkéket (extra munka)
 
 **Mitigáció:**
+
 - **Opcionális funkció:** Vonalkód/QR paradigm opcionális (partner választhat: használja vagy nem)
 - **Onboarding incentive:** "Nyomtass ki 100 QR címkét az első hónapban → 10% SaaS discount"
 
@@ -758,12 +805,14 @@ Az innovációk kockázatai és fallback stratégiák:
 **Kockázat:** Audit log táblák túl gyorsan növekednek → DB tárhely probléma
 
 **Mitigáció:**
+
 - **Log retention policy:** Audit trail 2 év után archiválódik S3-ba (cold storage)
 - **Compression:** Audit log JSON diff-ek gzip tömörítéssel tárolva
 
 **Kockázat:** Partner kifogásolja: "Miért látja a központ, hogy mit csinálok?"
 
 **Mitigáció:**
+
 - **Transparent policy:** Franchise szerződésben rögzítve: audit trail a franchise compliance miatt szükséges
 - **Role-based access:** Partner admin saját audit log-ját látja, központi admin csak fraud detection esetén fér hozzá
 
@@ -774,6 +823,7 @@ Az innovációk kockázatai és fallback stratégiák:
 **Kockázat:** Makita/Stihl API változik → adapter elromlik → nincs ár/készlet frissítés
 
 **Mitigáció:**
+
 - **API versioning:** Adapter támogatja a beszállító API v1, v2, v3 verziókat (backward compatibility)
 - **Fallback:** Ha API sync fail → manuális CSV import vagy admin override
 - **Monitoring:** Daily API health check, alert ha sync 2+ napja nem sikerült
@@ -781,6 +831,7 @@ Az innovációk kockázatai és fallback stratégiák:
 **Kockázat:** Beszállító nem ad API-t (csak Excel export hetente egyszer)
 
 **Mitigáció:**
+
 - **CSV adapter:** FTP/SFTP-ről automatikus CSV letöltés és import
 - **Manual upload:** Admin feltöltheti a beszállító Excel-jét → system parseol és importál
 
@@ -799,6 +850,7 @@ A KGC ERP v7.0 **franchise partner-alapú multi-tenancy modellt** implementál, 
 #### Tenant Isolation Stratégia
 
 **Database-level Isolation:**
+
 - **Shared Schema + RLS Policies** - Egyetlen PostgreSQL adatbázisban minden tenant közös sémát használ, de row-level security policy-k biztosítják az adatizolációt
 - **Tenant Identifier:** Minden táblában `partner_id` foreign key mező → franchise partner azonosító
 - **RLS Policy Example:**
@@ -839,12 +891,12 @@ A KGC ERP v7.0 **franchise partner-alapú multi-tenancy modellt** implementál, 
 
 **Ki mit láthat a franchise hálózaton keresztül:**
 
-| Aktor | Saját partner adatai | Más partnerek adatai | Központi HQ adatai |
-|-------|---------------------|----------------------|--------------------|
-| **Pultos / Értékesítő** | ✅ Saját warehouse inventory<br>✅ Saját bérlési tranzakciók | ❌ Nincs láthatóság | ❌ Nincs láthatóság |
-| **Központi admin** | ✅ Minden partner inventory<br>✅ Cross-warehouse analytics | ✅ READ-ONLY minden partnernél<br>✅ Cross-warehouse transfer koordinálás | ✅ Teljes hozzáférés HQ adatokhoz |
-| **Franchise partner tulajdonos** | ✅ Saját bevételi dashboard<br>✅ Készlet analytics<br>✅ Transaction breakdown | ❌ Nincs láthatóság<br>(franchise partnerek izolálva) | ❌ Csak subscription billing info |
-| **DevOps admin** | ✅ Tenant metadata (status, tier)<br>✅ Partner onboarding history | ✅ Tenant health metrics<br>✅ System-wide monitoring | ✅ Teljes technikai access |
+| Aktor                            | Saját partner adatai                                                            | Más partnerek adatai                                                      | Központi HQ adatai                |
+| -------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | --------------------------------- |
+| **Pultos / Értékesítő**          | ✅ Saját warehouse inventory<br>✅ Saját bérlési tranzakciók                    | ❌ Nincs láthatóság                                                       | ❌ Nincs láthatóság               |
+| **Központi admin**               | ✅ Minden partner inventory<br>✅ Cross-warehouse analytics                     | ✅ READ-ONLY minden partnernél<br>✅ Cross-warehouse transfer koordinálás | ✅ Teljes hozzáférés HQ adatokhoz |
+| **Franchise partner tulajdonos** | ✅ Saját bevételi dashboard<br>✅ Készlet analytics<br>✅ Transaction breakdown | ❌ Nincs láthatóság<br>(franchise partnerek izolálva)                     | ❌ Csak subscription billing info |
+| **DevOps admin**                 | ✅ Tenant metadata (status, tier)<br>✅ Partner onboarding history              | ✅ Tenant health metrics<br>✅ System-wide monitoring                     | ✅ Teljes technikai access        |
 
 **RLS Implementation:** `partners.visibility_scope` enum (`own_only`, `read_all_partners`, `admin_full_access`)
 
@@ -860,13 +912,13 @@ A KGC ERP v7.0 **franchise partner-alapú multi-tenancy modellt** implementál, 
 
 **Permissions:**
 
-| Modul | READ | WRITE | DELETE | SPECIAL |
-|-------|------|-------|--------|---------|
-| **Inventory** | ✅ Saját warehouse<br>✅ K-P-D lookup<br>✅ Serial number search | ✅ Árumozgatás rögzítés<br>✅ K-P-D kód bevitel<br>✅ Vonalkód scan | ❌ | 🔍 Real-time inventory lookup |
-| **Bérlés** | ✅ Bérlési tranzakciók<br>✅ Ügyfél adatlap | ✅ Bérlés kiadás/visszavétel<br>✅ Kaució rögzítés<br>✅ Tartozékok hozzáadás | ❌ | 💳 MyPos payment terminal access |
-| **Szerviz** | ✅ Munkalapok (read-only) | ✅ Szerviz munkalapon jegyzet | ❌ | - |
-| **Értékesítés** | ✅ Terméklista | ✅ Értékesítési tranzakció rögzítés | ❌ | - |
-| **Admin Dashboard** | ❌ | ❌ | ❌ | - |
+| Modul               | READ                                                             | WRITE                                                                         | DELETE | SPECIAL                          |
+| ------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------ | -------------------------------- |
+| **Inventory**       | ✅ Saját warehouse<br>✅ K-P-D lookup<br>✅ Serial number search | ✅ Árumozgatás rögzítés<br>✅ K-P-D kód bevitel<br>✅ Vonalkód scan           | ❌     | 🔍 Real-time inventory lookup    |
+| **Bérlés**          | ✅ Bérlési tranzakciók<br>✅ Ügyfél adatlap                      | ✅ Bérlés kiadás/visszavétel<br>✅ Kaució rögzítés<br>✅ Tartozékok hozzáadás | ❌     | 💳 MyPos payment terminal access |
+| **Szerviz**         | ✅ Munkalapok (read-only)                                        | ✅ Szerviz munkalapon jegyzet                                                 | ❌     | -                                |
+| **Értékesítés**     | ✅ Terméklista                                                   | ✅ Értékesítési tranzakció rögzítés                                           | ❌     | -                                |
+| **Admin Dashboard** | ❌                                                               | ❌                                                                            | ❌     | -                                |
 
 **RLS Filter:** `WHERE partner_id = current_partner AND warehouse_id = user_assigned_warehouse`
 
@@ -878,18 +930,19 @@ A KGC ERP v7.0 **franchise partner-alapú multi-tenancy modellt** implementál, 
 
 **Permissions:**
 
-| Modul | READ | WRITE | DELETE | SPECIAL |
-|-------|------|-------|--------|---------|
-| **Inventory** | ✅ Saját warehouse<br>✅ K-P-D lookup<br>✅ Serial number search | ✅ Árumozgatás rögzítés<br>✅ K-P-D kód bevitel | ❌ | ❌ Készlet átmozgatás NEM (központi admin jog) |
-| **Bérlés** | ✅ Bérlési tranzakciók<br>✅ Ügyfél adatlap | ✅ Bérlés kiadás/visszavétel<br>✅ Kaució rögzítés<br>✅ **Korlátozott árazás (max ±20%)** | ❌ | 💰 Kedvezmény/felár max ±20% keretben |
-| **Szerviz** | ✅ Munkalapok (read-only) | ✅ Szerviz munkalapon jegyzet | ❌ | - |
-| **Értékesítés** | ✅ Terméklista | ✅ Értékesítési tranzakció rögzítés<br>✅ **Korlátozott árazás (max ±20%)** | ❌ | 💰 Kedvezmény/felár max ±20% keretben |
-| **HR Alapfunkciók** | ✅ Dolgozók listája | ✅ Új dolgozó felvétel | ❌ Elbocsátás NEM (tulajdonosi jog) | 👤 HR korlátozott hozzáférés |
-| **Boltvezető Dashboard** | ✅ Napi forgalom real-time<br>✅ Tranzakciószám<br>✅ Átlag kosárérték | ❌ | ❌ | 📊 Real-time forgalom monitoring |
+| Modul                    | READ                                                                   | WRITE                                                                                      | DELETE                              | SPECIAL                                        |
+| ------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------- | ---------------------------------------------- |
+| **Inventory**            | ✅ Saját warehouse<br>✅ K-P-D lookup<br>✅ Serial number search       | ✅ Árumozgatás rögzítés<br>✅ K-P-D kód bevitel                                            | ❌                                  | ❌ Készlet átmozgatás NEM (központi admin jog) |
+| **Bérlés**               | ✅ Bérlési tranzakciók<br>✅ Ügyfél adatlap                            | ✅ Bérlés kiadás/visszavétel<br>✅ Kaució rögzítés<br>✅ **Korlátozott árazás (max ±20%)** | ❌                                  | 💰 Kedvezmény/felár max ±20% keretben          |
+| **Szerviz**              | ✅ Munkalapok (read-only)                                              | ✅ Szerviz munkalapon jegyzet                                                              | ❌                                  | -                                              |
+| **Értékesítés**          | ✅ Terméklista                                                         | ✅ Értékesítési tranzakció rögzítés<br>✅ **Korlátozott árazás (max ±20%)**                | ❌                                  | 💰 Kedvezmény/felár max ±20% keretben          |
+| **HR Alapfunkciók**      | ✅ Dolgozók listája                                                    | ✅ Új dolgozó felvétel                                                                     | ❌ Elbocsátás NEM (tulajdonosi jog) | 👤 HR korlátozott hozzáférés                   |
+| **Boltvezető Dashboard** | ✅ Napi forgalom real-time<br>✅ Tranzakciószám<br>✅ Átlag kosárérték | ❌                                                                                         | ❌                                  | 📊 Real-time forgalom monitoring               |
 
 **RLS Filter:** `WHERE partner_id = current_partner AND warehouse_id = user_assigned_warehouse AND role = 'store_manager'`
 
 **Korlátok:**
+
 - Kedvezmény/felár: max ±20% (túllépésnél tulajdonosi jóváhagyás szükséges)
 - HR: dolgozó felvétel IGEN, elbocsátás NEM
 - Készlet: READ igen, készlet átmozgatás NEM
@@ -902,11 +955,11 @@ A KGC ERP v7.0 **franchise partner-alapú multi-tenancy modellt** implementál, 
 
 **Permissions:**
 
-| Modul | READ | WRITE | DELETE | SPECIAL |
-|-------|------|-------|--------|---------|
-| **Inventory** | ✅ **Minden warehouse**<br>✅ Cross-warehouse analytics<br>✅ Készlet forgási sebesség | ✅ Cross-warehouse transfer<br>✅ Bulk K-P-D update<br>✅ Warehouse config | ✅ Inventory correction (admin override) | 📊 Multi-warehouse dashboard<br>🔄 Transfer workflow coordination |
-| **Bérlés** | ✅ Minden partner bérlései | ✅ Bérlési díj override (audit trail-lel) | ❌ | 🚨 Késedelmi díj manual adjustment |
-| **Franchise Partner Management** | ✅ Partner dashboards<br>✅ Transaction breakdown | ❌ Pricing tier change (csak DevOps) | ❌ | 📈 Partner performance analytics |
+| Modul                            | READ                                                                                   | WRITE                                                                      | DELETE                                   | SPECIAL                                                           |
+| -------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------- |
+| **Inventory**                    | ✅ **Minden warehouse**<br>✅ Cross-warehouse analytics<br>✅ Készlet forgási sebesség | ✅ Cross-warehouse transfer<br>✅ Bulk K-P-D update<br>✅ Warehouse config | ✅ Inventory correction (admin override) | 📊 Multi-warehouse dashboard<br>🔄 Transfer workflow coordination |
+| **Bérlés**                       | ✅ Minden partner bérlései                                                             | ✅ Bérlési díj override (audit trail-lel)                                  | ❌                                       | 🚨 Késedelmi díj manual adjustment                                |
+| **Franchise Partner Management** | ✅ Partner dashboards<br>✅ Transaction breakdown                                      | ❌ Pricing tier change (csak DevOps)                                       | ❌                                       | 📈 Partner performance analytics                                  |
 
 **RLS Filter:** `WHERE visibility_scope = 'read_all_partners'` (user role check application level-en)
 
@@ -918,12 +971,12 @@ A KGC ERP v7.0 **franchise partner-alapú multi-tenancy modellt** implementál, 
 
 **Permissions:**
 
-| Modul | READ | WRITE | DELETE | SPECIAL |
-|-------|------|-------|--------|---------|
-| **Business Intelligence** | ✅ Saját bevételi dashboard<br>✅ Készlet analytics<br>✅ Hibrid árazás billing breakdown | ❌ | ❌ | 📊 Real-time revenue tracking<br>💰 Transparent SaaS cost calculator |
-| **User Management** | ✅ Saját franchise partner users | ✅ User létrehozás/törlés<br>✅ Role assignment (partner scope-on belül) | ✅ User deletion | 👥 Bulk user import CSV |
-| **Warehouse Config** | ✅ K-P-D helykód rendszer | ✅ Polc/doboz hozzáadás/átnevezés | ❌ Warehouse törlés (központi admin) | 🏗️ Warehouse config wizard |
-| **Pricing** | ✅ Saját pricing tier info | ❌ Tier change (request → DevOps approval) | ❌ | - |
+| Modul                     | READ                                                                                      | WRITE                                                                    | DELETE                               | SPECIAL                                                              |
+| ------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------ | -------------------------------------------------------------------- |
+| **Business Intelligence** | ✅ Saját bevételi dashboard<br>✅ Készlet analytics<br>✅ Hibrid árazás billing breakdown | ❌                                                                       | ❌                                   | 📊 Real-time revenue tracking<br>💰 Transparent SaaS cost calculator |
+| **User Management**       | ✅ Saját franchise partner users                                                          | ✅ User létrehozás/törlés<br>✅ Role assignment (partner scope-on belül) | ✅ User deletion                     | 👥 Bulk user import CSV                                              |
+| **Warehouse Config**      | ✅ K-P-D helykód rendszer                                                                 | ✅ Polc/doboz hozzáadás/átnevezés                                        | ❌ Warehouse törlés (központi admin) | 🏗️ Warehouse config wizard                                           |
+| **Pricing**               | ✅ Saját pricing tier info                                                                | ❌ Tier change (request → DevOps approval)                               | ❌                                   | -                                                                    |
 
 **RLS Filter:** `WHERE partner_id = user_partner_id`
 
@@ -935,11 +988,11 @@ A KGC ERP v7.0 **franchise partner-alapú multi-tenancy modellt** implementál, 
 
 **Permissions:**
 
-| Modul | READ | WRITE | DELETE | SPECIAL |
-|-------|------|-------|--------|---------|
-| **Tenant Management** | ✅ Minden tenant metadata<br>✅ Partner onboarding history<br>✅ System health metrics | ✅ Franchise onboarding wizard<br>✅ RLS schema creation<br>✅ Tenant provisioning<br>✅ Pricing tier assignment | ✅ Tenant deactivation (soft delete) | 🚀 Automated onboarding (15 perc)<br>🔧 Manual rollback mechanism |
-| **Monitoring** | ✅ Transaction count/partner<br>✅ API usage metrics<br>✅ Gemini AI cost tracking | ✅ Alert threshold beállítás<br>✅ Partner quota limits | ❌ | 📉 Real-time DevOps monitoring dashboard |
-| **Partner Business Data** | ❌ Bevétel, inventory details<br>(csak metadata) | ❌ | ❌ | 🔒 Privacy: DevOps nem látja üzleti adatokat |
+| Modul                     | READ                                                                                   | WRITE                                                                                                            | DELETE                               | SPECIAL                                                           |
+| ------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------- |
+| **Tenant Management**     | ✅ Minden tenant metadata<br>✅ Partner onboarding history<br>✅ System health metrics | ✅ Franchise onboarding wizard<br>✅ RLS schema creation<br>✅ Tenant provisioning<br>✅ Pricing tier assignment | ✅ Tenant deactivation (soft delete) | 🚀 Automated onboarding (15 perc)<br>🔧 Manual rollback mechanism |
+| **Monitoring**            | ✅ Transaction count/partner<br>✅ API usage metrics<br>✅ Gemini AI cost tracking     | ✅ Alert threshold beállítás<br>✅ Partner quota limits                                                          | ❌                                   | 📉 Real-time DevOps monitoring dashboard                          |
+| **Partner Business Data** | ❌ Bevétel, inventory details<br>(csak metadata)                                       | ❌                                                                                                               | ❌                                   | 🔒 Privacy: DevOps nem látja üzleti adatokat                      |
 
 **Application-Level Check:** DevOps role csak tenant metadata és system metrics-hez fér hozzá, business data RLS-sel blokkolva.
 
@@ -953,19 +1006,21 @@ A KGC ERP v7.0 **franchise partner-alapú multi-tenancy modellt** implementál, 
 
 **Javasolt tier struktúra** (Q24 kérdés későbbi válaszra vár, de interim modell):
 
-| Tier | Max Users | Havi alap díj | User licensz díj | AI Query Limit | Extra user díj |
-|------|-----------|---------------|------------------|----------------|----------------|
-| **Startup** | 1-3 user | 25.000 Ft/hó | 5.000 Ft/user/hó | 100 query/hó | 7.000 Ft/user |
-| **Standard** | 4-10 user | 50.000 Ft/hó | 4.000 Ft/user/hó | 1000 query/hó | 5.000 Ft/user |
-| **Enterprise** | 10+ user | Egyedi árazás | Egyedi árazás | Unlimited | Egyedi |
+| Tier           | Max Users | Havi alap díj | User licensz díj | AI Query Limit | Extra user díj |
+| -------------- | --------- | ------------- | ---------------- | -------------- | -------------- |
+| **Startup**    | 1-3 user  | 25.000 Ft/hó  | 5.000 Ft/user/hó | 100 query/hó   | 7.000 Ft/user  |
+| **Standard**   | 4-10 user | 50.000 Ft/hó  | 4.000 Ft/user/hó | 1000 query/hó  | 5.000 Ft/user  |
+| **Enterprise** | 10+ user  | Egyedi árazás | Egyedi árazás    | Unlimited      | Egyedi         |
 
 **Licensing Strategy:**
+
 - **Alap díj:** Fix havi díj partnerenként (infrastruktúra, support, frissítések)
 - **User licensz:** Aktív felhasználók száma alapján (Pultos, Boltvezető, Admin)
 - **Billing Cycle:** Havi billing, előző hónap user count alapján
 - **Transparent Dashboard:** Partner látja: "Alap díj: 50.000 Ft + 6 user × 4.000 Ft = 74.000 Ft/hó"
 
 **Fair Use Policy (Q24 kérdés validációra vár):**
+
 - Inaktív user (30+ nap nincs login) = fél díj
 - Temporary user (szezonális munkás) = napi arányosítás lehetséges
 
@@ -978,24 +1033,28 @@ A KGC ERP v7.0 **franchise partner-alapú multi-tenancy modellt** implementál, 
 #### CORE Integrációk (MVP Kötelező)
 
 **1. NAV Online Számlázás (ADR-013)**
+
 - **Státusz:** Kötelező (magyar jogszabályi követelmény)
 - **Scope:** Real-time számla kiállítás NAV API-n keresztül
 - **Implementáció:** Node.js NAV API SDK integráció
 - **Kritikusság:** HIGH - nélküle a rendszer nem használható Magyarországon
 
 **2. MyPos Payment Terminal (ADR-005)**
+
 - **Státusz:** CORE (kaució blokkolás kritikus a bérlés workflow-hoz)
 - **Scope:** Kártya kaució blokkolás, kaució visszatérítés
 - **Implementáció:** MyPos REST API → tokenization (PCI DSS compliance)
 - **Kritikusság:** HIGH - bérlés kiadás/visszavétel core funkció
 
 **3. Google Gemini AI - Koko Chatbot (ADR-016)**
+
 - **Státusz:** CORE (Innovation differentiator)
 - **Scope:** 24/7 multi-channel support chatbot, FAQ handling
 - **Implementáció:** Gemini Flash API + Chatwoot escalation
 - **Kritikusság:** MEDIUM - Innovation core, de fallback: direct Chatwoot
 
 **4. Beszállító API-k (ADR-017)**
+
 - **Státusz:** CORE (készlet frissítés automatizálás)
 - **Scope:** Makita, Stihl, Hikoki termék katalógus + ár sync
 - **Implementáció:** Adapter pattern (REST/SOAP/CSV)
@@ -1006,25 +1065,30 @@ A KGC ERP v7.0 **franchise partner-alapú multi-tenancy modellt** implementál, 
 #### PLUGIN Integrációk (Opcionális Modulok - 2. Fázis)
 
 **5. Chatwoot Support (ADR-015)**
+
 - **Modul:** Support Plugin (ki/bekapcsolható)
 - **Scope:** Multi-channel support (email, chat, Facebook Messenger)
 - **Pricing Impact:** Plugin modul usage = extra díj? (Q25 validációra vár)
 
 **6. Twenty CRM (ADR-015)**
+
 - **Modul:** CRM Plugin
 - **Scope:** Lead tracking, marketing automation, sales pipeline
 - **Pricing Impact:** CRM plugin használat = extra havi díj?
 
 **7. Horilla HRMS (ADR-015)**
+
 - **Modul:** HR Plugin
 - **Scope:** Jelenlét, szabadság kezelés, payroll integráció
 - **Pricing Impact:** HR plugin használat = extra havi díj?
 
 **8. Gemini AI Extended Features (ADR-018, ADR-019, ADR-020)**
+
 - **Scope:** OCR számla feldolgozás, 3D fotó sérülésdetektálás, Email thread parsing
 - **Pricing Impact:** AI Extended usage = tier-based quota (Q24 validációra vár)
 
 **Plugin Architecture (ADR-014):**
+
 - Moduláris architektúra → frontend + backend plugin komponensek
 - Ki/bekapcsolás partner szinten (`partners.enabled_plugins` JSON mező)
 - Plugin usage metering → billing system-be integráció
@@ -1038,24 +1102,28 @@ A KGC ERP v7.0 **franchise partner-alapú multi-tenancy modellt** implementál, 
 #### MVP Kritikus Megfelelőség
 
 **1. NAV Online Számlázás Compliance**
+
 - **Követelmény:** Magyar jogszabályi kötelezettség (GDPR + NAV törvény)
 - **Implementáció:** NAV API v3.0 real-time számlázás
 - **Scope:** Bérlési díj, szerviz munkalap, értékesítés számlázás
 - **Validáció:** NAV teszt környezet sikeres integráció teszt
 
 **2. GDPR Compliance Alapok**
+
 - **User Data Privacy:** Ügyfél adatok titkosítása (PostgreSQL column encryption)
 - **Right to be Forgotten:** Cascade delete implementáció (ügyfél törlésekor minden kapcsolódó adat törlődik)
 - **Consent Management:** Explicit user consent GDPR-compliant formokkal
 - **Data Export:** GDPR data export API (ügyfél kérheti adatai letöltését)
 
 **3. Audit Trail (ADR-006)**
+
 - **Immutable Logging:** Minden bérlési/szerviz/értékesítési művelet append-only log táblában
 - **Log Content:** KI (user_id + name), MIT (action_type), MIKOR (timestamp UTC), MIÉRT (optional note), VÁLTOZÁS (JSON diff)
 - **Retention:** 2 év audit trail retention, utána S3 cold storage archiválás
 - **Compliance Use:** NAV audit, franchise partner transparency, dispute resolution
 
 **4. Multi-Tenancy RLS Security (ADR-001)**
+
 - **Tenant Isolation:** PostgreSQL RLS policy minden táblán
 - **Session Security:** `app.current_partner_id` session variable validáció minden request-nél
 - **Cross-Tenant Attack Prevention:** Application-level partner_id check + DB-level RLS double protection
@@ -1065,11 +1133,13 @@ A KGC ERP v7.0 **franchise partner-alapú multi-tenancy modellt** implementál, 
 #### Közepes Prioritás Megfelelőség (MVP Nice-to-Have vagy 2. Fázis)
 
 **5. PCI DSS Compliance**
+
 - **MyPos Tokenization:** Kártyaadatok soha nem tárolódnak KGC adatbázisban, csak MyPos tokenek
 - **Scope:** PCI DSS Level 4 SAQ A-EP (self-assessment)
 - **Validáció:** Q19 kérdés validációra vár (tokenization elég-e MVP-ben vagy teljes PCI audit kell)
 
 **6. Equipment Liability Documentation**
+
 - **AI-Powered Sérülésdetektálás (ADR-020):** 360° fotó + AI comparison kár dokumentáláshoz
 - **Scope:** Fotó evidence elegendő-e vagy digitális szerződés aláírás is kell?
 - **Validáció:** Q21 kérdés validációra vár
@@ -1079,11 +1149,13 @@ A KGC ERP v7.0 **franchise partner-alapú multi-tenancy modellt** implementál, 
 #### Alacsony Prioritás (2. Fázis)
 
 **7. ISO 27001 Compliance**
+
 - **Cél:** Enterprise tier franchise partnerek követelménye (nagy cégek beszállítói audit)
 - **Scope:** Security management system certification
 - **Timeline:** Phase 2 vagy 3 (MVP után)
 
 **8. Financial Regulations Detailed Audit**
+
 - **Kaució/Késedelmi Díj:** Alapvető logika MVP-ben, részletes pénzügyi audit Phase 2
 - **Scope:** Pénzügyi tranzakció compliance audit (Q22 validációra vár)
 
@@ -1098,10 +1170,12 @@ A KGC ERP v7.0 fejlesztése **3 fázisra** oszlik, ahol az **MVP (Phase 1) a 4 c
 **MVP Típus:** Problem-Solving MVP
 
 **Fő Üzleti Probléma:**
+
 > "Áruk nyomon követésének hiányosságai a meglévő rendszerben" - Executive Summary
 
 **MVP Célkitűzés:**
 A legkisebb feature set, amely:
+
 1. ✅ **Megoldja a 4 core user journey fájdalmat** (Kata, László, Péter, Anna)
 2. ✅ **Mérhető business value-t szállít** (10x árumozgatás gyorsítás, 96x onboarding gyorsítás, 22% bevétel növekedés)
 3. ✅ **Franchise-ready multi-tenant platform** (RLS alapú tenant isolation + automated onboarding)
@@ -1109,14 +1183,15 @@ A legkisebb feature set, amely:
 
 **MVP Success Criteria (User Journey alapján):**
 
-| User Journey | Fájdalom (Régi rendszer) | MVP Target (v7.0) | Siker Metrika |
-|--------------|-------------------------|-------------------|---------------|
-| **Kata (Pultos)** | Árumozgatás rögzítés 3-5 perc/gép | < 30 másodperc/gép | ✅ 10x gyorsítás |
-| **László (Központi Admin)** | Inventory lookup 3-8 perc | < 5 másodperc | ✅ 48-96x gyorsítás |
-| **Péter (Partner)** | Nincs real-time business intelligence | Real-time bevételi dashboard | ✅ 22% bevétel növekedés (3 hónap) |
-| **Anna (DevOps)** | Franchise onboarding 24 óra | < 15 perc | ✅ 96x gyorsítás |
+| User Journey                | Fájdalom (Régi rendszer)              | MVP Target (v7.0)            | Siker Metrika                      |
+| --------------------------- | ------------------------------------- | ---------------------------- | ---------------------------------- |
+| **Kata (Pultos)**           | Árumozgatás rögzítés 3-5 perc/gép     | < 30 másodperc/gép           | ✅ 10x gyorsítás                   |
+| **László (Központi Admin)** | Inventory lookup 3-8 perc             | < 5 másodperc                | ✅ 48-96x gyorsítás                |
+| **Péter (Partner)**         | Nincs real-time business intelligence | Real-time bevételi dashboard | ✅ 22% bevétel növekedés (3 hónap) |
+| **Anna (DevOps)**           | Franchise onboarding 24 óra           | < 15 perc                    | ✅ 96x gyorsítás                   |
 
 **MVP Filozófia - "Must-Have" Decision Framework:**
+
 - ❓ **Without this feature, does the product fail to solve the core problem?** → YES = MVP
 - ❓ **Can this be manual initially or added later?** → NO = MVP, YES = Phase 2
 - ❓ **Is this a deal-breaker for early adopters (franchise partners)?** → YES = MVP
@@ -1134,6 +1209,7 @@ A legkisebb feature set, amely:
 ##### 1.1 Inventory Modul ⭐ CRITICAL
 
 **Scope:**
+
 - ✅ K-P-D (Kommandó-Polc-Doboz) helykód rendszer (ADR-021)
   - 3-tier location hierarchy: `K{1-20}-P{1-100}-D{1-200}`
   - Automated K-P-D generation wizard franchise onboarding során
@@ -1152,11 +1228,13 @@ A legkisebb feature set, amely:
   - Target: < 30 másodperc árumozgatás rögzítés (vs. régi 3-5 perc)
 
 **Out-of-Scope (Phase 2):**
+
 - ❌ Cross-warehouse transfer workflow automation (MVP: manual koordináció Slack-en)
 - ❌ Bulk K-P-D update wizard (MVP: manuális egyenkénti módosítás)
 - ❌ Készlet forgási sebesség analytics (MVP: basic inventory count report)
 
 **Acceptance Criteria:**
+
 - Kata (pultos) 8 gépet 3 perc alatt raktároz (korábban 40 perc)
 - László (admin) 5 másodperc alatt talál egy konkrét bérgépet 6 warehouse között
 - K-P-D kód validáció működik (nem lehet nem létező polcot beírni)
@@ -1166,6 +1244,7 @@ A legkisebb feature set, amely:
 ##### 1.2 Bérlés Modul ⭐ CRITICAL
 
 **Scope:**
+
 - ✅ E2E Bérlés Workflow
   - Ügyfél kiválasztás/új ügyfél felvétel
   - Bérgép kiválasztás (inventory lookup)
@@ -1184,11 +1263,13 @@ A legkisebb feature set, amely:
   - Minden bérlési művelet immutable log (KI, MIT, MIKOR, MIÉRT, JSON diff)
 
 **Out-of-Scope (Phase 2):**
+
 - ❌ Bérlés foglalási rendszer (reservation system) - MVP: walk-in only
 - ❌ Online bérlés portal (ügyfél self-service) - MVP: pultos rögzít mindent
 - ❌ Bérlés díj override audit alert (MVP: audit trail rögzít, de nincs auto-alert)
 
 **Acceptance Criteria:**
+
 - Pultos 5 perc alatt kiad egy bérlést (ügyfél adatok + gép + kaució + tartozékok)
 - MyPos kaució blokkolás működik (teszt transaction sikeres)
 - Késedelmi díj automatikusan számolódik (30 nap bérlés, 3 nap késés = +3 nap díj)
@@ -1198,6 +1279,7 @@ A legkisebb feature set, amely:
 ##### 1.3 Szerviz Modul
 
 **Scope:**
+
 - ✅ Szerviz Munkalap Workflow
   - Bérgép státusz: kint/bent → szerviz
   - Munkalap létrehozás (probléma leírás, alkatrészek, munkaóra)
@@ -1208,11 +1290,13 @@ A legkisebb feature set, amely:
   - Alkatrész készlet csökkentés (ha szerviz során csere történik)
 
 **Out-of-Scope (Phase 2):**
+
 - ❌ Makita garanciális javítás API sync (ADR-019 extended) - MVP: manual elszámolás
 - ❌ Szerviz munkaóra kalkulátor (standard óradíj × munkaóra) - MVP: manual bevitel
 - ❌ Szerviz analitika (átlagos javítási idő, gyakori hibák) - Phase 2
 
 **Acceptance Criteria:**
+
 - Szerviz munkalap létrehozás < 2 perc (probléma leírás + alkatrész lista)
 - Bérgép státusz szinkronban van (szerviz alatt lévő gép nem kiadható bérlésre)
 
@@ -1221,6 +1305,7 @@ A legkisebb feature set, amely:
 ##### 1.4 Értékesítés Modul
 
 **Scope:**
+
 - ✅ Termékeladás Workflow
   - Termék kiválasztás inventory-ból
   - Értékesítési tranzakció rögzítés
@@ -1230,10 +1315,12 @@ A legkisebb feature set, amely:
   - Értékesítési művelet immutable log
 
 **Out-of-Scope (Phase 2):**
+
 - ❌ Értékesítési analytics (top termékek, bevétel trend) - Phase 2
 - ❌ Készlet low-stock alert (automatikus értesítés ha termék fogy) - Phase 2
 
 **Acceptance Criteria:**
+
 - Termékeladás rögzítés < 1 perc (termék + mennyiség + NAV számla)
 - Inventory automatikusan csökken értékesítés után
 
@@ -1242,6 +1329,7 @@ A legkisebb feature set, amely:
 ##### 1.5 Pénzügy Modul (Basic)
 
 **Scope:**
+
 - ✅ MyPos Payment Integráció (ADR-005)
   - Kártya kaució blokkolás/visszatérítés
   - Payment transaction log
@@ -1251,11 +1339,13 @@ A legkisebb feature set, amely:
   - Pénzügyi tranzakciók immutable log (compliance)
 
 **Out-of-Scope (Phase 2):**
+
 - ❌ Banki elszámolás automata import (bank statement parsing) - MVP: manual
 - ❌ Pénzügyi jelentések (P&L, cash flow) - Phase 2
 - ❌ Multi-currency support - Phase 3 (MVP: HUF only)
 
 **Acceptance Criteria:**
+
 - MyPos payment sikeres (kaució blokkolás + visszatérítés teszt)
 - Késedelmi díj helyesen számolódik (30 nap bérlés + 5 nap késés = +5 nap bérlési díj)
 
@@ -1266,6 +1356,7 @@ A legkisebb feature set, amely:
 ##### 2.1 NAV Online Számlázás ⭐ CRITICAL
 
 **Scope:**
+
 - ✅ NAV API v3.0 integráció (ADR-013)
   - Real-time számla kiállítás (bérlés, szerviz, értékesítés)
   - NAV API error handling (retry logic, fallback manual számlázás)
@@ -1274,10 +1365,12 @@ A legkisebb feature set, amely:
   - Adóalany számla (cég, VAT number)
 
 **Out-of-Scope (Phase 2):**
+
 - ❌ NAV API v4.0+ migration - MVP: v3.0 elég
 - ❌ Automata stornó számla (credit note) - MVP: manual
 
 **Acceptance Criteria:**
+
 - NAV teszt környezet sikeres számla kiállítás (100% success rate 10 teszt számlából)
 - NAV API downtime fallback működik (manual számlázás + későbbi NAV sync)
 
@@ -1286,16 +1379,19 @@ A legkisebb feature set, amely:
 ##### 2.2 MyPos Payment Terminal ⭐ CRITICAL
 
 **Scope:**
+
 - ✅ MyPos REST API integráció (ADR-005)
   - Kártya kaució blokkolás (authorization hold)
   - Kaució visszatérítés (refund/void)
   - Payment tokenization (PCI DSS SAQ A-EP compliance)
 
 **Out-of-Scope (Phase 2):**
+
 - ❌ MyPos terminal fizikai integráció (bluetooth/USB) - MVP: manual terminal use + API sync
 - ❌ PCI DSS teljes audit - MVP: tokenization elég
 
 **Acceptance Criteria:**
+
 - 10 teszt tranzakció sikeres (kaució blokkolás + visszatérítés)
 - Kártyaadatok soha nem tárolódnak KGC DB-ben (csak MyPos tokenek)
 
@@ -1304,6 +1400,7 @@ A legkisebb feature set, amely:
 ##### 2.3 Google Gemini AI - Koko Chatbot Basic ⭐ INNOVATION DIFFERENTIATOR
 
 **Scope:**
+
 - ✅ Gemini Flash API integráció (ADR-016)
   - 24/7 FAQ handling chatbot (magyar nyelv)
   - Basic support kérdések (nyitvatartás, árak, bérlési feltételek)
@@ -1313,11 +1410,13 @@ A legkisebb feature set, amely:
   - AI quota túllépés → fallback: direct Chatwoot
 
 **Out-of-Scope (Phase 2):**
+
 - ❌ Multi-channel chatbot (Facebook Messenger, WhatsApp) - MVP: web chat only
 - ❌ AI intent recognition advanced (custom NLP training) - MVP: Gemini off-the-shelf
 - ❌ AI-generated email responses - Phase 2 (ADR-018 extended)
 
 **Acceptance Criteria:**
+
 - Koko chatbot válaszol 10 gyakori kérdésre (FAQ teszt)
 - Chatwoot escalation működik (komplex kérdés → support ticket auto-creation)
 - AI quota limit működik (101. query Startup tier-ben → fallback Chatwoot)
@@ -1329,6 +1428,7 @@ A legkisebb feature set, amely:
 ##### 3.1 Franchise Onboarding Wizard ⭐ CRITICAL (Anna Journey)
 
 **Scope:**
+
 - ✅ Automated Onboarding Workflow (ADR-001)
   1. Partner info bevitel (név, cím, VAT number, contact email)
   2. Warehouse config (K-P-D rendszer auto-generálás)
@@ -1339,10 +1439,12 @@ A legkisebb feature set, amely:
 - ✅ Target: **15 perc onboarding** (vs. régi 24 óra manual)
 
 **Out-of-Scope (Phase 2):**
+
 - ❌ Self-service partner onboarding (MVP: DevOps admin-driven)
 - ❌ Partner migration wizard (régi rendszer import) - Phase 2
 
 **Acceptance Criteria:**
+
 - 3 pilot partner sikeres onboarding < 15 perc/partner
 - RLS schema automatikusan létrejön (tenant isolation teszt)
 - Onboarding email megérkezik új partnernek (login link)
@@ -1352,6 +1454,7 @@ A legkisebb feature set, amely:
 ##### 3.2 PostgreSQL RLS Multi-Tenancy ⭐ CRITICAL
 
 **Scope:**
+
 - ✅ Row Level Security implementáció (ADR-001)
   - `partner_id` foreign key minden táblában
   - RLS policy minden táblán: `WHERE partner_id = current_setting('app.current_partner_id')`
@@ -1361,10 +1464,12 @@ A legkisebb feature set, amely:
   - Cross-tenant attack prevention (security teszt)
 
 **Out-of-Scope (Phase 2):**
+
 - ❌ Multi-database tenant separation (MVP: shared DB + RLS elég)
 - ❌ Tenant backup/restore per-partner - Phase 2
 
 **Acceptance Criteria:**
+
 - RLS policy teszt: 100 query, 0 cross-tenant leak
 - Központi admin látja minden partnert (read-only)
 - Pultos csak saját partner adatait látja
@@ -1374,6 +1479,7 @@ A legkisebb feature set, amely:
 ##### 3.3 Transaction-Based Pricing Metering
 
 **Scope:**
+
 - ✅ Transaction Event Tracking
   - Bérlés kiadás/visszavétel = 1 transaction
   - Szerviz munkalap létrehozás = 1 transaction
@@ -1386,11 +1492,13 @@ A legkisebb feature set, amely:
   - Billing cycle: előző hónap tranzakcióinak összesítése
 
 **Out-of-Scope (Phase 2):**
+
 - ❌ Automated invoicing (partner számla kiküldés) - MVP: manual billing
 - ❌ Fair use policy enforcement (batch transaction detection) - Phase 2
 - ❌ Pricing calculator widget (előzetes költség becslés) - Phase 2
 
 **Acceptance Criteria:**
+
 - Partner dashboard mutatja real-time transaction count
 - Havi billing report generálódik (előző hónap összesítése)
 
@@ -1429,6 +1537,7 @@ A legkisebb feature set, amely:
    - Partner Business Data: NO ACCESS (privacy)
 
 **Out-of-Scope (Phase 2):**
+
 - ❌ Custom role builder (admin definiálhat új role-okat) - Phase 2
 - ❌ Fine-grained permission matrix (permission per module/action) - MVP: 5 standard role elég
 
@@ -1442,6 +1551,7 @@ A legkisebb feature set, amely:
 4. ✅ **Multi-Tenancy RLS Security** - Tenant isolation (ADR-001)
 
 **Out-of-Scope (Phase 2):**
+
 - ❌ PCI DSS teljes audit (MVP: MyPos tokenization SAQ A-EP elég)
 - ❌ ISO 27001 certification - Phase 3
 - ❌ GDPR data export API (user request) - Phase 2
@@ -1477,11 +1587,13 @@ A legkisebb feature set, amely:
    - **Business Value:** Manual email processing 40-60% csökkentés
 
 **AI Usage Tier Extended:**
+
 - Startup tier: 100 AI query/hó (basic Koko only)
 - Standard tier: 1000 AI query/hó (Koko + OCR + Vision)
 - Enterprise tier: Unlimited (Koko + OCR + Vision + Email parsing)
 
 **Pricing Impact:**
+
 - AI Extended features = plugin usage metering (extra transaction charge vagy tier upgrade)
 
 ---
@@ -1489,16 +1601,19 @@ A legkisebb feature set, amely:
 ##### 2.2 CRM Plugin - Twenty Integration (ADR-015)
 
 **Scope:**
+
 - 🔌 Lead tracking (potenciális ügyfél management)
 - 🔌 Sales pipeline (lead → qualified → proposal → closed)
 - 🔌 Marketing automation basic (email kampányok)
 - 🔌 Twenty CRM API sync (KGC ügyfél adatok → Twenty contacts)
 
 **Plugin Architecture:**
+
 - Ki/bekapcsolás partner szinten (`partners.enabled_plugins: ['crm']`)
 - CRM plugin usage metering → billing system
 
 **Business Value:**
+
 - Marketing ROI tracking (kampány → lead → bérlés konverzió)
 - Franchise partner sales efficiency 15-25% növekedés
 
@@ -1507,15 +1622,18 @@ A legkisebb feature set, amely:
 ##### 2.3 Chatwoot Support Advanced (ADR-015)
 
 **Scope:**
+
 - 🔌 Multi-channel support (email, Facebook Messenger, WhatsApp)
 - 🔌 Support ticket management (Koko chatbot escalation extended)
 - 🔌 Team collaboration (support agent collaboration tools)
 
 **Plugin Architecture:**
+
 - Ki/bekapcsolás partner szinten
 - Chatwoot plugin usage metering
 
 **Business Value:**
+
 - Customer support response time 30-50% csökkentés
 - Multi-channel customer engagement
 
@@ -1524,6 +1642,7 @@ A legkisebb feature set, amely:
 ##### 2.4 Beszállító API Extended (ADR-017)
 
 **Scope:**
+
 - 🔌 Makita garanciális javítás API sync (ADR-019 extended)
   - Munkalap automatikus szinkronizálás Makita szerviz rendszerrel
   - Automata elszámolás: munkaóra + alkatrész költség vissza a Makita-tól
@@ -1531,6 +1650,7 @@ A legkisebb feature set, amely:
 - 🔌 Napi automata sync job (cron) + fallback manual CSV import
 
 **Business Value:**
+
 - Beszerzési folyamat automatizálás 50-70%
 - Garanciális elszámolás pontosság 90%+
 
@@ -1539,6 +1659,7 @@ A legkisebb feature set, amely:
 ##### 2.5 Inventory Advanced Features
 
 **Scope:**
+
 - 🔌 Cross-warehouse transfer workflow automation
   - László (központi admin) egy kattintással transfer request
   - Pultos approval workflow
@@ -1552,6 +1673,7 @@ A legkisebb feature set, amely:
   - Low-stock alert (automatikus értesítés ha termék fogy)
 
 **Business Value:**
+
 - Készlet optimalizálás → Péter journey 22% bevétel növekedés (validált user journey-ből)
 - Cross-warehouse koordináció 50-70% gyorsítás
 
@@ -1566,15 +1688,18 @@ A legkisebb feature set, amely:
 ##### 3.1 HR Plugin - Horilla HRMS Integration (ADR-015)
 
 **Scope:**
+
 - 🔌 Jelenlét kezelés (check-in/check-out)
 - 🔌 Szabadság kezelés (szabadság kérelem workflow)
 - 🔌 Payroll integráció basic (órabér × munkaóra)
 
 **Plugin Architecture:**
+
 - Ki/bekapcsolás partner szinten
 - HR plugin usage metering
 
 **Business Value:**
+
 - HR admin munka 40-60% csökkentés
 - Compliance: munkaidő nyilvántartás (munkaügyi ellenőrzés)
 
@@ -1583,11 +1708,13 @@ A legkisebb feature set, amely:
 ##### 3.2 ISO 27001 Compliance
 
 **Scope:**
+
 - 🔒 Security management system certification
 - 🔒 Enterprise tier franchise partnerek követelménye
 - 🔒 Audit preparation + certification process
 
 **Business Value:**
+
 - Enterprise tier sales enablement (nagy cégek beszállítói audit compliance)
 
 ---
@@ -1595,10 +1722,12 @@ A legkisebb feature set, amely:
 ##### 3.3 PCI DSS Full Audit
 
 **Scope:**
+
 - 🔒 PCI DSS Level 4 teljes audit (SAQ A-EP → SAQ D)
 - 🔒 Quarterly security scans + penetration testing
 
 **Business Value:**
+
 - Payment security compliance advanced
 - Enterprise tier sales enablement
 
@@ -1607,11 +1736,13 @@ A legkisebb feature set, amely:
 ##### 3.4 Advanced Analytics Dashboard
 
 **Scope:**
+
 - 📊 Pénzügyi jelentések (P&L, cash flow, balance sheet)
 - 📊 Predictive analytics (bérlési trend előrejelzés)
 - 📊 Franchise partner benchmarking (performance comparison)
 
 **Business Value:**
+
 - Data-driven decision making
 - Franchise network optimization
 
@@ -1620,11 +1751,13 @@ A legkisebb feature set, amely:
 ##### 3.5 Mobile App Native (iOS/Android)
 
 **Scope:**
+
 - 📱 Native mobile app (React Native vagy Flutter)
 - 📱 Offline mode support (raktárban internet nélkül is használható)
 - 📱 Push notifications (bérlés lejárat, késedelmi díj alert)
 
 **Business Value:**
+
 - Pultos mobility 30-50% növekedés
 - Offline capability = no downtime
 
@@ -1641,6 +1774,7 @@ Az MVP sikeressége és a phased development zavartalan végrehajtása érdekéb
 **Kockázat:** RLS policy evaluation minden query-nél lassíthatja a rendszert nagy transaction volume esetén (500+ bérlés/nap/partner).
 
 **Mitigáció:**
+
 - ✅ **Database indexing:** `partner_id` index minden táblán
 - ✅ **Query optimization:** Application-level caching (Redis) gyakori lookup-okhoz (pl. termék katalógus)
 - ✅ **Load testing:** MVP pre-launch 10.000 query/óra stress teszt
@@ -1655,6 +1789,7 @@ Az MVP sikeressége és a phased development zavartalan végrehajtása érdekéb
 **Kockázat:** Gemini API downtime → Koko chatbot nem működik. Vagy: nagy tranzakciószám → AI költség exponenciálisan nő.
 
 **Mitigáció:**
+
 - ✅ **Fallback:** Gemini API offline → automatic redirect Chatwoot support ticket
 - ✅ **AI quota limit:** Tier-based query limit (Startup: 100/hó, Standard: 1000/hó)
 - ✅ **Cost monitoring:** Real-time Gemini API költség tracking, alert ha meghaladja tier limitet
@@ -1669,6 +1804,7 @@ Az MVP sikeressége és a phased development zavartalan végrehajtása érdekéb
 **Kockázat:** NAV API v3.0 változik vagy downtime → számlázás leáll.
 
 **Mitigáció:**
+
 - ✅ **NAV API versioning:** API v3.0 + v4.0 backward compatibility support
 - ✅ **Fallback:** NAV API downtime → manual számlázás + későbbi NAV sync queue
 - ✅ **Retry logic:** Exponential backoff retry (3 retry, 5-10-20 sec delay)
@@ -1685,6 +1821,7 @@ Az MVP sikeressége és a phased development zavartalan végrehajtása érdekéb
 **Kockázat:** Franchise partnerek nem akarnak átállni új rendszerre (change resistance), ragaszkodnak a régi Ver:1.33z-hez.
 
 **Mitigáció:**
+
 - ✅ **Pilot program:** 3 franchise partner early adopter program (ingyenes 90 nap + dedicated support)
 - ✅ **Change management:** User training (2 napos onboarding workshop pultosoknak)
 - ✅ **Success story:** Pilot partnerek eredményei (10x gyorsítás, 22% bevétel növekedés) → marketing case study
@@ -1699,6 +1836,7 @@ Az MVP sikeressége és a phased development zavartalan végrehajtása érdekéb
 **Kockázat:** Franchise partnerek nem értik a hibrid árazás (alap díj + user licensz) modellt, vagy nehezen tervezik a költségeket.
 
 **Mitigáció:**
+
 - ✅ **Transparent dashboard:** Partner látja real-time: "Alap díj: 50.000 Ft + 6 user = 74.000 Ft/hó"
 - ✅ **Pricing calculator:** Partner előre kalkulálhatja: "Ha 10 pultos lesz, mennyi a költség?"
 - ✅ **User tracking:** Inaktív userek (30+ nap) fél díjjal számítanak
@@ -1715,6 +1853,7 @@ Az MVP sikeressége és a phased development zavartalan végrehajtása érdekéb
 **Kockázat:** MVP 90-120 nap timeline túl ambiciózus, fejlesztői kapacitás nem elég.
 
 **Mitigáció:**
+
 - ✅ **Phased feature delivery:** MVP feature set priorizálás (CORE modulok first, PLUGIN modulok Phase 2)
 - ✅ **Outsource opció:** DevOps admin onboarding wizard fejlesztése outsource-olható (junior dev task)
 - ✅ **Reusable components:** UI component library (React/Vue shared components) → development speed 20-30% gyorsítás
@@ -1729,6 +1868,7 @@ Az MVP sikeressége és a phased development zavartalan végrehajtása érdekéb
 **Kockázat:** Automated RLS schema creation + K-P-D generation + user provisioning komplexebb mint becsült → Anna journey 15 perc target nem elérhető.
 
 **Mitigáció:**
+
 - ✅ **Manual fallback:** Ha automated wizard fail → DevOps admin manuálisan létrehozhatja tenant-ot (régi 24 órás process)
 - ✅ **Pre-flight validation:** Wizard "Deploy" gomb előtt schema creation teszt futtatása staging DB-n
 - ✅ **Rollback mechanism:** Ha deploy fail → automatic rollback, admin notification
@@ -1743,6 +1883,7 @@ Az MVP sikeressége és a phased development zavartalan végrehajtása érdekéb
 **Kockázat:** Pultosok és partnerek nem tudják használni az új rendszert (insufficient training).
 
 **Mitigáció:**
+
 - ✅ **User documentation:** Minden feature-hez screenshot-os user guide (magyar nyelv)
 - ✅ **Video tutorials:** 5-10 perces video tutorial-ok (árumozgatás rögzítés, bérlés kiadás, stb.)
 - ✅ **In-app help:** Context-sensitive help tooltips (pl. K-P-D kód bevitelnél: "Példa: K2-P5-D3")
@@ -1759,6 +1900,7 @@ Az MVP sikeressége és a phased development zavartalan végrehajtása érdekéb
 **Kockázat:** Ügyfél adatok szivárgása (data breach) → GDPR bírság + reputációs kár.
 
 **Mitigáció:**
+
 - ✅ **PostgreSQL column encryption:** Ügyfél személyes adatok (név, cím, telefonszám) titkosítva
 - ✅ **RLS tenant isolation:** Partner A nem látja Partner B ügyfeleit (integration teszt)
 - ✅ **Security audit:** Pre-launch penetration testing + security code review
@@ -1773,6 +1915,7 @@ Az MVP sikeressége és a phased development zavartalan végrehajtása érdekéb
 **Kockázat:** NAV audit során kiderül, hogy számlázás nem szabályos → bírság franchise partnernek.
 
 **Mitigáció:**
+
 - ✅ **NAV API v3.0 compliance:** NAV teszt környezet sikeres számlázás (100% success rate)
 - ✅ **Audit trail:** Minden számla kiállítás immutable log (KI, MIT, MIKOR)
 - ✅ **NAV API error handling:** Ha NAV API elutasít számlát → error message user-nek + admin alert
@@ -1829,6 +1972,7 @@ Az MVP sikeressége és a phased development zavartalan végrehajtása érdekéb
 A funkcionális követelmények definiálják **MILYEN képességekkel rendelkezik a termék** (WHAT capabilities exist), implementáció-független módon. Ez a **capability contract** minden downstream munkához (UX design, Architecture, Epic breakdown).
 
 **Kritikus tulajdonságok:**
+
 - ✅ Minden FR testelhető képesség (capability)
 - ✅ Minden FR implementáció-agnosztikus (sokféleképpen megvalósítható)
 - ✅ Minden FR meghatározza KI és MIT, de NEM a HOGYAN-t
@@ -1836,6 +1980,7 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 - ✅ Átfogó lefedés minden capability területen
 
 **Felhasználás:**
+
 1. UX Designer olvassa FRs → interakciót tervez minden képességhez
 2. Architect olvassa FRs → rendszert tervez minden képesség támogatásához
 3. PM olvassa FRs → epiceket és storykat hoz létre minden képesség implementálásához
@@ -1975,6 +2120,7 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 **Scope:** Egységes feladatkezelő widget három funkcióval: közös bevásárlólista (bolt szintű), delegálható feladatok (felelős hozzárendelés), személyes jegyzetek (privát)
 
 **MVP Funkciók:**
+
 - **FR73:** A Pultos képes bevásárlólista tételt létrehozni címmel, opcionális mennyiséggel és helyszín kiválasztásával
 - **FR74:** A Pultos képes feladatot (To-Do) létrehozni és felelőst hozzárendelni (multi-select a bolt dolgozóiból)
 - **FR75:** A Pultos képes személyes jegyzetet létrehozni, amely csak a saját felhasználója számára látható
@@ -1988,11 +2134,13 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 - **FR83:** A Rendszer biztosítja a bolt szintű izolációt (franchise-ok nem látják egymás listáit)
 
 **Phase 2 Funkciók:**
+
 - Kategóriák (takarítószer, irodaszer, alkatrész stb.)
 - Push értesítések új feladatról / közelgő határidőről
 - Ismétlődő tételek (heti bevásárlás)
 
 **User Story Kontextus:**
+
 > "Reggel látom nincs WC papír a raktárban. Beírom: 'WC papír - Raktár'. Délután Kata elmegy bevásárolni, kipipálja."
 > "Ki lett adva a boltosoknak, hogy töltsék fel az X polcot" - delegált feladat felelőssel
 
@@ -2005,6 +2153,7 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 **Üzleti Indoklás:** Pályázati követelmény - a rendszernek támogatnia kell a termelési/gyártási folyamatokat az alapanyag bevételezéstől a késztermék készletbe vételéig.
 
 **MVP Funkciók (Phase 2):**
+
 - **FR84:** BOM (Darabjegyzék) Kezelés - A Központi Admin képes többszintű (2-3 level) BOM-ot definiálni, amely meghatározza milyen alapanyagokból/alkatrészekből áll egy késztermék, beleértve a mennyiségeket és mértékegységeket
 - **FR85:** Gyártási Rendelés Létrehozás - A Központi Admin képes gyártási rendelést létrehozni BOM alapján megadott mennyiségre, amely automatikusan kiszámolja a szükséges alapanyag mennyiségeket
 - **FR86:** Gyártási Lap (Munkalap Analóg) - A Raktáros/Gyártó képes gyártási lapot kezelni fázisokkal (előkészítés → gyártás → ellenőrzés → készletbe vétel), státusz követéssel és munkaidő rögzítéssel
@@ -2014,10 +2163,12 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 - **FR90:** Lot/Batch Követés (Opcionális) - A Rendszer képes gyártási tételenként (lot/batch) nyomon követni a készterméket terméktípusonként konfigurálható módon (engedélyezett/tiltott)
 
 **Kapcsolódó Modulok:**
+
 - **Inventory Modul:** Készletmozgások (FR4-FR5), Serial Number tracking
 - **Szerviz Modul:** Munkalap analógia, felújítási workflow
 
 **Architekturális Referenciák:**
+
 - ADR-027: Gyártás Modul Architektúra
 - Feature-Gyartas-Modul-ERD.excalidraw
 
@@ -2030,11 +2181,13 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 **Üzleti Indoklás:** A szervizben különböző sürgősségű munkák érkeznek (garanciális, szerződött partner, felár miatt sürgős). A pultosnak azonnal látnia kell, melyik gépet kell előre venni.
 
 **Funkciók:**
+
 - **FR91:** A Pultos képes szerviz prioritást beállítani munkalap létrehozásakor (sürgős / felár miatt sürgős / garanciális / franchise partner / normál)
 - **FR92:** A Rendszer képes a szerviz várakozási listát prioritás szerint rendezni és vizuálisan megkülönböztetni (szín/ikon kódolás)
 - **FR93:** A Központi Admin képes partnerenként alapértelmezett prioritási szintet beállítani (szerződött partner = automatikusan magasabb prioritás)
 
 **Architekturális Referenciák:**
+
 - ADR-041: Szerviz Prioritás Rendszer
 
 ---
@@ -2046,10 +2199,12 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 **Üzleti Indoklás:** Nem minden beszállítónak van API-ja. Egyesek JSON-t küldenek emailben, másoktól manuálisan kell letölteni az adatokat.
 
 **Funkciók:**
+
 - **FR94:** A Rendszer képes JSON készletfájlokat fogadni és feldolgozni dedikált email címről (technikai@kisgepcentrum.hu) automatikus parsing-gel
 - **FR95:** A Központi Admin képes manuálisan feltölteni beszállítói készlet/ár fájlokat (JSON, CSV, Excel) web felületen keresztül
 
 **Architekturális Referenciák:**
+
 - ADR-017: Beszállítói API Integráció (bővített)
 
 ---
@@ -2061,6 +2216,7 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 **Üzleti Indoklás:** A dolgozóknak tudniuk kell egymásnak feladatot adni, kérdést küldeni. A szervizben fontos látni, milyen kommunikáció folyt az ügyféllel egy javítással kapcsolatban.
 
 **Funkciók:**
+
 - **FR96:** A Pultos képes másik dolgozónak üzenetet/kérést küldeni a rendszeren belül, amely az adott dolgozó feladatlistájában megjelenik
 - **FR97:** A Szervizes képes kommunikációs bejegyzést rögzíteni munkalaphoz (ügyfél hívás, email, egyéb), amely a munkalap előzményeiben látható
 
@@ -2075,6 +2231,7 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 **Üzleti Indoklás:** "Tudod, hogy meddig marad még nálad a gép?" - Az ügyféllel való kommunikáció előzményei megmaradjanak, ne kelljen hívogatni, mindkét fél lássa a historyt.
 
 **Funkciók:**
+
 - **FR98:** A Bérlő képes in-app üzenetet küldeni az aktív bérlésével kapcsolatban a boltnak, amely a bérlési rekordhoz kapcsolódik
 - **FR99:** A Pultos képes a bérléshez kapcsolódó kommunikációs előzményeket megtekinteni és válaszolni az ügyfélnek
 - **FR100:** A Rendszer képes a kommunikáció feladóját azonosítani (dolgozó név + szerep)
@@ -2082,6 +2239,7 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 **Megjegyzés:** Ez a modul NEM kapcsolódik a Chatwoot-hoz, kifejezetten bérlő-specifikus kommunikációs csatorna.
 
 **Architekturális Referenciák:**
+
 - ADR-042: Bérlői Kommunikáció Modul
 
 ---
@@ -2093,6 +2251,7 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 **Üzleti Indoklás:** A késés kezelés jelenleg telefonos. Az ügyfél tudja maga hosszabbítani, kalkulálni a díjat, és online fizetni - mindkét félnek kevesebb adminisztráció.
 
 **Funkciók:**
+
 - **FR101:** A Bérlő képes bérlés hosszabbítási kérelmet benyújtani app/web felületen, megadva a kívánt új visszahozási dátumot VAGY a befizetni kívánt összeget
 - **FR102:** A Rendszer képes automatikusan kalkulálni a hosszabbítás díját idő alapján VAGY a befizetett összeg alapján a meghosszabbított időtartamot (kedvezményeket figyelembe véve: hétvége 1,5 nap, heti, havi)
 - **FR103:** A Rendszer képes maximális fizetés nélküli hosszabbítási időt (alapértelmezett: 1 hét) érvényesíteni, utána fizetés szükséges a további hosszabbításhoz
@@ -2101,6 +2260,7 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 - **FR106:** A Rendszer képes jogi figyelmeztetést megjeleníteni a hosszabbítás során a nem fizetés következményeiről (lopás minősítés)
 
 **Architekturális Referenciák:**
+
 - ADR-043: Bérlés Hosszabbítás Self-Service
 - ADR-005: MyPos Payment (bővített)
 
@@ -2113,6 +2273,7 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 **Üzleti Indoklás:** "Ha beírja, hogy 20000-ig csináljátok, ha annál fölött van, akkor küldjetek árajánlatot, akkor tudja, hogy figyelj, nem küldök neki árajánlatot, hanem megcsinálom és küldöm is, hogy kész van. Sokkal gyorsabb a munka."
 
 **Funkciók:**
+
 - **FR107:** A Pultos képes szerviz felvételkor maximális javítási költség limitet rögzíteni az ügyfél kérésére
 - **FR108:** A Rendszer képes a szervizest figyelmeztetni, ha a becsült javítási költség meghaladja az ügyfél által megadott limitet (árajánlat szükséges)
 - **FR109:** A Szervizes képes a limiten belüli javítást elvégezni és lezárni külön jóváhagyás nélkül
@@ -2126,6 +2287,7 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 **Üzleti Indoklás:** "Három hétig árajánlat van, és nem különíti el, akkor mit fog látni a másik? Zárolva, hogy van raktáron de zárolva."
 
 **Funkciók:**
+
 - **FR110:** A Szervizes képes alkatrészeket "foglalt" státuszba helyezni árajánlat készítésekor, amely más szervizesek számára látható (raktáron, de foglalt)
 - **FR111:** A Rendszer képes a foglalást automatikusan feloldani konfigurálja időkorlát után (alapértelmezett: 5 nap), ha nincs ügyfél válasz
 - **FR112:** A Pultos képes reminder értesítést küldeni az ügyfélnek a foglalás lejárta előtt
@@ -2139,6 +2301,7 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 **Üzleti Indoklás:** "Angolok szoktak jönni, meg ukrán."
 
 **Funkciók:**
+
 - **FR113:** A Rendszer képes a felhasználói felületet magyar, angol és ukrán nyelven megjeleníteni
 - **FR114:** A Felhasználó képes a preferált nyelvet beállítani a profiljában
 
@@ -2151,17 +2314,20 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 **Üzleti Indoklás:** "legyen egy belső kommunikációs csatorna... a szervíz tud a pultossal kommunikálni... a szervíz egy csomó üzenetet ír a pultnak, hogy mit mondjon majd az ügyfélnek"
 
 **Funkciók:**
+
 - **FR115:** A Dolgozó képes valós idejű üzenetet küldeni másik dolgozónak a rendszeren belül (1-to-1 chat, WebSocket)
 - **FR116:** A Rendszer képes online/offline státuszt megjeleníteni a dolgozók mellett (zöld/piros jelzés)
 - **FR117:** A Dolgozó képes értesítést kapni új üzenetről (toast notification + olvasatlan badge a chat ikonon)
 - **FR118:** A Rendszer képes a chat előzményeket tárolni és visszakereshetővé tenni (dolgozónként)
 
 **Architekturális Referenciák:**
+
 - KGC-Integracios-Strategia-Vegleges.md (2.3 Custom Belső Chat)
 
 **Technológia:** NestJS + Socket.io (WebSocket), React komponens, PostgreSQL
 
 **MVP Korlátok:**
+
 - Csak 1-to-1 chat (nincs group chat)
 - Csak szöveg (nincs fájl csatolás)
 - Nincs video call
@@ -2173,20 +2339,23 @@ A funkcionális követelmények definiálják **MILYEN képességekkel rendelkez
 **Scope:** Alacsonyabb prioritású kényelmi funkciók.
 
 **Funkciók:**
+
 - **FR119:** A Rendszer képes franchise partnerenként email aláírás sablont tárolni és generálni a jogi követelményeknek megfelelően (brand név + üzemeltető cég adatai)
 - **FR120:** A Boltvezető képes ideiglenes emelt jogosultságot adni dolgozónak meghatározott időtartamra (max 24 óra), amely automatikusan visszavonódik
 - **FR121:** A Felhasználó képes a dashboard widgetjeit átrendezni és személyre szabott elrendezést menteni
+- **FR122:** A Felhasználó képes menüpontokat kedvencként megjelölni (max 10), amelyek a navigációs sávban külön "Gyorselérés" szekcióban jelennek meg, felhasználónként mentve, offline-first szinkronizációval (ADR-044)
 
 ---
 
 ### Funkcionális Követelmények Összefoglaló
 
-**Total Functional Requirements:** 121 FRs across 20 capability areas
+**Total Functional Requirements:** 122 FRs across 20 capability areas
 
 **Coverage Validation:**
+
 - ✅ **MVP Scope (Phase 1):** FR1-FR52, FR73-FR83, FR91-FR93, FR96-FR97, FR101-FR112, FR115-FR118 (CORE modulok, CORE integrations, CORE franchise multi-tenancy, CORE compliance, Feladatlista Widget, Szerviz Prioritás, Bérlés Hosszabbítás, Javítási Limit, Alkatrész Foglalás, Belső Chat)
 - ✅ **Phase 2 Scope:** FR53-FR55 (AI Extended), FR60-FR64 (Extended Integrations), FR84-FR90 (Gyártás Modul), FR94-FR95 (Beszállító Import), FR98-FR100 (Bérlői Kommunikáció), FR113-FR114 (Többnyelvűség)
-- ✅ **Phase 3 Scope:** FR119-FR121 (Egyéb Bővítések)
+- ✅ **Phase 3 Scope:** FR119-FR122 (Egyéb Bővítések)
 - ✅ **All User Journeys:** Kata (FR1-FR10, FR73-FR77), László (FR4-FR5, FR40), Péter (FR37-FR38), Anna (FR30-FR36), Tamás (FR82)
 - ✅ **Domain-Specific:** NAV compliance (FR24, FR56), GDPR (FR67-FR68), PCI DSS (FR59), Audit (FR65-FR72)
 - ✅ **Innovation Differentiators:** AI automation (FR49-FR55), Hibrid árazás billing (FR41), Franchise onboarding (FR30-FR36), K-P-D tracking (FR1, FR8), Vonalkód/QR (FR2-FR3), Audit trail (FR65-FR72), Beszállító API (FR60-FR61, FR94-FR95), Feladatlista Widget (FR73-FR83, FR96-FR97), Gyártás/BOM (FR84-FR90), Szerviz Prioritás (FR91-FR93), Bérlés Self-Service (FR101-FR106), Bérlői Kommunikáció (FR98-FR100)
@@ -2242,6 +2411,7 @@ A nem-funkcionális követelmények meghatározzák **MILYEN JÓL kell a rendsze
 - **NFR-S11:** GDPR breach notification protocol **< 72 óra** detection után (incident response plan)
 
 **Compliance Validáció:**
+
 - GDPR compliance checklist: user data encryption ✅, cascade delete ✅, consent management ✅
 - PCI DSS SAQ A-EP: tokenization ✅, no card data storage ✅
 - NAV audit: immutable audit trail ✅, számla kiállítás tracking ✅
@@ -2263,6 +2433,7 @@ A nem-funkcionális követelmények meghatározzák **MILYEN JÓL kell a rendsze
 - **NFR-SC7:** Horizontal scaling opció: PostgreSQL read replicas **Phase 3-ban** ha query volume meghaladja single instance kapacitást
 
 **Growth Scenario Planning:**
+
 - MVP: 3 partner × 100 transaction/hó = 300 transaction/hó
 - Phase 2: 10 partner × 200 transaction/hó = 2.000 transaction/hó
 - Phase 3: 20 partner × 500 transaction/hó = 10.000 transaction/hó
@@ -2286,6 +2457,7 @@ A nem-funkcionális követelmények meghatározzák **MILYEN JÓL kell a rendsze
 - **NFR-R9:** Health check monitoring: NAV API, MyPos API, Gemini API **status check 5 percenként**, alert ha 3+ consecutive failure
 
 **Monitoring & Alerting:**
+
 - Real-time DevOps monitoring dashboard: transaction count, API usage metrics, Gemini AI cost tracking
 - Alert thresholds: API failure > 3 egymás után, query response time > 200ms (90th percentile), RLS tenant leak teszt failure
 
@@ -2305,6 +2477,7 @@ A nem-funkcionális követelmények meghatározzák **MILYEN JÓL kell a rendsze
 - **NFR-I6:** Chatwoot/Twenty CRM/Horilla HRMS Plugin integrations **optional feature flags** (ki/bekapcsolható partner szinten, no core system dependency)
 
 **API Health Monitoring:**
+
 - NAV API health check: sikeres test számla minden deploy előtt (100% success rate 10 teszt számlából)
 - MyPos API health check: sikeres test authorization minden deploy előtt (10 teszt tranzakció)
 - Gemini API health check: FAQ teszt query minden deploy előtt (10 gyakori kérdés válasz accuracy > 80%)
@@ -2329,6 +2502,7 @@ A nem-funkcionális követelmények meghatározzák **MILYEN JÓL kell a rendsze
 - **NFR-U10:** Vonalkód/QR scan támogatás: **USB barcode scanner** + **camera-based scan** (telefon/tablet kamera fallback)
 
 **User Training & Documentation:**
+
 - Screenshot-os user guide minden feature-hez (magyar nyelv)
 - Video tutorials: 5-10 perc/video, minimum 10 video (árumozgatás, bérlés kiadás, szerviz munkalap, NAV számla, stb.)
 - Dedicated support első 90 napban (Chatwoot + email + telefon)
@@ -2355,6 +2529,7 @@ A nem-funkcionális követelmények meghatározzák **MILYEN JÓL kell a rendsze
 **Total NFR Categories:** 6 releváns kategóriák (Accessibility kihagyva - nem releváns internal tool esetén)
 
 **NFR Coverage:**
+
 - ✅ **Performance (8 NFR):** Response time targets minden critical workflow-ra (árumozgatás < 30s, inventory lookup < 5s, onboarding < 15 perc)
 - ✅ **Security (11 NFR):** Encryption, RLS isolation, PCI DSS tokenization, GDPR compliance, penetration testing
 - ✅ **Scalability (7 NFR):** Franchise network expansion (10+ partner), transaction volume growth (10k+ transaction/hó), horizontal scaling opció
@@ -2367,4 +2542,3 @@ A nem-funkcionális követelmények meghatározzák **MILYEN JÓL kell a rendsze
 Minden NFR **specifikus és mérhető** (nem vague mint "gyors", "biztonságos", "skálázható"). Minden NFR **tesztelhető** pre-launch validation során.
 
 ---
-

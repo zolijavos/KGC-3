@@ -8,12 +8,20 @@
  * - Document expiry tracking and reminders
  */
 
-import { COMPANY_VEHICLE_REPOSITORY, RENTAL_VEHICLE_REPOSITORY } from '@kgc/vehicles';
+import {
+  COMPANY_VEHICLE_REPOSITORY,
+  RENTAL_VEHICLE_REPOSITORY,
+  VEHICLE_REMINDER_REPOSITORY,
+} from '@kgc/vehicles';
 import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 // Repositories
-import { PrismaCompanyVehicleRepository, PrismaRentalVehicleRepository } from './repositories';
+import {
+  PrismaCompanyVehicleRepository,
+  PrismaRentalVehicleRepository,
+  PrismaVehicleReminderRepository,
+} from './repositories';
 
 // Controllers
 import { CompanyVehicleController, RentalVehicleController } from './controllers';
@@ -41,13 +49,17 @@ export class VehiclesModule {
         provide: COMPANY_VEHICLE_REPOSITORY,
         useClass: PrismaCompanyVehicleRepository,
       },
+      {
+        provide: VEHICLE_REMINDER_REPOSITORY,
+        useClass: PrismaVehicleReminderRepository,
+      },
     ];
 
     return {
       module: VehiclesModule,
       controllers: [RentalVehicleController, CompanyVehicleController],
       providers,
-      exports: [RENTAL_VEHICLE_REPOSITORY, COMPANY_VEHICLE_REPOSITORY],
+      exports: [RENTAL_VEHICLE_REPOSITORY, COMPANY_VEHICLE_REPOSITORY, VEHICLE_REMINDER_REPOSITORY],
     };
   }
 }

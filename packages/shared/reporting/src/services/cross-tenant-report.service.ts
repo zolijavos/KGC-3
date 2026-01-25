@@ -6,6 +6,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   ICrossReportResult,
+  IReportColumn,
   ITableRow,
   ReportType,
   DateRange,
@@ -141,6 +142,7 @@ export class CrossTenantReportService {
         aggregateBy: validInput.aggregateBy,
       },
       columns: this.getReportColumns(reportType),
+      data: aggregatedData,
       dataByTenant,
       aggregatedData,
       generatedAt: new Date(),
@@ -248,8 +250,8 @@ export class CrossTenantReportService {
     return names[type] || `${type} (Cross-tenant)`;
   }
 
-  private getReportColumns(type: ReportType): { field: string; header: string; type: string }[] {
-    const columnDefs: Record<ReportType, { field: string; header: string; type: string }[]> = {
+  private getReportColumns(type: ReportType): IReportColumn[] {
+    const columnDefs: Record<ReportType, IReportColumn[]> = {
       [ReportType.RENTAL_SUMMARY]: [
         { field: 'tenantName', header: 'Telephely', type: 'string' },
         { field: 'rentalCount', header: 'Bérlések', type: 'number' },

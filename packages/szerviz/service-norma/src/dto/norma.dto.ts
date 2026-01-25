@@ -13,12 +13,18 @@ export const NormaImportRowSchema = z.object({
   category: z.string().max(100).optional(),
 });
 
+/** Max items per import to prevent DoS attacks */
+const MAX_IMPORT_ITEMS = 10000;
+
 export const ImportNormaListSchema = z.object({
   supplier: z.string().min(1).max(100),
   versionNumber: z.string().min(1).max(50),
   effectiveFrom: z.date(),
-  defaultHourlyRate: z.number().min(0),
-  items: z.array(NormaImportRowSchema).min(1),
+  defaultHourlyRate: z.number().min(0).max(1000000), // Max 1M HUF/hour reasonable limit
+  items: z
+    .array(NormaImportRowSchema)
+    .min(1, { message: 'Legalább egy tétel szükséges' })
+    .max(MAX_IMPORT_ITEMS, { message: `Maximum ${MAX_IMPORT_ITEMS} tétel importálható egyszerre` }),
 });
 
 export const CalculateLaborCostSchema = z.object({

@@ -27,28 +27,28 @@ export interface IExpiringDocument {
   documentType: VehicleDocumentType;
   expiryDate: Date;
   daysUntilExpiry: number;
-  assignedUserId?: string;
-  tenantId?: string;
+  assignedUserId?: string | undefined;
+  tenantId?: string | undefined;
 }
 
 /** Dokumentum emlékeztető interfész */
 export interface IVehicleDocumentReminder {
   id: string;
-  rentalVehicleId?: string;
-  companyVehicleId?: string;
+  rentalVehicleId?: string | undefined;
+  companyVehicleId?: string | undefined;
   documentType: VehicleDocumentType;
   expiryDate: Date;
   reminderDaysBefore: number;
-  notificationSentAt?: Date;
-  notificationType?: NotificationType;
+  notificationSentAt?: Date | undefined;
+  notificationType?: NotificationType | undefined;
   sentToUserIds: string[];
   createdAt: Date;
 }
 
 /** Emlékeztető létrehozás input */
 export interface CreateReminderInput {
-  rentalVehicleId?: string;
-  companyVehicleId?: string;
+  rentalVehicleId?: string | undefined;
+  companyVehicleId?: string | undefined;
   documentType: VehicleDocumentType;
   expiryDate: Date;
   reminderDaysBefore: number;

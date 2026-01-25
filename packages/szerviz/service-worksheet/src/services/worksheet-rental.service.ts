@@ -122,11 +122,13 @@ export class WorksheetRentalService {
     const previousRentalId = worksheet.rentalId;
 
     // Update worksheet, remove rental link
+    // Use type assertion because exactOptionalPropertyTypes doesn't allow undefined assignment
     // Repository implementation should treat undefined rentalId as "clear field"
-    const updated = await this.worksheetRepository.update(worksheetId, {
+    const updateData = {
       rentalId: undefined,
       type: WorksheetType.FIZETOS, // Revert to standard paid repair
-    });
+    } as { rentalId?: string; type: WorksheetType };
+    const updated = await this.worksheetRepository.update(worksheetId, updateData);
 
     await this.auditService.log({
       action: 'worksheet_unlinked_from_rental',
@@ -213,7 +215,7 @@ export class WorksheetRentalService {
       priority: WorksheetPriority.NORMAL,
       partnerId: rental.partnerId,
       deviceName: rental.deviceName,
-      deviceSerialNumber: rental.deviceSerialNumber,
+      ...(rental.deviceSerialNumber !== undefined && { deviceSerialNumber: rental.deviceSerialNumber }),
       faultDescription: damageDescription,
       internalNote: `Bérlésből származó sérülés. Bérlés szám: ${rental.rentalNumber}`,
       rentalId,

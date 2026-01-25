@@ -93,9 +93,9 @@ export class DashboardWidgetService {
       type: validInput.type as WidgetType,
       title: validInput.title,
       dataSource: validInput.dataSource,
-      refreshInterval: validInput.refreshInterval,
+      ...(validInput.refreshInterval !== undefined && { refreshInterval: validInput.refreshInterval }),
       position: validInput.position,
-      config: validInput.config,
+      ...(validInput.config !== undefined && { config: validInput.config }),
     });
 
     await this.auditService.log({

@@ -6,11 +6,13 @@
 
 import {
   CreateRentalVehicleInput,
+  IExpiringDocument,
   IRentalVehicle,
   IRentalVehicleRepository,
   RentalVehicleFilter,
   RentalVehicleType,
   UpdateRentalVehicleInput,
+  VehicleDocumentType,
   VehicleStatus,
 } from '@kgc/vehicles';
 import { Inject, Injectable } from '@nestjs/common';
@@ -196,5 +198,75 @@ export class PrismaRentalVehicleRepository implements IRentalVehicleRepository {
     });
 
     return vehicles.map(v => this.toDomain(v));
+  }
+
+  /**
+   * Részletes lejáró dokumentumok lekérdezése
+   * Strukturált visszatérési értékkel: melyik dokumentum jár le, hány nap múlva
+   */
+  async findExpiringDocumentsDetailed(
+    tenantId: string,
+    withinDays: number
+  ): Promise<IExpiringDocument[]> {
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + withinDays);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const vehicles = await this.prisma.rentalVehicle.findMany({
+      where: {
+        tenantId,
+        status: 'ACTIVE',
+        OR: [
+          { registrationValidUntil: { lte: expiryDate, gte: today } },
+          { technicalInspectionUntil: { lte: expiryDate, gte: today } },
+        ],
+      },
+    });
+
+    const results: IExpiringDocument[] = [];
+
+    for (const vehicle of vehicles) {
+      // Forgalmi engedély lejárat
+      if (vehicle.registrationValidUntil) {
+        const regExpiry = new Date(vehicle.registrationValidUntil);
+        if (regExpiry >= today && regExpiry <= expiryDate) {
+          const daysUntilExpiry = Math.ceil(
+            (regExpiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+          );
+          results.push({
+            vehicleId: vehicle.id,
+            vehicleType: 'rental',
+            licensePlate: vehicle.licensePlate,
+            documentType: VehicleDocumentType.REGISTRATION,
+            expiryDate: regExpiry,
+            daysUntilExpiry,
+            tenantId: vehicle.tenantId,
+          });
+        }
+      }
+
+      // Műszaki vizsga lejárat
+      if (vehicle.technicalInspectionUntil) {
+        const techExpiry = new Date(vehicle.technicalInspectionUntil);
+        if (techExpiry >= today && techExpiry <= expiryDate) {
+          const daysUntilExpiry = Math.ceil(
+            (techExpiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+          );
+          results.push({
+            vehicleId: vehicle.id,
+            vehicleType: 'rental',
+            licensePlate: vehicle.licensePlate,
+            documentType: VehicleDocumentType.TECHNICAL_INSPECTION,
+            expiryDate: techExpiry,
+            daysUntilExpiry,
+            tenantId: vehicle.tenantId,
+          });
+        }
+      }
+    }
+
+    // Rendezés napok szerint növekvő sorrendben
+    return results.sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
   }
 }

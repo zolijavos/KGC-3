@@ -89,6 +89,8 @@ export interface RentalVehicleFilter {
 /** Bérgép jármű repository token */
 export const RENTAL_VEHICLE_REPOSITORY = Symbol('RENTAL_VEHICLE_REPOSITORY');
 
+import type { IExpiringDocument } from './vehicle-reminder.interface';
+
 /** Bérgép jármű repository interfész */
 export interface IRentalVehicleRepository {
   findAll(tenantId: string, filter?: RentalVehicleFilter): Promise<IRentalVehicle[]>;
@@ -107,4 +109,11 @@ export interface IRentalVehicleRepository {
     rentalEquipmentId: string
   ): Promise<IRentalVehicle>;
   findExpiringDocuments(tenantId: string, withinDays: number): Promise<IRentalVehicle[]>;
+  /**
+   * Részletes lejáró dokumentumok lekérdezése
+   * @param tenantId - Tenant azonosító
+   * @param withinDays - Napon belül lejáró dokumentumok
+   * @returns Strukturált lejáró dokumentum információk
+   */
+  findExpiringDocumentsDetailed(tenantId: string, withinDays: number): Promise<IExpiringDocument[]>;
 }

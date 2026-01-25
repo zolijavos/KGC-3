@@ -11,7 +11,6 @@ import type {
   RentalExtension,
   RentalHistoryEntry,
   RentalStatistics,
-  RentalStatus,
 } from '@kgc/rental-core';
 import {
   CreateRentalInput,
@@ -22,6 +21,7 @@ import {
   RentalEventType,
   RentalQuery,
   RentalQueryResult,
+  RentalStatus,
   UpdateRentalInput,
 } from '@kgc/rental-core';
 import { Inject, Injectable } from '@nestjs/common';

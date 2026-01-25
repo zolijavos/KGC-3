@@ -2304,3 +2304,279 @@ model VehicleDocumentReminder {
   @@index([notificationSentAt])
   @@map("vehicle_document_reminders")
 }
+
+// ============================================
+// USER SETTINGS MODELS (Epic 29: User Favorites, ADR-044)
+// ============================================
+
+/// UserSettings - User-level preferences
+model UserSettings {
+  id       String @id @default(uuid()) @db.Uuid
+  userId   String @unique @map("user_id") @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Favorites as JSONB array (ADR-044)
+  // Structure: [{ menuItemId: string, order: number, addedAt: Date, label?: string }]
+  favorites Json @default("[]")
+
+  // Version for optimistic locking (offline-first sync)
+  version Int @default(1)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([favorites], type: Gin)
+  @@map("user_settings")
+}
+
+/// TenantDefaultFavorites - Tenant-level default favorites per role
+model TenantDefaultFavorites {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @unique @map("tenant_id") @db.Uuid
+
+  // Role -> menuItemIds mapping as JSONB
+  // Structure: { "OPERATOR": ["rentals.checkout", ...], "MANAGER": [...], ... }
+  roleDefaults Json @default("{}") @map("role_defaults")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([tenantId])
+  @@map("tenant_default_favorites")
+}
+
+// ============================================
+// STOCK COUNT MODELS (Epic 24: Leltár, ADR-024)
+// ============================================
+
+/// Leltár státusz
+enum StockCountStatus {
+  DRAFT
+  IN_PROGRESS
+  SUSPENDED
+  PENDING_REVIEW
+  PENDING_ADJUSTMENT
+  COMPLETED
+  CANCELLED
+}
+
+/// Leltár típus
+enum StockCountType {
+  FULL
+  PARTIAL_CATEGORY
+  PARTIAL_ZONE
+  CYCLE
+  SPOT
+}
+
+/// Számlálás mód
+enum CountingMode {
+  MANUAL
+  BARCODE_SCAN
+  QR_SCAN
+  RFID_SCAN
+}
+
+/// Eltérés típus
+enum VarianceType {
+  SHORTAGE
+  OVERAGE
+  MATCH
+}
+
+/// Korrekció státusz
+enum AdjustmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  APPLIED
+}
+
+/// Eltérés ok kategória
+enum VarianceReasonCategory {
+  ADMIN_ERROR
+  THEFT_DAMAGE
+  MEASUREMENT_ERROR
+  RECEIPT_ERROR
+  DISPATCH_ERROR
+  NATURAL_LOSS
+  UNKNOWN
+  OTHER
+}
+
+/// StockCount - Leltár (Epic 24: Story 24-1)
+model StockCount {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Alapadatok
+  countNumber  String         @map("count_number") @db.VarChar(50)
+  name         String         @db.VarChar(255)
+  type         StockCountType
+  status       StockCountStatus @default(DRAFT)
+
+  // Helyszín
+  locationId  String @map("location_id") @db.Uuid
+  warehouseId String @map("warehouse_id") @db.Uuid
+
+  // Ütemezés
+  scheduledStartDate DateTime  @map("scheduled_start_date") @db.Timestamptz
+  scheduledEndDate   DateTime  @map("scheduled_end_date") @db.Timestamptz
+  actualStartDate    DateTime? @map("actual_start_date") @db.Timestamptz
+  actualEndDate      DateTime? @map("actual_end_date") @db.Timestamptz
+
+  // Készlet fagyasztás
+  stockFrozen Boolean @default(false) @map("stock_frozen")
+
+  // Felelős
+  responsibleUserId String @map("responsible_user_id") @db.Uuid
+
+  // Részleltár szűrők (JSON arrays)
+  categoryIds Json? @map("category_ids") @default("[]")
+  zoneIds     Json? @map("zone_ids") @default("[]")
+
+  // Statisztikák
+  totalItems    Int @default(0) @map("total_items")
+  countedItems  Int @default(0) @map("counted_items")
+  varianceCount Int @default(0) @map("variance_count")
+
+  notes String? @db.Text
+
+  // Audit
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  items            StockCountItem[]
+  counterSessions  CounterSession[]
+  adjustments      StockAdjustment[]
+
+  @@unique([tenantId, countNumber])
+  @@index([tenantId])
+  @@index([status])
+  @@index([type])
+  @@index([locationId])
+  @@index([warehouseId])
+  @@index([scheduledStartDate])
+  @@index([responsibleUserId])
+  @@map("stock_counts")
+}
+
+/// StockCountItem - Leltár tétel (Epic 24: Story 24-1, 24-2)
+model StockCountItem {
+  id           String @id @default(uuid()) @db.Uuid
+  stockCountId String @map("stock_count_id") @db.Uuid
+
+  // Cikk adatok
+  productId   String  @map("product_id") @db.Uuid
+  productName String  @map("product_name") @db.VarChar(255)
+  sku         String  @db.VarChar(100)
+  barcode     String? @db.VarChar(100)
+  locationCode String @map("location_code") @db.VarChar(50) // K-P-D
+
+  // Mennyiségek
+  bookQuantity    Decimal  @map("book_quantity") @db.Decimal(12, 3)
+  countedQuantity Decimal? @map("counted_quantity") @db.Decimal(12, 3)
+  variance        Decimal? @db.Decimal(12, 3)
+  varianceValue   Decimal? @map("variance_value") @db.Decimal(12, 2) // Ft
+
+  // Számlálás adatok
+  countedByUserId String?      @map("counted_by_user_id") @db.Uuid
+  countedAt       DateTime?    @map("counted_at") @db.Timestamptz
+  countingMode    CountingMode? @map("counting_mode")
+  scannedCode     String?      @map("scanned_code") @db.VarChar(100)
+
+  // Státusz
+  recountRequired Boolean @default(false) @map("recount_required")
+  recountReason   String? @map("recount_reason") @db.VarChar(255)
+
+  // Eltérés dokumentálás (24-3)
+  varianceType        VarianceType?
+  reasonCategory      VarianceReasonCategory? @map("reason_category")
+  reasonDescription   String?                 @map("reason_description") @db.Text
+  adjustmentStatus    AdjustmentStatus?       @map("adjustment_status")
+
+  notes String? @db.Text
+
+  // Audit
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  stockCount StockCount @relation(fields: [stockCountId], references: [id], onDelete: Cascade)
+
+  @@index([stockCountId])
+  @@index([productId])
+  @@index([barcode])
+  @@index([locationCode])
+  @@index([recountRequired])
+  @@index([varianceType])
+  @@index([adjustmentStatus])
+  @@map("stock_count_items")
+}
+
+/// CounterSession - Számláló session (Epic 24: Story 24-2)
+model CounterSession {
+  id           String @id @default(uuid()) @db.Uuid
+  stockCountId String @map("stock_count_id") @db.Uuid
+
+  // Felhasználó
+  userId   String @map("user_id") @db.Uuid
+  userName String @map("user_name") @db.VarChar(255)
+
+  // Session adatok
+  isActive       Boolean   @default(true) @map("is_active")
+  assignedZone   String?   @map("assigned_zone") @db.VarChar(100)
+  itemsCounted   Int       @default(0) @map("items_counted")
+  startedAt      DateTime  @default(now()) @map("started_at") @db.Timestamptz
+  lastActivityAt DateTime  @default(now()) @map("last_activity_at") @db.Timestamptz
+  endedAt        DateTime? @map("ended_at") @db.Timestamptz
+
+  // Relations
+  stockCount StockCount @relation(fields: [stockCountId], references: [id], onDelete: Cascade)
+
+  @@index([stockCountId])
+  @@index([userId])
+  @@index([isActive])
+  @@map("counter_sessions")
+}
+
+/// StockAdjustment - Készlet korrekció (Epic 24: Story 24-3)
+model StockAdjustment {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  stockCountId String @map("stock_count_id") @db.Uuid
+
+  // Korrekció adatok
+  adjustmentNumber   String           @map("adjustment_number") @db.VarChar(50)
+  status             AdjustmentStatus @default(PENDING)
+  itemCount          Int              @map("item_count")
+  totalVarianceValue Decimal          @map("total_variance_value") @db.Decimal(12, 2)
+
+  // Létrehozás
+  createdByUserId String   @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Jóváhagyás
+  approvedByUserId String?   @map("approved_by_user_id") @db.Uuid
+  approvedAt       DateTime? @map("approved_at") @db.Timestamptz
+
+  // Végrehajtás
+  appliedByUserId String?   @map("applied_by_user_id") @db.Uuid
+  appliedAt       DateTime? @map("applied_at") @db.Timestamptz
+
+  // Elutasítás
+  rejectionReason String? @map("rejection_reason") @db.Text
+
+  // Relations
+  stockCount StockCount @relation(fields: [stockCountId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, adjustmentNumber])
+  @@index([tenantId])
+  @@index([stockCountId])
+  @@index([status])
+  @@index([createdByUserId])
+  @@map("stock_adjustments")
+}

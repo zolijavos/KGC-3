@@ -4,9 +4,13 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { INormaItem, INormaLaborCalculation } from '../interfaces/norma.interface';
 import { CalculateLaborCostDto, CalculateLaborCostSchema } from '../dto/norma.dto';
-import { INormaVersionRepository, INormaItemRepository, IAuditService } from './norma-import.service';
+import { INormaItem, INormaLaborCalculation } from '../interfaces/norma.interface';
+import {
+  IAuditService,
+  INormaItemRepository,
+  INormaVersionRepository,
+} from './norma-import.service';
 
 export interface IWorksheet {
   id: string;
@@ -25,14 +29,14 @@ export class NormaLaborService {
     private readonly versionRepository: INormaVersionRepository,
     private readonly itemRepository: INormaItemRepository,
     private readonly worksheetRepository: IWorksheetRepository,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
   async calculateLaborCost(
     input: CalculateLaborCostDto,
     tenantId: string,
     userId: string,
-    supplier: string = 'Makita',
+    supplier: string = 'Makita'
   ): Promise<INormaLaborCalculation> {
     const validationResult = CalculateLaborCostSchema.safeParse(input);
     if (!validationResult.success) {
@@ -51,10 +55,20 @@ export class NormaLaborService {
     }
 
     // Warn if using norma pricing on non-warranty worksheet
+    // NOTE: In production, this should use a proper logging service
     if (!worksheet.isWarranty) {
-      console.warn(
-        `[NormaLaborService] Using norma pricing on non-warranty worksheet: ${worksheet.worksheetNumber}`,
-      );
+      // Using audit service for logging non-warranty usage - provides proper audit trail
+      await this.auditService.log({
+        action: 'norma_non_warranty_usage_warning',
+        entityType: 'worksheet',
+        entityId: validInput.worksheetId,
+        userId,
+        tenantId,
+        metadata: {
+          worksheetNumber: worksheet.worksheetNumber,
+          warning: 'Using norma pricing on non-warranty worksheet',
+        },
+      });
     }
 
     // Find active norma version
@@ -67,7 +81,7 @@ export class NormaLaborService {
     const normaItem = await this.itemRepository.findByCode(
       tenantId,
       activeVersion.id,
-      validInput.normaCode,
+      validInput.normaCode
     );
     if (!normaItem) {
       throw new Error(`Norma code not found: ${validInput.normaCode}`);
@@ -120,7 +134,7 @@ export class NormaLaborService {
   async findNormaByCode(
     normaCode: string,
     tenantId: string,
-    supplier: string = 'Makita',
+    supplier: string = 'Makita'
   ): Promise<INormaItem | null> {
     const activeVersion = await this.versionRepository.findActiveBySupplier(tenantId, supplier);
     if (!activeVersion) {
@@ -133,7 +147,7 @@ export class NormaLaborService {
   async searchNormaCodes(
     searchTerm: string,
     tenantId: string,
-    supplier: string = 'Makita',
+    supplier: string = 'Makita'
   ): Promise<INormaItem[]> {
     const activeVersion = await this.versionRepository.findActiveBySupplier(tenantId, supplier);
     if (!activeVersion) {
@@ -144,9 +158,9 @@ export class NormaLaborService {
     const lowerSearch = searchTerm.toLowerCase();
 
     return allItems.filter(
-      (item) =>
+      item =>
         item.normaCode.toLowerCase().includes(lowerSearch) ||
-        item.description.toLowerCase().includes(lowerSearch),
+        item.description.toLowerCase().includes(lowerSearch)
     );
   }
 }

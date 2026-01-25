@@ -3,17 +3,17 @@
  */
 
 import { Inject } from '@nestjs/common';
-import type {
-  IVarianceService,
-  IVarianceDetail,
-  IVarianceSummary,
-  IStockAdjustment,
-  VarianceReasonCategory,
-  VarianceType,
-  AdjustmentStatus,
-} from '../interfaces/variance.interface';
-import type { IStockCountItem, IStockCount } from '../interfaces/stock-count.interface';
 import { DocumentVarianceReasonSchema } from '../dto/variance.dto';
+import type { IStockCount, IStockCountItem } from '../interfaces/stock-count.interface';
+import { StockCountStatus } from '../interfaces/stock-count.interface';
+import type {
+  IStockAdjustment,
+  IVarianceDetail,
+  IVarianceService,
+  IVarianceSummary,
+  VarianceReasonCategory,
+} from '../interfaces/variance.interface';
+import { AdjustmentStatus, VarianceType } from '../interfaces/variance.interface';
 
 /**
  * Stock Count Item Repository interfész
@@ -67,7 +67,12 @@ export interface IProductRepository {
  * Audit szolgáltatás interfész
  */
 export interface IAuditService {
-  log(event: string, entityType: string, entityId: string, data: Record<string, unknown>): Promise<void>;
+  log(
+    event: string,
+    entityType: string,
+    entityId: string,
+    data: Record<string, unknown>
+  ): Promise<void>;
 }
 
 /**
@@ -106,7 +111,8 @@ export class VarianceService implements IVarianceService {
     const items = await this.itemRepository.findByStockCountId(stockCountId);
 
     const varianceItems = items.filter(
-      (item) => item.countedQuantity !== undefined && item.variance !== undefined && item.variance !== 0
+      item =>
+        item.countedQuantity !== undefined && item.variance !== undefined && item.variance !== 0
     );
 
     const details: IVarianceDetail[] = [];
@@ -116,11 +122,11 @@ export class VarianceService implements IVarianceService {
       const unitPrice = product?.unitPrice ?? 0;
       const variance = item.variance ?? 0;
 
-      let varianceType: VarianceType = 'MATCH';
+      let varianceType: VarianceType = VarianceType.MATCH;
       if (variance < 0) {
-        varianceType = 'SHORTAGE';
+        varianceType = VarianceType.SHORTAGE;
       } else if (variance > 0) {
-        varianceType = 'OVERAGE';
+        varianceType = VarianceType.OVERAGE;
       }
 
       const itemWithDetails = item as IStockCountItemWithDetails;
@@ -174,19 +180,17 @@ export class VarianceService implements IVarianceService {
     const unitPrice = product?.unitPrice ?? 0;
     const variance = item.variance;
 
-    let varianceType: VarianceType = 'MATCH';
+    let varianceType: VarianceType = VarianceType.MATCH;
     if (variance < 0) {
-      varianceType = 'SHORTAGE';
+      varianceType = VarianceType.SHORTAGE;
     } else if (variance > 0) {
-      varianceType = 'OVERAGE';
+      varianceType = VarianceType.OVERAGE;
     }
 
-    await this.auditService.log(
-      'VARIANCE_REASON_DOCUMENTED',
-      'StockCountItem',
-      itemId,
-      { category, description }
-    );
+    await this.auditService.log('VARIANCE_REASON_DOCUMENTED', 'StockCountItem', itemId, {
+      category,
+      description,
+    });
 
     return {
       itemId: updatedItem.id,
@@ -212,8 +216,8 @@ export class VarianceService implements IVarianceService {
   async getVarianceSummary(stockCountId: string): Promise<IVarianceSummary> {
     const variances = await this.getVariances(stockCountId);
 
-    const shortageItems = variances.filter((v) => v.varianceType === 'SHORTAGE');
-    const overageItems = variances.filter((v) => v.varianceType === 'OVERAGE');
+    const shortageItems = variances.filter(v => v.varianceType === 'SHORTAGE');
+    const overageItems = variances.filter(v => v.varianceType === 'OVERAGE');
 
     const totalShortageValue = shortageItems.reduce((sum, v) => sum + Math.abs(v.varianceValue), 0);
     const totalOverageValue = overageItems.reduce((sum, v) => sum + v.varianceValue, 0);
@@ -229,7 +233,8 @@ export class VarianceService implements IVarianceService {
       });
     }
 
-    const byReasonArray: Array<{ reason: VarianceReasonCategory; count: number; value: number }> = [];
+    const byReasonArray: Array<{ reason: VarianceReasonCategory; count: number; value: number }> =
+      [];
     byReason.forEach((val, reason) => {
       byReasonArray.push({ reason, count: val.count, value: val.value });
     });
@@ -258,7 +263,9 @@ export class VarianceService implements IVarianceService {
     const variances = await this.getVariances(stockCountId);
     const totalVarianceValue = variances.reduce((sum, v) => sum + v.varianceValue, 0);
 
-    const adjustmentNumber = await this.adjustmentRepository.generateAdjustmentNumber(stockCount.tenantId);
+    const adjustmentNumber = await this.adjustmentRepository.generateAdjustmentNumber(
+      stockCount.tenantId
+    );
 
     const adjustment: IStockAdjustment = {
       id: crypto.randomUUID(),
@@ -276,16 +283,14 @@ export class VarianceService implements IVarianceService {
 
     // Update stock count status
     await this.stockCountRepository.update(stockCountId, {
-      status: 'PENDING_ADJUSTMENT',
+      status: StockCountStatus.PENDING_ADJUSTMENT,
       updatedAt: new Date(),
     });
 
-    await this.auditService.log(
-      'ADJUSTMENT_CREATED',
-      'StockAdjustment',
-      created.id,
-      { itemCount: variances.length, totalVarianceValue }
-    );
+    await this.auditService.log('ADJUSTMENT_CREATED', 'StockAdjustment', created.id, {
+      itemCount: variances.length,
+      totalVarianceValue,
+    });
 
     return created;
   }
@@ -309,12 +314,7 @@ export class VarianceService implements IVarianceService {
       approvedAt: new Date(),
     });
 
-    await this.auditService.log(
-      'ADJUSTMENT_APPROVED',
-      'StockAdjustment',
-      adjustmentId,
-      { userId }
-    );
+    await this.auditService.log('ADJUSTMENT_APPROVED', 'StockAdjustment', adjustmentId, { userId });
 
     return updated;
   }
@@ -341,12 +341,10 @@ export class VarianceService implements IVarianceService {
       rejectionReason: reason,
     });
 
-    await this.auditService.log(
-      'ADJUSTMENT_REJECTED',
-      'StockAdjustment',
-      adjustmentId,
-      { userId, reason }
-    );
+    await this.auditService.log('ADJUSTMENT_REJECTED', 'StockAdjustment', adjustmentId, {
+      userId,
+      reason,
+    });
 
     return updated;
   }
@@ -388,12 +386,10 @@ export class VarianceService implements IVarianceService {
       appliedAt: new Date(),
     });
 
-    await this.auditService.log(
-      'ADJUSTMENT_APPLIED',
-      'StockAdjustment',
-      adjustmentId,
-      { userId, itemCount: variances.length }
-    );
+    await this.auditService.log('ADJUSTMENT_APPLIED', 'StockAdjustment', adjustmentId, {
+      userId,
+      itemCount: variances.length,
+    });
 
     return updated;
   }
@@ -416,25 +412,45 @@ export class VarianceService implements IVarianceService {
 
     // Check if all adjustments are applied
     const adjustments = await this.adjustmentRepository.findByStockCountId(stockCountId);
-    const pendingAdjustments = adjustments.filter((a) => a.status !== 'APPLIED' && a.status !== 'REJECTED');
+    const pendingAdjustments = adjustments.filter(
+      a => a.status !== 'APPLIED' && a.status !== 'REJECTED'
+    );
 
     if (pendingAdjustments.length > 0) {
       throw new Error('Vannak még végrehajtásra váró korrekciók');
     }
 
     await this.stockCountRepository.update(stockCountId, {
-      status: 'COMPLETED',
+      status: StockCountStatus.COMPLETED,
       stockFrozen: false,
       actualEndDate: new Date(),
       updatedAt: new Date(),
     });
 
-    await this.auditService.log(
-      'STOCK_COUNT_COMPLETED',
-      'StockCount',
-      stockCountId,
-      { userId }
-    );
+    await this.auditService.log('STOCK_COUNT_COMPLETED', 'StockCount', stockCountId, { userId });
+  }
+
+  /**
+   * Escape CSV field to prevent CSV injection
+   * Wraps in quotes and escapes internal quotes
+   * Prefixes formula characters with single quote to prevent Excel macro execution
+   */
+  private escapeCSVField(value: string | number | undefined): string {
+    if (value === undefined || value === null) {
+      return '';
+    }
+    const strValue = String(value);
+    // Prevent formula injection (=, +, -, @, tab, carriage return)
+    const formulaChars = ['=', '+', '-', '@', '\t', '\r'];
+    let escaped = strValue;
+    if (formulaChars.some(c => escaped.startsWith(c))) {
+      escaped = `'${escaped}`; // Prefix with single quote to prevent formula execution
+    }
+    // If contains semicolon, quote, or newline, wrap in quotes
+    if (escaped.includes(';') || escaped.includes('"') || escaped.includes('\n')) {
+      escaped = `"${escaped.replace(/"/g, '""')}"`;
+    }
+    return escaped;
   }
 
   /**
@@ -450,7 +466,16 @@ export class VarianceService implements IVarianceService {
 
       for (const v of variances) {
         lines.push(
-          `${v.sku};${v.productName};${v.locationCode};${v.bookQuantity};${v.countedQuantity};${v.variance};${v.varianceValue};${v.reasonCategory ?? ''}`
+          [
+            this.escapeCSVField(v.sku),
+            this.escapeCSVField(v.productName),
+            this.escapeCSVField(v.locationCode),
+            v.bookQuantity,
+            v.countedQuantity,
+            v.variance,
+            v.varianceValue,
+            this.escapeCSVField(v.reasonCategory ?? ''),
+          ].join(';')
         );
       }
 

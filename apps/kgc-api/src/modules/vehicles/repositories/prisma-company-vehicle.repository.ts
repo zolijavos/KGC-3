@@ -11,7 +11,9 @@ import {
   CreateCompanyVehicleInput,
   ICompanyVehicle,
   ICompanyVehicleRepository,
+  IExpiringDocument,
   UpdateCompanyVehicleInput,
+  VehicleDocumentType,
   VehicleStatus,
 } from '@kgc/vehicles';
 import { Inject, Injectable } from '@nestjs/common';
@@ -218,5 +220,119 @@ export class PrismaCompanyVehicleRepository implements ICompanyVehicleRepository
     });
 
     return vehicles.map(v => this.toDomain(v));
+  }
+
+  /**
+   * Részletes lejáró dokumentumok lekérdezése
+   * Strukturált visszatérési értékkel: KGFB, CASCO, műszaki vizsga, pályamatrica
+   */
+  async findExpiringDocumentsDetailed(withinDays: number): Promise<IExpiringDocument[]> {
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + withinDays);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const vehicles = await this.prisma.companyVehicle.findMany({
+      where: {
+        status: 'ACTIVE',
+        OR: [
+          { registrationValidUntil: { lte: expiryDate, gte: today } },
+          { technicalInspectionUntil: { lte: expiryDate, gte: today } },
+          { kgfbValidUntil: { lte: expiryDate, gte: today } },
+          { cascoValidUntil: { lte: expiryDate, gte: today } },
+          { highwayStickerUntil: { lte: expiryDate, gte: today } },
+        ],
+      },
+    });
+
+    const results: IExpiringDocument[] = [];
+
+    for (const vehicle of vehicles) {
+      const baseInfo = {
+        vehicleId: vehicle.id,
+        vehicleType: 'company' as const,
+        licensePlate: vehicle.licensePlate,
+        assignedUserId: vehicle.assignedUserId ?? undefined,
+        tenantId: vehicle.assignedTenantId ?? undefined,
+      };
+
+      // Forgalmi engedély lejárat
+      if (vehicle.registrationValidUntil) {
+        const regExpiry = new Date(vehicle.registrationValidUntil);
+        if (regExpiry >= today && regExpiry <= expiryDate) {
+          results.push({
+            ...baseInfo,
+            documentType: VehicleDocumentType.REGISTRATION,
+            expiryDate: regExpiry,
+            daysUntilExpiry: Math.ceil(
+              (regExpiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+            ),
+          });
+        }
+      }
+
+      // Műszaki vizsga lejárat
+      if (vehicle.technicalInspectionUntil) {
+        const techExpiry = new Date(vehicle.technicalInspectionUntil);
+        if (techExpiry >= today && techExpiry <= expiryDate) {
+          results.push({
+            ...baseInfo,
+            documentType: VehicleDocumentType.TECHNICAL_INSPECTION,
+            expiryDate: techExpiry,
+            daysUntilExpiry: Math.ceil(
+              (techExpiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+            ),
+          });
+        }
+      }
+
+      // KGFB biztosítás lejárat
+      if (vehicle.kgfbValidUntil) {
+        const kgfbExpiry = new Date(vehicle.kgfbValidUntil);
+        if (kgfbExpiry >= today && kgfbExpiry <= expiryDate) {
+          results.push({
+            ...baseInfo,
+            documentType: VehicleDocumentType.KGFB_INSURANCE,
+            expiryDate: kgfbExpiry,
+            daysUntilExpiry: Math.ceil(
+              (kgfbExpiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+            ),
+          });
+        }
+      }
+
+      // CASCO biztosítás lejárat
+      if (vehicle.cascoValidUntil) {
+        const cascoExpiry = new Date(vehicle.cascoValidUntil);
+        if (cascoExpiry >= today && cascoExpiry <= expiryDate) {
+          results.push({
+            ...baseInfo,
+            documentType: VehicleDocumentType.CASCO_INSURANCE,
+            expiryDate: cascoExpiry,
+            daysUntilExpiry: Math.ceil(
+              (cascoExpiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+            ),
+          });
+        }
+      }
+
+      // Pályamatrica lejárat
+      if (vehicle.highwayStickerUntil) {
+        const stickerExpiry = new Date(vehicle.highwayStickerUntil);
+        if (stickerExpiry >= today && stickerExpiry <= expiryDate) {
+          results.push({
+            ...baseInfo,
+            documentType: VehicleDocumentType.HIGHWAY_STICKER,
+            expiryDate: stickerExpiry,
+            daysUntilExpiry: Math.ceil(
+              (stickerExpiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+            ),
+          });
+        }
+      }
+    }
+
+    // Rendezés napok szerint növekvő sorrendben
+    return results.sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
   }
 }

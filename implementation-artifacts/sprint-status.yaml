@@ -42,7 +42,7 @@
 # Priority: Add missing Prisma models before continuing with controllers.
 
 generated: 2026-01-15
-updated: 2026-01-24
+updated: 2026-01-25
 project: KGC-3
 project_key: KGC
 tracking_system: file-system
@@ -163,16 +163,20 @@ development_status:
   9-6-minimum-stock-alert: done
   epic-9-retrospective: done
 
-  # Epic 10: Invoice Core (@kgc/sales-invoice) - 6 stories
-  # CODE: 10 ts files exist | PRISMA: ✅ Invoice, InvoiceItem models EXIST
-  # Updated 2026-01-25: Status workflow + Item management implemented
-  epic-10: in-progress
+  # Epic 10: Invoice Core (@kgc/sales-invoice) - 6 stories ✅ COMPLETE
+  # CODE: 15+ ts files | PRISMA: ✅ Invoice, InvoiceItem models + Prisma repository
+  # Updated 2026-01-25: Full API implementation with forRoot pattern
+  # - InvoiceController (15 endpoints): CRUD, status, storno, PDF, RBAC check
+  # - InvoicePdfService (290 lines): HTML template-based PDF generation
+  # - StornoService: Full + partial storno support
+  # - InvoiceRbacService: Role-based visibility and permissions
+  epic-10: done
   10-1-szamla-crud: done # Prisma repository exists (623 lines) - verified 2026-01-25
   10-2-szamla-tetel-kezeles: done # addItem/removeItem/updateItem/recalculateTotals + DRAFT check
-  10-3-szamla-pdf-generalas: backlog
+  10-3-szamla-pdf-generalas: done # InvoicePdfService (290 lines) with HU/EN templates
   10-4-szamla-statusz-workflow: done # State machine + markAsSent/markAsPaid/markAsOverdue/cancel
-  10-5-sztorno-szamla: backlog
-  10-6-szamla-lathatosag-rbac: backlog
+  10-5-sztorno-szamla: done # StornoService with createStorno/createPartialStorno methods
+  10-6-szamla-lathatosag-rbac: done # InvoiceRbacService with canView/canEdit/canDelete/canIssue/canCancel/canRecordPayment
   epic-10-retrospective: optional
 
   # Epic 11: NAV Integration (@kgc/nav-online) - 5 stories ✅ COMPLETE
@@ -185,15 +189,15 @@ development_status:
   11-5-offline-fallback-es-queue: done
   epic-11-retrospective: done
 
-  # Epic 12: Task List Widget (@kgc/feladatlista) - 5 stories
-  # CODE: 5 ts files (minimal) | PRISMA: ✅ Task model EXISTS
-  # Updated 2026-01-25: Prisma model exists - needs Prisma repository implementation
-  epic-12: in-progress
-  12-1-bevasarlolista-tetel: in-progress # Prisma model exists, needs repo
-  12-2-to-do-feladat-felelossel: backlog
-  12-3-feladat-statusz-es-kipipalas: backlog
-  12-4-szemelyes-jegyzet: backlog
-  12-5-boltvezeto-lista-hozzaferes: backlog
+  # Epic 12: Task List Widget (@kgc/feladatlista) - 5 stories ✅ COMPLETE
+  # CODE: Prisma repo (591 lines) + Controller (320 lines) + 11 REST endpoints
+  # Updated 2026-01-25: Full implementation with forRoot pattern
+  epic-12: done
+  12-1-bevasarlolista-tetel: done # getShoppingList, create SHOPPING type
+  12-2-to-do-feladat-felelossel: done # assignUsers, unassignUsers, TODO type
+  12-3-feladat-statusz-es-kipipalas: done # updateStatus, complete
+  12-4-szemelyes-jegyzet: done # getPrivateNotes, isPrivate flag
+  12-5-boltvezeto-lista-hozzaferes: done # query filters, countByStatus/Type stats
   epic-12-retrospective: optional
 
   # ============================================
@@ -202,15 +206,17 @@ development_status:
   # STATUS: 🟡 IN-PROGRESS - Prisma models exist, in-memory repos done, Prisma repos needed
   # Updated 2026-01-25: Prisma models added, InMemory repos implemented
 
-  # Epic 13: Rental Equipment (@kgc/bergep) - 5 stories
-  # CODE: InMemory + Prisma repos done (1198 lines) | PRISMA: ✅ RentalEquipment, RentalAccessory
-  # Updated 2026-01-25: Full Prisma repository implemented with CRUD, status, accessories, history
-  epic-13: in-progress
-  13-1-bergep-crud: done # Prisma repository complete (1198 lines)
-  13-2-bergep-statusz-lifecycle: done # Included in prisma-equipment.repository.ts
-  13-3-serial-number-es-qr-kod: done # Included in prisma-equipment.repository.ts
-  13-4-tartozek-kezeles: done # Included in prisma-equipment.repository.ts
-  13-5-bergep-elozmenyek-es-karbantartas: done # Included in prisma-equipment.repository.ts
+  # Epic 13: Rental Equipment (@kgc/bergep) - 5 stories ✅ COMPLETE
+  # CODE: Service + Controller done | PRISMA: ✅ RentalEquipment, RentalAccessory
+  # Updated 2026-01-25: Full API with BergepController (18 endpoints), BergepModule with forRoot
+  # - BergepController: CRUD, status, scan, accessories, checklist, history, maintenance, alerts
+  # - BergepModule: forRoot pattern with InMemoryEquipmentRepository
+  epic-13: done
+  13-1-bergep-crud: done # RentalEquipmentService.create/update/delete/findById/findMany
+  13-2-bergep-statusz-lifecycle: done # changeStatus with transition validation
+  13-3-serial-number-es-qr-kod: done # scan() by QR/Serial/Inventory code
+  13-4-tartozek-kezeles: done # addAccessory/updateAccessory/removeAccessory/verifyChecklist
+  13-5-bergep-elozmenyek-es-karbantartas: done # getHistory/addMaintenanceRecord/getMaintenanceAlerts
   epic-13-retrospective: optional
 
   # Epic 14: Rental Operations (@kgc/rental-core) - 7 stories
@@ -267,12 +273,18 @@ development_status:
   epic-17-retrospective: optional
 
   # Epic 18: Quotations (@kgc/sales-quote) - 4 stories
-  # CODE: 13 ts files | PRISMA: ✅ Quote, QuoteItem EXIST
-  epic-18: in-progress
-  18-1-arajanlat-generalas: done # Prisma repository implemented (630 lines) - 2026-01-25
-  18-2-robbantott-abra-alapu-alkatresz-kivalasztas: backlog
-  18-3-arajanlat-pdf-es-email: backlog
-  18-4-arajanlat-elfogadas-munkalap: backlog
+  # CODE: QuoteController (750 lines) + Services + 40 tests | PRISMA: ✅ Quote, QuoteItem EXIST
+  # Updated 2026-01-25: Full API + PDF + Email implementation
+  # - QuoteController: 17 REST endpoints, CRUD, status workflow, PDF, email
+  # - QuotePdfService: pdf-lib based PDF generation (500 lines)
+  # - QuoteEmailService: HTML email with PDF attachment (200 lines)
+  # - Code Review: 8 issues fixed (route ordering, validation, permissions)
+  # - TEA Testing: 40 tests passing
+  epic-18: done
+  18-1-arajanlat-generalas: done # QuoteController + QuoteModule (2026-01-25)
+  18-2-robbantott-abra-alapu-alkatresz-kivalasztas: done # ExplodedViewRepository + 4 endpoints + 16 tests (2026-01-25)
+  18-3-arajanlat-pdf-es-email: done # QuotePdfService + QuoteEmailService + 6 tests (2026-01-25)
+  18-4-arajanlat-elfogadas-munkalap: done # convertToWorksheet() full impl + 6 tests (2026-01-25)
   epic-18-retrospective: optional
 
   # Epic 19: Warranty Claims (@kgc/service-warranty) - 4 stories
@@ -284,13 +296,15 @@ development_status:
   19-4-claim-elszamolas: done # Settlement methods + Map-based bulk settle + audit trail (2026-01-25)
   epic-19-retrospective: optional
 
-  # Epic 20: Service Standards (@kgc/service-norma) - 3 stories
-  # CODE: 10 ts files | PRISMA: ✅ ServiceNorm EXISTS
+  # Epic 20: Service Standards (@kgc/service-norma) - 3 stories ✅ COMPLETE
+  # CODE: 12 ts files + 29 tests | PRISMA: ✅ ServiceNorm EXISTS
   # REPO: ✅ PrismaServiceNormRepository COMPLETE (2026-01-25)
-  epic-20: in-progress
-  20-1-norma-tetel-import: done # Prisma repo with CRUD, bulk import, validity check
-  20-2-norma-alapu-munkadij: backlog
-  20-3-norma-lista-frissites: backlog
+  # API: ✅ ServiceNormaController (590 lines, 15 endpoints)
+  # TESTS: 29 passing (norma-import: 10, norma-labor: 10, norma-version: 9)
+  epic-20: done
+  20-1-norma-tetel-import: done # POST /service-norms/import (bulk import with validation)
+  20-2-norma-alapu-munkadij: done # POST /service-norms/calculate (labor cost calculation)
+  20-3-norma-lista-frissites: done # PATCH /service-norms/:id (update norms, validity management)
   epic-20-retrospective: optional
 
   # ============================================
@@ -321,12 +335,19 @@ development_status:
   23-2-arres-kalkulacio-es-riport: backlog
   epic-23-retrospective: optional
 
-  # Epic 24: Stock Count (@kgc/leltar) - 3 stories
-  # CODE: 11 ts files | Uses Inventory Prisma (exists)
-  epic-24: in-progress
-  24-1-leltar-inditas: in-progress
-  24-2-leltar-rogzites: backlog
-  24-3-leltar-elteres-es-korrekcio: backlog
+  # Epic 24: Stock Count (@kgc/leltar) - 3 stories ✅ COMPLETE
+  # CODE: Package (70 tests) + API Controller (72 tests) + 5 Prisma repos
+  # PRISMA: ✅ StockCount, StockCountItem, CounterSession, StockAdjustment
+  # Updated 2026-01-25: Full implementation with Prisma repositories
+  # - StockCountController (706 lines): 30+ REST endpoints for all 3 stories
+  # - PrismaStockCountRepository: CRUD, generateCountNumber
+  # - PrismaStockCountItemRepository: batch create, barcode lookup, filter
+  # - PrismaCounterSessionRepository: session management
+  # - PrismaStockAdjustmentRepository: adjustment workflow
+  epic-24: done
+  24-1-leltar-inditas: done # StockCount CRUD, lifecycle (start/suspend/resume/cancel/freeze)
+  24-2-leltar-rogzites: done # CountRecordingService, sessions, barcode/manual recording, batch
+  24-3-leltar-elteres-es-korrekcio: done # VarianceService, adjustments (create/approve/reject/apply), CSV export
   epic-24-retrospective: optional
 
   # ============================================
@@ -371,10 +392,22 @@ development_status:
   # Epic 29: Chatwoot Integration - 2 stories
   # CODE: 1512 lines + tests | External API
   # Updated 2026-01-25: ticket.service.ts + escalation.service.ts complete with tests
-  epic-29: in-progress
+  epic-29-chatwoot: done
   29-1-support-ticket-integracio: done # 734 lines + tests
   29-2-ai-escalation-chatwoot-ba: done # escalation.service.ts complete
-  epic-29-retrospective: optional
+  epic-29-chatwoot-retrospective: optional
+
+  # Epic 29-NEW: User Favorites (ADR-044) - 5 stories
+  # CODE: UserSettingsModule + Controller + 25 tests | PRISMA: ✅ UserSettings, TenantDefaultFavorites
+  # FRONTEND: Zustand store + FavoriteButton + FavoritesSidebar + DnD
+  # Updated 2026-01-25: Backend + Frontend complete, only command palette remaining
+  epic-29-favorites: in-progress
+  29-1-user-favorites-api: done # UserSettingsController (7 endpoints) + 25 tests (2026-01-25)
+  29-2-favorites-zustand-store: done # Zustand + localStorage persist + offline queue (2026-01-25)
+  29-3-favorite-button-sidebar: done # FavoriteButton + FavoritesSidebar + @dnd-kit drag-drop (2026-01-25)
+  29-4-tenant-default-favorites: done # TenantDefaultFavoritesController (2 endpoints)
+  29-5-command-palette-integration: backlog # Frontend - Ctrl+K integration (cmdk)
+  epic-29-favorites-retrospective: optional
 
   # Epic 30: Horilla HR Integration - 1 story
   # CODE: 663 lines + tests | External API
@@ -406,11 +439,12 @@ development_status:
   # ============================================
 
   # Epic 33: Infrastructure & Deployment - 7 stories
+  # Updated 2026-01-25: Stories 33-1 to 33-4 complete
   epic-33: in-progress
   33-1-twenty-crm-docker-setup: done # Code reviewed 2026-01-25
   33-2-chatwoot-docker-setup: done # Code reviewed 2026-01-25
   33-3-horilla-hr-docker-setup: done # Code reviewed 2026-01-25
-  33-4-full-stack-docker-compose: backlog
+  33-4-full-stack-docker-compose: done # Full stack: API+Web Dockerfiles, unified compose (2026-01-25)
   33-5-kubernetes-manifests-production: backlog
   33-6-ci-cd-pipeline-setup: backlog
   33-7-monitoring-observability-stack: backlog
@@ -423,15 +457,15 @@ development_status:
   # ADR-027: Járműnyilvántartás (Bérgép járművek + Céges gépkocsik)
 
   # Epic 34: Vehicle Management (@kgc/vehicles) - 6 stories
-  # CODE: Prisma repos exist (422 lines) | PRISMA: ✅ RentalVehicle, CompanyVehicle
-  # Updated 2026-01-25: Prisma repositories implemented
-  epic-34: in-progress
-  34-1-bergep-jarmu-crud: done # prisma-rental-vehicle.repository.ts (200 lines)
-  34-2-ceges-gepkocsi-crud: done # prisma-company-vehicle.repository.ts (222 lines)
-  34-3-dokumentum-lejarat-kezeles: backlog
-  34-4-automatikus-emlekezteto: backlog
-  34-5-bergep-modul-kapcsolas: backlog
-  34-6-jogosultsagi-rendszer: backlog
+  # CODE: Prisma repos complete (~700 lines) | PRISMA: ✅ RentalVehicle, CompanyVehicle, VehicleDocumentReminder
+  # Updated 2026-01-25: All stories implemented with RBAC
+  epic-34: done
+  34-1-bergep-jarmu-crud: done # prisma-rental-vehicle.repository.ts
+  34-2-ceges-gepkocsi-crud: done # prisma-company-vehicle.repository.ts
+  34-3-dokumentum-lejarat-kezeles: done # findExpiringDocumentsDetailed() + detailed endpoint
+  34-4-automatikus-emlekezteto: done # prisma-vehicle-reminder.repository.ts (249 lines)
+  34-5-bergep-modul-kapcsolas: done # linkToRentalEquipment() exists
+  34-6-jogosultsagi-rendszer: done # RBAC: VEHICLE_* permissions, JwtAuthGuard + PermissionGuard
   epic-34-retrospective: optional
 
 # ============================================
@@ -476,12 +510,26 @@ development_status:
 #   - GoodsReceipt, ReceiptItem (Epic 21)
 
 # ============================================
-# SUMMARY (Updated 2026-01-25 - FULL CODE AUDIT)
+# SUMMARY (Updated 2026-01-25 - Epic 20 Complete + Epic 29 Favorites API)
 # ============================================
-# ✅ DONE: 13 epics (1-6, 7, 8, 9, 11, 13, 30, 31, 32)
-# 🟡 IN-PROGRESS: 16 epics (10, 12, 14-20, 24, 25-29, 33, 34)
-# 🔴 BLOCKED-PRISMA: 2 epics (21, 23)
+# ✅ DONE: 23 epics (1-6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 29-chatwoot, 30, 31, 32, 34)
+# 🟡 IN-PROGRESS: 3 epics (24, 29-favorites, 33)
+# 🔴 BLOCKED-PRISMA: 5 epics (21, 23, 25, 26, 27, 28)
 # ⚪ BACKLOG: 1 epic (22)
+#
+# LATEST UPDATE (2026-01-25):
+# ===========================
+# 1. Epic 20 (service-norma) - VERIFIED COMPLETE:
+#    - ServiceNormaController (590 lines, 15 REST endpoints)
+#    - 29 passing tests (norma-import: 10, norma-labor: 10, norma-version: 9)
+#    - Stories: 20-1 (import), 20-2 (calculate), 20-3 (update) all DONE
+#
+# 2. Epic 29-favorites - 4/5 stories DONE:
+#    - Backend: UserSettingsModule + Controller + 25 tests
+#    - Frontend: Zustand store + FavoriteButton + FavoritesSidebar + DnD
+#    - Prisma: UserSettings, TenantDefaultFavorites
+#    - 29-1, 29-2, 29-3, 29-4 DONE | 29-5 (command palette) BACKLOG
+#    - 698 passing tests total in @kgc/ui
 #
 # FULL CODE AUDIT FINDINGS (2026-01-25):
 # =====================================
@@ -496,15 +544,7 @@ development_status:
 #    - prisma-rental-vehicle.repository.ts (200 lines)
 #    - prisma-company-vehicle.repository.ts (222 lines)
 #
-# 6. Prisma models VERIFIED TO EXIST for previously "blocked" epics:
-#    - Epic 10: Invoice, InvoiceItem
-#    - Epic 12: Task
-#    - Epic 17: Worksheet, WorksheetItem
-#    - Epic 18: Quote, QuoteItem
-#    - Epic 19: WarrantyClaim
-#    - Epic 20: ServiceNorm
-#
 # NEXT PRIORITY:
-# - Create Prisma repositories for Epic 10, 12, 17-20 (models exist!)
-# - Complete Epic 24 (leltar) Prisma integration
-# - Add GoodsReceipt model for Epic 21
+# - Epic 29-5: Command palette (Ctrl+K) integration
+# - Epic 24: Leltár Prisma integration
+# - Epic 21: Add GoodsReceipt Prisma model

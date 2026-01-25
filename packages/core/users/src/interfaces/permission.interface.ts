@@ -113,6 +113,15 @@ export enum Permission {
   WORKSHEET_CREATE = 'worksheet:create',
   WORKSHEET_UPDATE = 'worksheet:update',
   WORKSHEET_CLOSE = 'worksheet:close',
+
+  // ============================================
+  // Jármű modul (5 permissions) - Epic 34
+  // ============================================
+  VEHICLE_VIEW = 'vehicle:view', // Járművek megtekintése
+  VEHICLE_CREATE = 'vehicle:create', // Bérgép jármű létrehozása
+  VEHICLE_UPDATE = 'vehicle:update', // Jármű módosítása
+  VEHICLE_DELETE = 'vehicle:delete', // Jármű törlése
+  VEHICLE_MANAGE_COMPANY = 'vehicle:manage_company', // Céges gépkocsi kezelés (admin)
 }
 
 /**
@@ -132,6 +141,7 @@ export enum PermissionModule {
   WARRANTY = 'warranty',
   QUOTE = 'quote',
   WORKSHEET = 'worksheet',
+  VEHICLE = 'vehicle',
 }
 
 /**
@@ -208,7 +218,7 @@ export interface UserPermissionsResponse {
  */
 export function getPermissionsByModule(module: PermissionModule): Permission[] {
   const modulePrefix = `${module}:`;
-  return Object.values(Permission).filter((p) => p.startsWith(modulePrefix));
+  return Object.values(Permission).filter(p => p.startsWith(modulePrefix));
 }
 
 /**

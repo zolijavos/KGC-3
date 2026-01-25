@@ -19,3 +19,14 @@ export {
   type IQuoteRepository,
   type QuoteFilterDto,
 } from './prisma-quote.repository';
+
+// Exploded View (Story 18-2)
+export {
+  EXPLODED_VIEW_REPOSITORY,
+  PrismaExplodedViewRepository,
+  type ExplodedViewFilterDto,
+  type IExplodedView,
+  type IExplodedViewHotspot,
+  type IExplodedViewRepository,
+  type IPartSelection,
+} from './exploded-view.repository';

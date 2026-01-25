@@ -3,16 +3,16 @@
  */
 
 import { Inject } from '@nestjs/common';
+import { BatchCountSchema, RecordCountSchema } from '../dto/count-recording.dto';
 import type {
-  ICountRecordingService,
-  ICounterSession,
-  IRecordCountInput,
   IBatchCountInput,
   ICountItemFilter,
+  ICountRecordingService,
+  ICounterSession,
   ICountingProgress,
+  IRecordCountInput,
 } from '../interfaces/count-recording.interface';
-import type { IStockCountItem, IStockCount } from '../interfaces/stock-count.interface';
-import { RecordCountSchema, BatchCountSchema } from '../dto/count-recording.dto';
+import type { IStockCount, IStockCountItem } from '../interfaces/stock-count.interface';
 
 /**
  * Counter Session Repository interfész
@@ -55,7 +55,12 @@ export interface IUserRepository {
  * Audit szolgáltatás interfész
  */
 export interface IAuditService {
-  log(event: string, entityType: string, entityId: string, data: Record<string, unknown>): Promise<void>;
+  log(
+    event: string,
+    entityType: string,
+    entityId: string,
+    data: Record<string, unknown>
+  ): Promise<void>;
 }
 
 /**
@@ -111,12 +116,11 @@ export class CountRecordingService implements ICountRecordingService {
 
     const created = await this.sessionRepository.create(session);
 
-    await this.auditService.log(
-      'COUNTER_SESSION_STARTED',
-      'CounterSession',
-      created.id,
-      { stockCountId, userId, assignedZone }
-    );
+    await this.auditService.log('COUNTER_SESSION_STARTED', 'CounterSession', created.id, {
+      stockCountId,
+      userId,
+      assignedZone,
+    });
 
     return created;
   }
@@ -135,12 +139,9 @@ export class CountRecordingService implements ICountRecordingService {
       endedAt: new Date(),
     });
 
-    await this.auditService.log(
-      'COUNTER_SESSION_ENDED',
-      'CounterSession',
-      sessionId,
-      { itemsCounted: session.itemsCounted }
-    );
+    await this.auditService.log('COUNTER_SESSION_ENDED', 'CounterSession', sessionId, {
+      itemsCounted: session.itemsCounted,
+    });
 
     return updated;
   }
@@ -163,6 +164,15 @@ export class CountRecordingService implements ICountRecordingService {
       throw new Error('Tétel nem található');
     }
 
+    // Validate stock count is in progress
+    const stockCount = await this.stockCountRepository.findById(item.stockCountId);
+    if (!stockCount) {
+      throw new Error('Leltár nem található');
+    }
+    if (stockCount.status !== 'IN_PROGRESS') {
+      throw new Error('Csak aktív (IN_PROGRESS) leltárhoz rögzíthető számlálás');
+    }
+
     // Eltérés számítás
     const variance = validated.countedQuantity - item.bookQuantity;
 
@@ -178,17 +188,12 @@ export class CountRecordingService implements ICountRecordingService {
     // Leltár statisztika frissítése
     await this.updateStockCountStats(item.stockCountId);
 
-    await this.auditService.log(
-      'COUNT_RECORDED',
-      'StockCountItem',
-      validated.itemId,
-      {
-        bookQuantity: item.bookQuantity,
-        countedQuantity: validated.countedQuantity,
-        variance,
-        mode: validated.mode,
-      }
-    );
+    await this.auditService.log('COUNT_RECORDED', 'StockCountItem', validated.itemId, {
+      bookQuantity: item.bookQuantity,
+      countedQuantity: validated.countedQuantity,
+      variance,
+      mode: validated.mode,
+    });
 
     return updated;
   }
@@ -199,19 +204,42 @@ export class CountRecordingService implements ICountRecordingService {
   async recordBatchCount(input: IBatchCountInput): Promise<IStockCountItem[]> {
     const validated = BatchCountSchema.parse(input);
 
+    // Validate stock count is in progress
+    const stockCount = await this.stockCountRepository.findById(validated.stockCountId);
+    if (!stockCount) {
+      throw new Error('Leltár nem található');
+    }
+    if (stockCount.status !== 'IN_PROGRESS') {
+      throw new Error('Csak aktív (IN_PROGRESS) leltárhoz rögzíthető számlálás');
+    }
+
     const results: IStockCountItem[] = [];
+    const skippedItems: Array<{ productId?: string; barcode?: string }> = [];
 
     for (const itemInput of validated.items) {
       let item: IStockCountItem | null = null;
 
       if (itemInput.productId) {
-        item = await this.itemRepository.findByProductId(validated.stockCountId, itemInput.productId);
+        item = await this.itemRepository.findByProductId(
+          validated.stockCountId,
+          itemInput.productId
+        );
       } else if (itemInput.barcode) {
         item = await this.itemRepository.findByBarcode(validated.stockCountId, itemInput.barcode);
       }
 
       if (!item) {
-        continue; // Skip unknown items
+        // Track skipped items for audit logging
+        // Only add defined properties to satisfy exactOptionalPropertyTypes
+        const skippedItem: { productId?: string; barcode?: string } = {};
+        if (itemInput.productId !== undefined) {
+          skippedItem.productId = itemInput.productId;
+        }
+        if (itemInput.barcode !== undefined) {
+          skippedItem.barcode = itemInput.barcode;
+        }
+        skippedItems.push(skippedItem);
+        continue;
       }
 
       const variance = itemInput.countedQuantity - item.bookQuantity;
@@ -230,12 +258,12 @@ export class CountRecordingService implements ICountRecordingService {
     // Leltár statisztika frissítése
     await this.updateStockCountStats(validated.stockCountId);
 
-    await this.auditService.log(
-      'BATCH_COUNT_RECORDED',
-      'StockCount',
-      validated.stockCountId,
-      { itemCount: results.length, userId: validated.userId }
-    );
+    await this.auditService.log('BATCH_COUNT_RECORDED', 'StockCount', validated.stockCountId, {
+      itemCount: results.length,
+      skippedCount: skippedItems.length,
+      skippedItems: skippedItems.length > 0 ? skippedItems : undefined,
+      userId: validated.userId,
+    });
 
     return results;
   }
@@ -243,10 +271,7 @@ export class CountRecordingService implements ICountRecordingService {
   /**
    * Tétel keresése vonalkóddal
    */
-  async findItemByBarcode(
-    stockCountId: string,
-    barcode: string
-  ): Promise<IStockCountItem | null> {
+  async findItemByBarcode(stockCountId: string, barcode: string): Promise<IStockCountItem | null> {
     return this.itemRepository.findByBarcode(stockCountId, barcode);
   }
 
@@ -274,12 +299,10 @@ export class CountRecordingService implements ICountRecordingService {
     // Leltár statisztika frissítése
     await this.updateStockCountStats(item.stockCountId);
 
-    await this.auditService.log(
-      'COUNT_UNDONE',
-      'StockCountItem',
-      itemId,
-      { userId, previousCount: item.countedQuantity }
-    );
+    await this.auditService.log('COUNT_UNDONE', 'StockCountItem', itemId, {
+      userId,
+      previousCount: item.countedQuantity,
+    });
 
     return updated;
   }
@@ -298,12 +321,7 @@ export class CountRecordingService implements ICountRecordingService {
       notes: `${item.notes ?? ''}\nÚjraszámlálás: ${reason}`,
     });
 
-    await this.auditService.log(
-      'RECOUNT_MARKED',
-      'StockCountItem',
-      itemId,
-      { reason }
-    );
+    await this.auditService.log('RECOUNT_MARKED', 'StockCountItem', itemId, { reason });
 
     return updated;
   }
@@ -311,10 +329,7 @@ export class CountRecordingService implements ICountRecordingService {
   /**
    * Számláló tételek lekérdezése
    */
-  async getCountItems(
-    stockCountId: string,
-    filter: ICountItemFilter
-  ): Promise<IStockCountItem[]> {
+  async getCountItems(stockCountId: string, filter: ICountItemFilter): Promise<IStockCountItem[]> {
     return this.itemRepository.findByFilter(stockCountId, filter);
   }
 
@@ -326,9 +341,9 @@ export class CountRecordingService implements ICountRecordingService {
     const activeSessions = await this.sessionRepository.findActiveByStockCountId(stockCountId);
 
     const totalItems = items.length;
-    const countedItems = items.filter((i) => i.countedQuantity !== undefined).length;
-    const pendingRecountItems = items.filter((i) => i.recountRequired).length;
-    const varianceItems = items.filter((i) => i.variance !== undefined && i.variance !== 0).length;
+    const countedItems = items.filter(i => i.countedQuantity !== undefined).length;
+    const pendingRecountItems = items.filter(i => i.recountRequired).length;
+    const varianceItems = items.filter(i => i.variance !== undefined && i.variance !== 0).length;
     const matchingItems = countedItems - varianceItems;
 
     const completionPercent = totalItems > 0 ? (countedItems / totalItems) * 100 : 0;
@@ -351,10 +366,8 @@ export class CountRecordingService implements ICountRecordingService {
   private async updateStockCountStats(stockCountId: string): Promise<void> {
     const items = await this.itemRepository.findByStockCountId(stockCountId);
 
-    const countedItems = items.filter((i) => i.countedQuantity !== undefined).length;
-    const varianceCount = items.filter(
-      (i) => i.variance !== undefined && i.variance !== 0
-    ).length;
+    const countedItems = items.filter(i => i.countedQuantity !== undefined).length;
+    const varianceCount = items.filter(i => i.variance !== undefined && i.variance !== 0).length;
 
     await this.stockCountRepository.update(stockCountId, {
       countedItems,
