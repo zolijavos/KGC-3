@@ -342,7 +342,7 @@ development_status:
   epic-23: done
   23-1-beszerzesi-ar-tracking: done # PurchasePriceService + 33 tests (2026-01-26)
   23-2-arres-kalkulacio-es-riport: done # MarginService + 46 tests (2026-01-26)
-  epic-23-retrospective: optional
+  epic-23-retrospective: done # Retrospective 2026-01-26: 79 tests, 2 code review fixes
 
   # Epic 24: Stock Count (@kgc/leltar) - 3 stories ✅ COMPLETE
   # CODE: Package (70 tests) + API Controller (72 tests) + 5 Prisma repos
@@ -377,11 +377,17 @@ development_status:
   25-2-szerviz-kesz-bergep-visszaall: done # ServiceReturnService + 9 tests (2026-01-26)
   epic-25-retrospective: optional
 
-  # Epic 26: Online Booking - 2 stories
-  # CODE: 8 ts files | PRISMA: ✅ Rental models EXIST
-  epic-26: backlog
-  26-1-online-foglalas-felulet: backlog
-  26-2-foglalas-megerosites: backlog
+  # Epic 26: Online Booking - 2 stories ✅ COMPLETE
+  # CODE: @kgc/online-booking package (26 tests) + API module (39 tests)
+  # PRISMA: ✅ Rental models EXIST
+  # Updated 2026-01-26: Full implementation with API layer
+  # - BookingService: createBooking, checkAvailability, getTimeSlots
+  # - BookingConfirmationService: confirm, cancel, status, resend
+  # - OnlineBookingController: 8 REST endpoints
+  # - 65 tests total (package: 26, API: 39)
+  epic-26: done
+  26-1-online-foglalas-letrehozas: done # BookingService + 11 tests (2026-01-26)
+  26-2-foglalas-megerosites-kezeles: done # BookingConfirmationService + 15 tests (2026-01-26)
   epic-26-retrospective: optional
 
   # Epic 27: Reporting Engine - 3 stories ✅ COMPLETE
@@ -403,11 +409,17 @@ development_status:
   # ============================================
   # STATUS: ⚠️ External integrations, shell implementations
 
-  # Epic 28: Twenty CRM Integration - 2 stories
-  # CODE: 8 ts files | PRISMA: ✅ Partner model EXISTS
-  epic-28: backlog
-  28-1-partner-szinkronizalas: backlog
-  28-2-crm-dashboard-embed: backlog
+  # Epic 28: Twenty CRM Integration - 2 stories ✅ COMPLETE
+  # CODE: @kgc/twenty-crm package (26 tests) + API module (48 tests)
+  # PRISMA: ✅ Partner model EXISTS
+  # Updated 2026-01-26: Full implementation with API layer
+  # - PartnerSyncService: sync, mapping CRUD, auto-link by email
+  # - DashboardEmbedService: config CRUD, token generation, embed URL
+  # - TwentyCrmController: 14 REST endpoints
+  # - 74 tests total (package: 26, API: 48)
+  epic-28: done
+  28-1-partner-szinkronizalas: done # PartnerSyncService + 33 tests (2026-01-26)
+  28-2-crm-dashboard-embed: done # DashboardEmbedService + 41 tests (2026-01-26)
   epic-28-retrospective: optional
 
   # Epic 29: Chatwoot Integration - 2 stories
@@ -535,14 +547,26 @@ development_status:
 # All Prisma models are now complete! No missing models.
 
 # ============================================
-# SUMMARY (Updated 2026-01-26 - Epic 23 Complete)
+# SUMMARY (Updated 2026-01-26 - Epic 28 Complete)
 # ============================================
-# ✅ DONE: 30 epics (1-6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27, 29-chatwoot, 29-favorites, 30, 31, 32, 33, 34)
+# ✅ DONE: 32 epics (1-6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29-chatwoot, 29-favorites, 30, 31, 32, 33, 34)
 # 🟡 IN-PROGRESS: 0 epics
-# ⚪ BACKLOG: 2 epics (26, 28) - Prisma models ready, awaiting implementation
+# ⚪ BACKLOG: 0 epics - ALL EPICS COMPLETE!
 #
 # LATEST UPDATE (2026-01-26):
 # ===========================
+# 4. Epic 28 (twenty-crm) - ✅ COMPLETE:
+#    - @kgc/twenty-crm package: PartnerSyncService + DashboardEmbedService
+#    - TwentyCrmController: 14 REST endpoints (sync, mappings, auto-link, dashboards, tokens)
+#    - 74 tests total (package: 26, API: 48)
+#    - Stories: 28-1 (partner sync), 28-2 (dashboard embed) all DONE
+#
+# 3. Epic 26 (online-booking) - ✅ COMPLETE:
+#    - @kgc/online-booking package: BookingService + BookingConfirmationService
+#    - OnlineBookingController: 8 REST endpoints (create, availability, slots, confirm, cancel, status, resend)
+#    - 65 tests total (package: 26, API: 39)
+#    - Stories: 26-1 (létrehozás), 26-2 (megerősítés/kezelés) all DONE
+#
 # 2. Epic 25 (bergep-szerviz) - ✅ COMPLETE:
 #    - @kgc/bergep-szerviz package: EquipmentDispatchService + ServiceReturnService
 #    - BergepSzervizController: 5 REST endpoints (dispatch, return, active, history, auto-complete)
