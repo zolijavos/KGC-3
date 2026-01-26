@@ -206,8 +206,12 @@ export class SessionService {
     }
 
     // Calculate expected balance (opening + cash sales - cash returns)
-    // For now, simplified: expectedBalance = openingBalance
-    // Full calculation will be in Story 22-2 (with payments)
+    // TODO(arch): This uses simplified calculation (openingBalance only).
+    // The accurate expectedBalance is calculated in ZReportService.generateZReport()
+    // which sums actual cash payments. To fix: inject ITransactionRepository +
+    // IPaymentRepository here, or create a dedicated CashBalanceService.
+    // For now, z-report displays the correct value; stored session.expectedBalance
+    // may be inaccurate if there were cash sales.
     const expectedBalance = session.openingBalance;
     const variance = validInput.closingBalance - expectedBalance;
 

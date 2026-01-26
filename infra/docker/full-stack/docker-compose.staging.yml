@@ -1,0 +1,126 @@
+# ==============================================================================
+# KGC ERP v7.0 - Staging Docker Compose
+# Epic 33-5: Staging Environment (staging.kgc.local)
+# ==============================================================================
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env.staging up -d
+#
+# For local staging with self-signed certs, add to /etc/hosts:
+#   127.0.0.1 staging.kgc.local api.staging.kgc.local
+#
+# ==============================================================================
+
+name: kgc-erp-staging
+
+services:
+  # ============================================================================
+  # CADDY REVERSE PROXY (Self-signed SSL for staging)
+  # ============================================================================
+  caddy:
+    image: caddy:2-alpine
+    container_name: kgc-caddy-staging
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile.staging:/etc/caddy/Caddyfile:ro
+      - caddy-staging-data:/data
+      - caddy-staging-config:/config
+    depends_on:
+      kgc-api:
+        condition: service_healthy
+      kgc-web:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+    restart: unless-stopped
+    networks:
+      - kgc-network
+
+  # ============================================================================
+  # KGC SERVICES OVERRIDES (Staging)
+  # ============================================================================
+
+  kgc-api:
+    environment:
+      NODE_ENV: staging
+      LOG_LEVEL: debug
+      SENTRY_ENVIRONMENT: staging
+      # Staging-specific settings
+      RATE_LIMIT_ENABLED: 'true'
+      RATE_LIMIT_MAX: 200
+    # Keep ports exposed for debugging in staging
+    ports:
+      - '${KGC_API_PORT:-3000}:3000'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+
+  kgc-web:
+    build:
+      args:
+        VITE_API_URL: https://api.staging.kgc.local
+        VITE_APP_NAME: KGC_ERP_STAGING
+        VITE_APP_VERSION: ${VITE_APP_VERSION:-7.0.0-staging}
+        VITE_SENTRY_ENVIRONMENT: staging
+    # Keep port for direct access in staging
+    ports:
+      - '${KGC_WEB_PORT:-8080}:80'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+
+  kgc-db:
+    # Keep port exposed for DBeaver/pgAdmin access in staging
+    ports:
+      - '${KGC_DB_PORT:-5432}:5432'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
+  kgc-redis:
+    # Keep port exposed for Redis Insight in staging
+    ports:
+      - '${KGC_REDIS_PORT:-6379}:6379'
+
+  kgc-minio:
+    # Keep both ports in staging
+    ports:
+      - '${MINIO_API_PORT:-9000}:9000'
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+
+  # Twenty CRM - exposed for testing
+  twenty-server:
+    ports:
+      - '${TWENTY_PORT:-3001}:3000'
+
+  # Chatwoot - exposed for testing
+  chatwoot-rails:
+    ports:
+      - '${CHATWOOT_PORT:-3002}:3000'
+
+  # Horilla HR - exposed for testing
+  horilla-app:
+    ports:
+      - '${HORILLA_PORT:-3003}:8000'
+
+# ==============================================================================
+# VOLUMES (Staging-specific names to avoid conflicts)
+# ==============================================================================
+volumes:
+  caddy-staging-data:
+    name: kgc-staging-caddy-data
+  caddy-staging-config:
+    name: kgc-staging-caddy-config

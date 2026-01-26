@@ -47,12 +47,34 @@ async function bootstrap() {
   // Swagger API documentation
   const config = new DocumentBuilder()
     .setTitle('KGC ERP API')
-    .setDescription('Kisgépcentrum ERP rendszer API dokumentáció')
-    .setVersion('3.0.0')
+    .setDescription('Kisgépcentrum ERP rendszer API dokumentáció - v7.0')
+    .setVersion('7.0.0')
     .addBearerAuth()
-    .addTag('auth', 'Authentication endpoints')
-    .addTag('users', 'User management endpoints')
-    .addTag('tenants', 'Tenant management endpoints')
+    // Core
+    .addTag('auth', 'Authentikáció és JWT kezelés')
+    .addTag('users', 'Felhasználó kezelés')
+    .addTag('tenants', 'Tenant (franchise) kezelés')
+    // Értékesítés
+    .addTag('pos', 'Pénztár (Point of Sale) - Epic 22')
+    .addTag('invoice', 'Számlázás')
+    .addTag('quote', 'Árajánlatok')
+    // Bérlés
+    .addTag('bergep', 'Bérgép kezelés')
+    .addTag('rental-vehicles', 'Bérautó kezelés')
+    // Szerviz
+    .addTag('bergep-szerviz', 'Szerviz munkalapok')
+    .addTag('service-norma', 'Szerviz normák (Makita)')
+    // Készlet
+    .addTag('inventory', 'Készletkezelés')
+    .addTag('bevetelezes', 'Árubevételezés - Epic 21')
+    .addTag('stock-count', 'Leltár')
+    // Integráció
+    .addTag('twenty-crm', 'Twenty CRM integráció')
+    .addTag('online-booking', 'Online foglalás')
+    // Riportok
+    .addTag('reports', 'Riportok és dashboard')
+    .addTag('vehicles', 'Járművek kezelés')
+    .addTag('tasks', 'Feladatkezelés')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

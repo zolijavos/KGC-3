@@ -1,0 +1,133 @@
+# ==============================================================================
+# KGC ERP v7.0 - Staging Caddyfile
+# Self-signed certificates for staging.kgc.local
+# ==============================================================================
+
+{
+    # Use internal CA for self-signed certs (staging)
+    local_certs
+
+    # Skip ACME for local domains
+    skip_install_trust
+
+    # Debug logging for staging
+    debug
+}
+
+# ==============================================================================
+# Main Frontend (staging.kgc.local)
+# ==============================================================================
+staging.kgc.local {
+    # Enable compression
+    encode gzip zstd
+
+    # Proxy to web frontend
+    reverse_proxy kgc-web:80 {
+        health_uri /health
+        health_interval 30s
+    }
+
+    # Security headers
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # Note: CSP is typically handled by the app itself
+    }
+
+    # Access logging
+    log {
+        output file /data/logs/staging.kgc.local.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}
+
+# ==============================================================================
+# API (api.staging.kgc.local)
+# ==============================================================================
+api.staging.kgc.local {
+    encode gzip zstd
+
+    reverse_proxy kgc-api:3000 {
+        health_uri /api/health
+        health_interval 30s
+    }
+
+    # CORS headers for API
+    header {
+        Access-Control-Allow-Origin "https://staging.kgc.local"
+        Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Authorization, Content-Type, X-Tenant-ID, X-Request-ID"
+        Access-Control-Allow-Credentials "true"
+    }
+
+    # Handle preflight requests
+    @options method OPTIONS
+    respond @options 204
+
+    log {
+        output file /data/logs/api.staging.kgc.local.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}
+
+# ==============================================================================
+# Twenty CRM (crm.staging.kgc.local)
+# ==============================================================================
+crm.staging.kgc.local {
+    encode gzip zstd
+
+    reverse_proxy twenty-server:3000 {
+        health_uri /healthz
+        health_interval 30s
+    }
+
+    log {
+        output file /data/logs/crm.staging.kgc.local.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}
+
+# ==============================================================================
+# Chatwoot Support (support.staging.kgc.local)
+# ==============================================================================
+support.staging.kgc.local {
+    encode gzip zstd
+
+    reverse_proxy chatwoot-rails:3000 {
+        health_uri /api
+        health_interval 30s
+    }
+
+    log {
+        output file /data/logs/support.staging.kgc.local.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}
+
+# ==============================================================================
+# Horilla HR (hr.staging.kgc.local)
+# ==============================================================================
+hr.staging.kgc.local {
+    encode gzip zstd
+
+    reverse_proxy horilla-app:8000 {
+        health_interval 30s
+    }
+
+    log {
+        output file /data/logs/hr.staging.kgc.local.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}

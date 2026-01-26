@@ -3,6 +3,7 @@
   "globalDependencies": ["**/.env.*local", ".env"],
   "globalEnv": ["NODE_ENV", "DATABASE_URL", "REDIS_URL"],
   "ui": "tui",
+  "concurrency": "20",
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

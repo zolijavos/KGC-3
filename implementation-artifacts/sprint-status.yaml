@@ -322,15 +322,16 @@ development_status:
   21-3-bevetelezes-elteres-kezeles: done # DiscrepancyService + DiscrepancyController + PrismaDiscrepancyRepository (2026-01-26)
   epic-21-retrospective: done # Retrospective 2026-01-26: 38 tests, 9 code review fixes
 
-  # Epic 22: Point of Sale (@kgc/sales-pos) - 3 stories ✅ COMPLETE
-  # CODE: @kgc/sales-pos package (112 tests) + API module
+  # Epic 22: Point of Sale (@kgc/sales-pos) - 4 stories ✅ COMPLETE
+  # CODE: @kgc/sales-pos package (112 tests) + kgc-web hooks (65 tests)
   # PRISMA: ✅ CashRegisterSession, SaleTransaction, SaleItem, SalePayment
-  # Updated 2026-01-26: All 3 stories complete with 112 tests
+  # Updated 2026-01-26: All 4 stories complete with 177 tests + retrospective
   epic-22: done
   22-1-ertekesites-kasszabol: done # Session + Cart + Transaction - 62 tests (2026-01-26)
   22-2-fizetesi-modok: done # Payment methods (cash, card, mixed) - 22 tests, code review 2026-01-26
   22-3-napi-penztarzaras: done # Z-report + variance approval - 28 tests (2026-01-26)
-  epic-22-retrospective: optional
+  22-4-pos-frontend: done # Frontend API integráció + scanner support - 65 teszt (2026-01-26)
+  epic-22-retrospective: done # Adversarial review + retrospective (2026-01-26)
 
   # Epic 23: Pricing & Margin (@kgc/arres) - 2 stories ✅ COMPLETE
   # CODE: @kgc/arres package (79 tests) + interfaces + services

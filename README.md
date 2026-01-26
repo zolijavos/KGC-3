@@ -24,15 +24,15 @@ KGC ERP is a comprehensive enterprise resource planning system designed for **Ki
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
+| Layer        | Technology                                |
+| ------------ | ----------------------------------------- |
 | **Frontend** | React 19, Vite, TanStack Query, shadcn/ui |
-| **Backend** | NestJS 10, Prisma ORM |
-| **Database** | PostgreSQL 16 with RLS |
-| **Cache** | Redis |
-| **Auth** | JWT with refresh tokens |
-| **Testing** | Vitest, Playwright |
-| **Monorepo** | pnpm workspaces, Turborepo |
+| **Backend**  | NestJS 10, Prisma ORM                     |
+| **Database** | PostgreSQL 16 with RLS                    |
+| **Cache**    | Redis                                     |
+| **Auth**     | JWT with refresh tokens                   |
+| **Testing**  | Vitest, Playwright                        |
+| **Monorepo** | pnpm workspaces, Turborepo                |
 
 ## Architecture
 
@@ -59,13 +59,13 @@ KGC-3/
 
 ## Integrations
 
-| System | Purpose | Status |
-|--------|---------|--------|
-| **Twenty CRM** | Customer relationship management | ✅ Configured |
-| **Chatwoot** | Customer support & ticketing | Planned |
-| **Horilla HR** | Human resources management | Planned |
-| **Számlázz.hu** | NAV Online invoicing | Planned |
-| **MyPOS** | Card payments & deposits | Planned |
+| System          | Purpose                          | Status        |
+| --------------- | -------------------------------- | ------------- |
+| **Twenty CRM**  | Customer relationship management | ✅ Configured |
+| **Chatwoot**    | Customer support & ticketing     | ✅ Configured |
+| **Horilla HR**  | Human resources management       | ✅ Configured |
+| **Számlázz.hu** | NAV Online invoicing             | Stub ready    |
+| **MyPOS**       | Card payments & deposits         | Stub ready    |
 
 ## Getting Started
 
@@ -131,16 +131,37 @@ pnpm --filter @kgc/rental-core build # Build specific package
 
 ## Docker Deployment
 
-### Twenty CRM (Self-hosted)
+### Full Stack (Development)
 
 ```bash
-cd infra/docker/twenty-crm
-cp .env.example .env
-# Edit .env with your configuration
-docker compose up -d
+cd infra/docker/full-stack
+docker compose up -d kgc-db kgc-redis
 ```
 
-Access Twenty CRM at `http://localhost:3001`
+### Staging Environment (staging.kgc.local)
+
+```bash
+cd infra/docker/full-stack
+
+# Configure
+cp .env.staging.example .env.staging
+# Edit .env.staging
+
+# Add to /etc/hosts: 127.0.0.1 staging.kgc.local api.staging.kgc.local
+
+# Start
+docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env.staging up -d
+```
+
+Access staging at `https://staging.kgc.local`
+
+### Production
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+See [docs/deployment-guide.md](./docs/deployment-guide.md) for detailed instructions
 
 ## Project Status
 
@@ -155,21 +176,22 @@ The project uses the **BMAD Method** for agile development with comprehensive do
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [CLAUDE.md](./CLAUDE.md) | AI assistant instructions & project overview |
-| [planning-artifacts/prd.md](./planning-artifacts/prd.md) | Product Requirements Document |
-| [planning-artifacts/architecture.md](./planning-artifacts/architecture.md) | System Architecture |
-| [planning-artifacts/adr/](./planning-artifacts/adr/) | Architecture Decision Records |
-| [docs/kgc3-development-principles.md](./docs/kgc3-development-principles.md) | Development guidelines |
+| Document                                                                     | Description                                  |
+| ---------------------------------------------------------------------------- | -------------------------------------------- |
+| [CLAUDE.md](./CLAUDE.md)                                                     | AI assistant instructions & project overview |
+| [docs/deployment-guide.md](./docs/deployment-guide.md)                       | Deployment and staging guide                 |
+| [planning-artifacts/prd.md](./planning-artifacts/prd.md)                     | Product Requirements Document                |
+| [planning-artifacts/architecture.md](./planning-artifacts/architecture.md)   | System Architecture                          |
+| [planning-artifacts/adr/](./planning-artifacts/adr/)                         | Architecture Decision Records (46)           |
+| [docs/kgc3-development-principles.md](./docs/kgc3-development-principles.md) | Development guidelines                       |
 
 ## API Endpoints
 
-| Endpoint | Description |
-|----------|-------------|
-| `GET /health` | Health check |
-| `GET /api/docs` | Swagger documentation |
-| `POST /auth/login` | User authentication |
+| Endpoint                | Description                 |
+| ----------------------- | --------------------------- |
+| `GET /health`           | Health check                |
+| `GET /api/docs`         | Swagger documentation       |
+| `POST /auth/login`      | User authentication         |
 | `POST /webhooks/twenty` | Twenty CRM webhook receiver |
 
 ## Contributing

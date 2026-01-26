@@ -211,13 +211,12 @@ export class ZReportService {
       throw new Error('Session is not pending approval');
     }
 
-    // Reopen session for recounting - use nullish partial update
-    // Note: Repository implementation should handle clearing these fields
+    // Reopen session for recounting
+    // Clear closing fields to reset session state (null = clear in Prisma)
+    // Note: Object.assign used to bypass exactOptionalPropertyTypes for null fields
     const reopenData: Partial<ICashRegisterSession> = {
       status: CashRegisterStatus.OPEN,
     };
-    // Clear optional fields by setting them on the update data
-    // The repository should interpret these as "clear/unset" operations
     Object.assign(reopenData, {
       closingBalance: null,
       variance: null,
@@ -304,6 +303,10 @@ export class ZReportService {
   /**
    * Calculate payment method breakdown
    * @param transactions - Pre-loaded transactions to avoid duplicate query
+   *
+   * TODO(perf): N+1 query pattern - findByTransaction called per transaction.
+   * Future optimization: Add IPaymentRepository.findByTransactions(ids: string[])
+   * to batch load all payments in a single query. Deferred for stub phase.
    */
   private async calculatePaymentBreakdown(
     transactions: ISaleTransaction[]
