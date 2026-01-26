@@ -1,6 +1,6 @@
 /**
  * @kgc/sales-pos - Point of Sale Module
- * Epic 22: Point of Sale - Story 22-1 + 22-2
+ * Epic 22: Point of Sale - Story 22-1, 22-2, 22-3
  */
 
 // Module
@@ -11,6 +11,7 @@ export { CartService } from './services/cart.service.js';
 export { PaymentService } from './services/payment.service.js';
 export { SessionService } from './services/session.service.js';
 export { TransactionService } from './services/transaction.service.js';
+export { ZReportService } from './services/z-report.service.js';
 
 // Audit Service Interface (shared between SessionService and TransactionService)
 export type { IAuditService } from './services/session.service.js';
@@ -45,6 +46,16 @@ export type {
   IPaymentRepository,
   ISalePayment,
 } from './interfaces/payment.interface.js';
+
+// Interfaces - Z-Report (Story 22-3)
+export type {
+  ICompanyInfo,
+  IPaymentMethodBreakdown,
+  IPdfGeneratorService,
+  IZReport,
+  IZReportGenerateResult,
+  IZReportSummary,
+} from './interfaces/z-report.interface.js';
 
 // DTOs - Session
 export { CloseSessionSchema, OpenSessionSchema, SuspendSessionSchema } from './dto/session.dto.js';
@@ -92,6 +103,20 @@ export type {
   ProcessCashPaymentDto,
   RefundPaymentDto,
 } from './dto/payment.dto.js';
+
+// DTOs - Z-Report (Story 22-3)
+export {
+  ApproveVarianceSchema,
+  ExportZReportJsonSchema,
+  ExportZReportPdfSchema,
+  RejectVarianceSchema,
+} from './dto/z-report.dto.js';
+export type {
+  ApproveVarianceDto,
+  ExportZReportJsonDto,
+  ExportZReportPdfDto,
+  RejectVarianceDto,
+} from './dto/z-report.dto.js';
 
 // Note: Prisma repositories should be implemented in apps/kgc-api/src/modules/pos/
 // where PrismaClient is available. Use the repository interfaces from interfaces/.

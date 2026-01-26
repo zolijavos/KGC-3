@@ -6,6 +6,7 @@
 export enum CashRegisterStatus {
   OPEN = 'OPEN',
   SUSPENDED = 'SUSPENDED',
+  PENDING_APPROVAL = 'PENDING_APPROVAL',
   CLOSED = 'CLOSED',
 }
 
@@ -23,6 +24,9 @@ export interface ICashRegisterSession {
   varianceNote?: string;
   openedBy: string;
   closedBy?: string;
+  approvedBy?: string;
+  approvedAt?: Date;
+  approverNote?: string;
   status: CashRegisterStatus;
   createdAt: Date;
   updatedAt: Date;
