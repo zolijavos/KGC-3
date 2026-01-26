@@ -1,5 +1,5 @@
 {
-  "name": "@kgc/sales-pos",
+  "name": "@kgc/eladas-legacy",
   "version": "0.0.1",
   "description": "KGC ERP Point of Sale module - POS transactions, payments, cash reconciliation",
   "main": "dist/index.js",
