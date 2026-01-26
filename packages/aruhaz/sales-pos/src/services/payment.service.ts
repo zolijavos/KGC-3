@@ -24,6 +24,7 @@ import {
 } from '../interfaces/payment.interface.js';
 import {
   ISaleItemRepository,
+  ISaleTransaction,
   ITransactionRepository,
   PaymentStatus,
   SaleStatus,
@@ -90,13 +91,16 @@ export class PaymentService {
     const totalPaid = alreadyPaid + remainingAmount;
     const isFullyPaid = totalPaid >= transaction.total;
 
-    await this.transactionRepository.update(transactionId, {
+    const updateData: Partial<ISaleTransaction> = {
       paidAmount: totalPaid,
       changeAmount,
       paymentStatus: isFullyPaid ? PaymentStatus.PAID : PaymentStatus.PARTIAL,
       status: isFullyPaid ? SaleStatus.COMPLETED : transaction.status,
-      completedAt: isFullyPaid ? new Date() : undefined,
-    });
+    };
+    if (isFullyPaid) {
+      updateData.completedAt = new Date();
+    }
+    await this.transactionRepository.update(transactionId, updateData);
 
     return {
       payment,
@@ -234,12 +238,15 @@ export class PaymentService {
     const totalPaid = alreadyPaid + validInput.amount;
     const isFullyPaid = totalPaid >= transaction.total;
 
-    await this.transactionRepository.update(transactionId, {
+    const partialUpdateData: Partial<ISaleTransaction> = {
       paidAmount: totalPaid,
       paymentStatus: isFullyPaid ? PaymentStatus.PAID : PaymentStatus.PARTIAL,
       status: isFullyPaid ? SaleStatus.COMPLETED : transaction.status,
-      completedAt: isFullyPaid ? new Date() : undefined,
-    });
+    };
+    if (isFullyPaid) {
+      partialUpdateData.completedAt = new Date();
+    }
+    await this.transactionRepository.update(transactionId, partialUpdateData);
 
     return {
       payment,
@@ -294,13 +301,18 @@ export class PaymentService {
         });
       }
 
-      deductionResults.push({
+      const itemResult: IInventoryDeductionResult = {
         itemId: item.id,
         productId: item.productId,
         success: deductResult.success,
-        newQuantity: deductResult.newQuantity,
-        errorMessage: deductResult.errorMessage,
-      });
+      };
+      if (deductResult.newQuantity !== undefined) {
+        itemResult.newQuantity = deductResult.newQuantity;
+      }
+      if (deductResult.errorMessage !== undefined) {
+        itemResult.errorMessage = deductResult.errorMessage;
+      }
+      deductionResults.push(itemResult);
     }
 
     return {
@@ -327,7 +339,12 @@ export class PaymentService {
     // Refund card payments via MyPos
     for (const payment of payments) {
       if (payment.method === PaymentMethod.CARD && payment.cardTransactionId) {
-        await this.myPosService.refundPayment(payment.cardTransactionId);
+        const refundResult = await this.myPosService.refundPayment(payment.cardTransactionId);
+        if (!refundResult.success) {
+          throw new Error(
+            `Card refund failed for payment ${payment.id}: ${refundResult.errorMessage ?? 'Unknown error'}`
+          );
+        }
       }
     }
 

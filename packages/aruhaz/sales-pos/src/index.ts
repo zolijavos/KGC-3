@@ -1,6 +1,6 @@
 /**
  * @kgc/sales-pos - Point of Sale Module
- * Epic 22: Point of Sale - Story 22-1
+ * Epic 22: Point of Sale - Story 22-1 + 22-2
  */
 
 // Module
@@ -8,6 +8,7 @@ export { SalesPosModule } from './sales-pos.module.js';
 
 // Services
 export { CartService } from './services/cart.service.js';
+export { PaymentService } from './services/payment.service.js';
 export { SessionService } from './services/session.service.js';
 export { TransactionService } from './services/transaction.service.js';
 
@@ -31,6 +32,19 @@ export type {
   ITransactionCreateResult,
   ITransactionRepository,
 } from './interfaces/transaction.interface.js';
+
+// Interfaces - Payment (Story 22-2)
+export { PaymentMethod } from './interfaces/payment.interface.js';
+export type {
+  ICardPaymentResult,
+  ICashPaymentResult,
+  IInventoryDeductionResult,
+  IInventoryService,
+  IMyPosService,
+  IPaymentCreateResult,
+  IPaymentRepository,
+  ISalePayment,
+} from './interfaces/payment.interface.js';
 
 // DTOs - Session
 export { CloseSessionSchema, OpenSessionSchema, SuspendSessionSchema } from './dto/session.dto.js';
@@ -61,6 +75,23 @@ export type {
   TaxRate,
   UpdateCartItemDto,
 } from './dto/cart.dto.js';
+
+// DTOs - Payment (Story 22-2)
+export {
+  AddPartialPaymentSchema,
+  FinalizePaymentSchema,
+  PAYMENT_CONSTANTS,
+  ProcessCardPaymentSchema,
+  ProcessCashPaymentSchema,
+  RefundPaymentSchema,
+} from './dto/payment.dto.js';
+export type {
+  AddPartialPaymentDto,
+  FinalizePaymentDto,
+  ProcessCardPaymentDto,
+  ProcessCashPaymentDto,
+  RefundPaymentDto,
+} from './dto/payment.dto.js';
 
 // Note: Prisma repositories should be implemented in apps/kgc-api/src/modules/pos/
 // where PrismaClient is available. Use the repository interfaces from interfaces/.

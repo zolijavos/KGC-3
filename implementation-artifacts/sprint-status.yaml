@@ -1,6 +1,6 @@
 # KGC ERP v7.0 Sprint Status
 # generated: 2026-01-15
-# updated: 2026-01-25 (FULL CODE AUDIT)
+# updated: 2026-01-26 (Status cleanup - removed blocked-prisma)
 # project: KGC-3
 # project_key: KGC
 # tracking_system: file-system
@@ -42,7 +42,7 @@
 # Priority: Add missing Prisma models before continuing with controllers.
 
 generated: 2026-01-15
-updated: 2026-01-25
+updated: 2026-01-26
 project: KGC-3
 project_key: KGC
 tracking_system: file-system
@@ -305,7 +305,7 @@ development_status:
   20-1-norma-tetel-import: done # POST /service-norms/import (bulk import with validation)
   20-2-norma-alapu-munkadij: done # POST /service-norms/calculate (labor cost calculation)
   20-3-norma-lista-frissites: done # PATCH /service-norms/:id (update norms, validity management)
-  epic-20-retrospective: optional
+  epic-20-retrospective: done # Retrospective 2026-01-26: 29 tests, 15 REST endpoints
 
   # ============================================
   # ÁRUHÁZ LAYER (4 epics) - Post-MVP
@@ -320,20 +320,21 @@ development_status:
   21-1-avizo-kezeles: done # AvizoService + AvizoController + PrismaAvizoRepository (2026-01-26)
   21-2-bevetelezes-workflow: done # ReceiptService + ReceiptController + PrismaReceiptRepository (2026-01-26)
   21-3-bevetelezes-elteres-kezeles: done # DiscrepancyService + DiscrepancyController + PrismaDiscrepancyRepository (2026-01-26)
-  epic-21-retrospective: optional
+  epic-21-retrospective: done # Retrospective 2026-01-26: 38 tests, 9 code review fixes
 
   # Epic 22: Point of Sale (@kgc/sales-pos) - 3 stories
-  # CODE: ❌ 0 ts files (EMPTY PACKAGE!)
-  epic-22: backlog
-  22-1-ertekesites-kasszabol: backlog
-  22-2-fizetesi-modok: backlog
-  22-3-napi-penztarzaras: backlog
+  # CODE: @kgc/sales-pos package (84 tests) + API module
+  # PRISMA: ✅ CashRegisterSession, SaleTransaction, SaleItem, SalePayment
+  epic-22: in-progress
+  22-1-ertekesites-kasszabol: done # Session + Cart + Transaction - 62 tests (2026-01-26)
+  22-2-fizetesi-modok: done # Payment methods (cash, card, mixed) - 22 tests, code review 2026-01-26
+  22-3-napi-penztarzaras: backlog # Daily cash closing + report
   epic-22-retrospective: optional
 
   # Epic 23: Pricing & Margin (@kgc/arres) - 2 stories
-  # CODE: 9 ts files | Depends on Product model
-  epic-23: blocked-prisma
-  23-1-beszerzesi-ar-tracking: blocked-prisma
+  # CODE: 9 ts files | PRISMA: ✅ Product model EXISTS
+  epic-23: backlog
+  23-1-beszerzesi-ar-tracking: backlog
   23-2-arres-kalkulacio-es-riport: backlog
   epic-23-retrospective: optional
 
@@ -355,26 +356,26 @@ development_status:
   # ============================================
   # INTEGRATION LAYER (3 epics) - Post-MVP
   # ============================================
-  # STATUS: ⚠️ Shell implementations, depend on domain models
+  # STATUS: ⚪ BACKLOG - Prisma models ready, awaiting implementation
 
   # Epic 25: Equipment-Service Integration - 2 stories
-  # CODE: 8 ts files | Depends on Rental + Service models
-  epic-25: blocked-prisma
-  25-1-bergep-szervizbe-kuldes-automatizalas: blocked-prisma
-  25-2-szerviz-kesz-bergep-visszaall: blocked-prisma
+  # CODE: 8 ts files | PRISMA: ✅ Rental + Service models EXIST
+  epic-25: backlog
+  25-1-bergep-szervizbe-kuldes-automatizalas: backlog
+  25-2-szerviz-kesz-bergep-visszaall: backlog
   epic-25-retrospective: optional
 
   # Epic 26: Online Booking - 2 stories
-  # CODE: 8 ts files | Depends on Rental models
-  epic-26: blocked-prisma
-  26-1-online-foglalas-felulet: blocked-prisma
-  26-2-foglalas-megerosites: blocked-prisma
+  # CODE: 8 ts files | PRISMA: ✅ Rental models EXIST
+  epic-26: backlog
+  26-1-online-foglalas-felulet: backlog
+  26-2-foglalas-megerosites: backlog
   epic-26-retrospective: optional
 
   # Epic 27: Reporting Engine - 3 stories
-  # CODE: 11 ts files | Depends on all domain models
-  epic-27: blocked-prisma
-  27-1-dashboard-widgetek: blocked-prisma
+  # CODE: 11 ts files | PRISMA: ✅ All domain models EXIST
+  epic-27: backlog
+  27-1-dashboard-widgetek: backlog
   27-2-reszletes-riportok: backlog
   27-3-cross-tenant-riportok: backlog
   epic-27-retrospective: optional
@@ -385,9 +386,9 @@ development_status:
   # STATUS: ⚠️ External integrations, shell implementations
 
   # Epic 28: Twenty CRM Integration - 2 stories
-  # CODE: 8 ts files | Depends on Partner model
-  epic-28: blocked-prisma
-  28-1-partner-szinkronizalas: blocked-prisma
+  # CODE: 8 ts files | PRISMA: ✅ Partner model EXISTS
+  epic-28: backlog
+  28-1-partner-szinkronizalas: backlog
   28-2-crm-dashboard-embed: backlog
   epic-28-retrospective: optional
 
@@ -409,7 +410,7 @@ development_status:
   29-3-favorite-button-sidebar: done # FavoriteButton + FavoritesSidebar + @dnd-kit drag-drop (2026-01-25)
   29-4-tenant-default-favorites: done # TenantDefaultFavoritesController (2 endpoints)
   29-5-command-palette-integration: done # cmdk + Ctrl+K + Header search button (2026-01-26)
-  epic-29-favorites-retrospective: optional
+  epic-29-favorites-retrospective: done # Retrospective 2026-01-26: 698 tests, full offline
 
   # Epic 30: Horilla HR Integration - 1 story
   # CODE: 663 lines + tests | External API
@@ -452,7 +453,7 @@ development_status:
   33-5-production-docker-compose-caddy: done # ADR-045: docker-compose.prod.yml + Caddyfile + backup.sh (2026-01-26)
   33-6-simple-ci-cd-pipeline: done # ADR-045: deploy.sh + rollback.sh + updated workflow (2026-01-26)
   33-7-sentry-health-monitoring: done # ADR-045: /health + /ready endpoints + monitoring docs (2026-01-26)
-  epic-33-retrospective: optional
+  epic-33-retrospective: done # Retrospective 2026-01-26: ADR-045, -16 SP megtakarítás
 
   # ============================================
   # VEHICLE LAYER (1 epic) - MVP
@@ -516,11 +517,10 @@ development_status:
 # All Prisma models are now complete! No missing models.
 
 # ============================================
-# SUMMARY (Updated 2026-01-26 - Epic 21 + 29-favorites + 33 DONE)
+# SUMMARY (Updated 2026-01-26 - Status cleanup)
 # ============================================
 # ✅ DONE: 26 epics (1-6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 29-chatwoot, 29-favorites, 30, 31, 32, 33, 34)
-# 🔴 BLOCKED-PRISMA: 5 epics (23, 25, 26, 27, 28)
-# ⚪ BACKLOG: 1 epic (22)
+# ⚪ BACKLOG: 6 epics (22, 23, 25, 26, 27, 28) - Prisma models ready, awaiting implementation
 #
 # LATEST UPDATE (2026-01-26):
 # ===========================
@@ -559,8 +559,8 @@ development_status:
 #    - prisma-company-vehicle.repository.ts (222 lines)
 #
 # NEXT PRIORITY:
-# - Epic 22: Point of Sale (sales-pos) - requires new models
-# - Epic 23-28: Blocked on domain Prisma models
+# - Epic 22: Point of Sale (sales-pos) - POS models needed
+# - Epic 23-28: Ready for implementation (Prisma models exist)
 #
 # LATEST UPDATE (2026-01-26):
 # ===========================
