@@ -377,11 +377,13 @@ model Warehouse {
   movementsTo        StockMovement[]     @relation("MovementToWarehouse")
   transfersFrom      InventoryTransfer[] @relation("TransferFromWarehouse")
   transfersTo        InventoryTransfer[] @relation("TransferToWarehouse")
-  stockLevelSettings StockLevelSetting[]
-  locationStructures LocationStructure[]
-  rentals            Rental[]
-  stockAlerts        StockAlert[]
-  goodsReceipts      GoodsReceipt[]
+  stockLevelSettings      StockLevelSetting[]
+  locationStructures      LocationStructure[]
+  rentals                 Rental[]
+  stockAlerts             StockAlert[]
+  goodsReceipts           GoodsReceipt[]
+  cashRegisterSessions    CashRegisterSession[]
+  saleItems               SaleItem[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -764,13 +766,14 @@ model Partner {
   deletedBy String?   @map("deleted_by") @db.Uuid
 
   // Relations
-  loyaltyTier     LoyaltyTier?     @relation(fields: [loyaltyTierId], references: [id])
-  representatives Representative[]
-  loyaltyHistory  LoyaltyHistory[]
-  rentals         Rental[]
-  worksheets      Worksheet[]
-  invoices        Invoice[]
-  quotes          Quote[]
+  loyaltyTier      LoyaltyTier?      @relation(fields: [loyaltyTierId], references: [id])
+  representatives  Representative[]
+  loyaltyHistory   LoyaltyHistory[]
+  rentals          Rental[]
+  worksheets       Worksheet[]
+  invoices         Invoice[]
+  quotes           Quote[]
+  saleTransactions SaleTransaction[]
 
   @@unique([tenantId, partnerCode])
   @@unique([tenantId, taxNumber])
@@ -1063,6 +1066,7 @@ model Product {
   quoteItems        QuoteItem[]
   avizoItems        AvizoItem[]
   goodsReceiptItems GoodsReceiptItem[]
+  saleItems         SaleItem[]
 
   @@unique([tenantId, sku])
   @@unique([tenantId, barcode])
@@ -2650,6 +2654,8 @@ model Avizo {
   @@index([supplierId])
   @@index([status])
   @@index([expectedDate])
+  @@index([tenantId, supplierId]) // M3 FIX: Composite index for findBySupplier query
+  @@index([tenantId, status]) // M3 FIX: Composite index for findPending query
   @@map("avizos")
 }
 
@@ -2802,5 +2808,196 @@ model ReceiptDiscrepancy {
   @@index([type])
   @@index([supplierNotified])
   @@index([resolvedAt])
+  @@index([receiptId, resolvedAt]) // M3 FIX: Composite index for findUnresolvedByReceiptId query
   @@map("receipt_discrepancies")
+}
+
+// ============================================
+// POINT OF SALE MODELS (Epic 22)
+// ============================================
+
+/// CashRegisterStatus - Kassza állapot
+enum CashRegisterStatus {
+  OPEN      // Nyitva, aktív
+  SUSPENDED // Felfüggesztve
+  CLOSED    // Lezárva
+}
+
+/// SaleStatus - Értékesítési tranzakció állapot
+enum SaleStatus {
+  IN_PROGRESS     // Kosár összeállítás alatt
+  PENDING_PAYMENT // Fizetésre vár
+  COMPLETED       // Befejezett
+  VOIDED          // Sztornózott
+}
+
+/// PaymentStatus - Fizetési állapot
+enum PaymentStatusPOS {
+  PENDING   // Függőben
+  PARTIAL   // Részlegesen fizetve
+  PAID      // Kifizetve
+  REFUNDED  // Visszatérítve
+}
+
+/// PaymentMethod - Fizetési mód
+enum PaymentMethod {
+  CASH     // Készpénz
+  CARD     // Bankkártya (MyPos)
+  TRANSFER // Átutalás
+  VOUCHER  // Utalvány/kupon
+  CREDIT   // Hitel (partner hitelkeret)
+}
+
+/// CashRegisterSession - POS Kassza Session (Napi nyitás/zárás)
+model CashRegisterSession {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  sessionNumber String             @map("session_number") @db.VarChar(50) // KASSZA-YYYY-NNNN
+  locationId    String             @map("location_id") @db.Uuid
+  status        CashRegisterStatus @default(OPEN)
+
+  // Nyitás
+  openedAt       DateTime @map("opened_at") @db.Timestamptz
+  openingBalance Decimal  @map("opening_balance") @db.Decimal(12, 2)
+  openedBy       String   @map("opened_by") @db.Uuid
+
+  // Zárás
+  closedAt        DateTime? @map("closed_at") @db.Timestamptz
+  closingBalance  Decimal?  @map("closing_balance") @db.Decimal(12, 2)
+  expectedBalance Decimal?  @map("expected_balance") @db.Decimal(12, 2)
+  variance        Decimal?  @db.Decimal(12, 2) // Eltérés (closingBalance - expectedBalance)
+  varianceNote    String?   @map("variance_note") @db.Text
+  closedBy        String?   @map("closed_by") @db.Uuid
+
+  // Audit
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  location     Warehouse         @relation(fields: [locationId], references: [id])
+  transactions SaleTransaction[]
+
+  @@unique([tenantId, sessionNumber])
+  @@index([tenantId, status])
+  @@index([tenantId, locationId, openedAt])
+  @@map("cash_register_sessions")
+}
+
+/// SaleTransaction - Értékesítési tranzakció
+model SaleTransaction {
+  id        String @id @default(uuid()) @db.Uuid
+  tenantId  String @map("tenant_id") @db.Uuid
+  sessionId String @map("session_id") @db.Uuid
+
+  transactionNumber String @map("transaction_number") @db.VarChar(50) // ELADAS-YYYY-NNNN
+
+  // Vevő (opcionális - készpénzes vásárlásnál nem kötelező)
+  customerId        String? @map("customer_id") @db.Uuid
+  customerName      String? @map("customer_name") @db.VarChar(255)
+  customerTaxNumber String? @map("customer_tax_number") @db.VarChar(20)
+
+  // Összegek
+  subtotal       Decimal @db.Decimal(12, 2)
+  taxAmount      Decimal @map("tax_amount") @db.Decimal(12, 2)
+  discountAmount Decimal @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  total          Decimal @db.Decimal(12, 2)
+
+  // Fizetés
+  paymentStatus PaymentStatusPOS @default(PENDING) @map("payment_status")
+  paidAmount    Decimal          @default(0) @map("paid_amount") @db.Decimal(12, 2)
+  changeAmount  Decimal          @default(0) @map("change_amount") @db.Decimal(12, 2)
+
+  // Számla kapcsolat
+  invoiceId     String? @map("invoice_id") @db.Uuid
+  receiptNumber String? @map("receipt_number") @db.VarChar(50)
+
+  // Státusz
+  status     SaleStatus @default(IN_PROGRESS)
+  voidedAt   DateTime?  @map("voided_at") @db.Timestamptz
+  voidedBy   String?    @map("voided_by") @db.Uuid
+  voidReason String?    @map("void_reason") @db.Text
+
+  // Audit
+  createdBy   String    @map("created_by") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  completedAt DateTime? @map("completed_at") @db.Timestamptz
+
+  // Relations
+  session  CashRegisterSession @relation(fields: [sessionId], references: [id])
+  customer Partner?            @relation(fields: [customerId], references: [id])
+  items    SaleItem[]
+  payments SalePayment[]
+
+  @@unique([tenantId, transactionNumber])
+  @@index([tenantId, sessionId])
+  @@index([tenantId, status, createdAt])
+  @@index([transactionNumber])
+  @@map("sale_transactions")
+}
+
+/// SaleItem - Értékesítési tétel
+model SaleItem {
+  id            String @id @default(uuid()) @db.Uuid
+  transactionId String @map("transaction_id") @db.Uuid
+  tenantId      String @map("tenant_id") @db.Uuid
+
+  productId   String @map("product_id") @db.Uuid
+  productCode String @map("product_code") @db.VarChar(50)
+  productName String @map("product_name") @db.VarChar(255)
+
+  quantity        Decimal @db.Decimal(10, 3)
+  unitPrice       Decimal @map("unit_price") @db.Decimal(12, 2)
+  taxRate         Decimal @map("tax_rate") @db.Decimal(5, 2) // 27, 18, 5, 0
+  discountPercent Decimal @default(0) @map("discount_percent") @db.Decimal(5, 2)
+
+  lineSubtotal Decimal @map("line_subtotal") @db.Decimal(12, 2)
+  lineTax      Decimal @map("line_tax") @db.Decimal(12, 2)
+  lineTotal    Decimal @map("line_total") @db.Decimal(12, 2)
+
+  // Készlet tracking
+  inventoryDeducted Boolean @default(false) @map("inventory_deducted")
+  warehouseId       String? @map("warehouse_id") @db.Uuid
+
+  // Audit
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  transaction SaleTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  product     Product         @relation(fields: [productId], references: [id])
+  warehouse   Warehouse?      @relation(fields: [warehouseId], references: [id])
+
+  @@index([transactionId])
+  @@index([productId])
+  @@map("sale_items")
+}
+
+/// SalePayment - Fizetési rekord (vegyes fizetéshez)
+model SalePayment {
+  id            String @id @default(uuid()) @db.Uuid
+  transactionId String @map("transaction_id") @db.Uuid
+  tenantId      String @map("tenant_id") @db.Uuid
+
+  method PaymentMethod
+  amount Decimal       @db.Decimal(12, 2)
+
+  // Kártya fizetésnél
+  cardTransactionId String? @map("card_transaction_id") @db.VarChar(100)
+  cardLastFour      String? @map("card_last_four") @db.VarChar(4)
+  cardBrand         String? @map("card_brand") @db.VarChar(20) // VISA, MC, etc.
+
+  // Átutalásnál
+  transferReference String? @map("transfer_reference") @db.VarChar(100)
+
+  // Utalványnál
+  voucherCode String? @map("voucher_code") @db.VarChar(50)
+
+  // Audit
+  receivedAt DateTime @default(now()) @map("received_at") @db.Timestamptz
+
+  // Relations
+  transaction SaleTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId])
+  @@map("sale_payments")
 }

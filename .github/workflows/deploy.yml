@@ -13,7 +13,7 @@ on:
 
 concurrency:
   group: deploy-${{ github.ref }}
-  cancel-in-progress: false  # Deploy-t ne szakítsuk meg
+  cancel-in-progress: false # Deploy-t ne szakítsuk meg
 
 env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -244,13 +244,21 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Deploy (Kubernetes / egyéb)
+      # Deploy via SSH (ADR-045: Simple CI/CD - Docker Compose)
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STAGING_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.STAGING_HOST }} >> ~/.ssh/known_hosts
+
       - name: Deploy to Staging
         run: |
-          echo "Deploying to staging..."
-          # Itt jön a tényleges deploy script
-          # kubectl set image deployment/kgc-api ...
-          # vagy: ssh deploy@staging ./deploy.sh ${{ github.sha }}
+          chmod +x scripts/deploy.sh
+          ./scripts/deploy.sh staging ${{ github.sha }}
+        env:
+          STAGING_SERVER: ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}
+          STAGING_PATH: ${{ secrets.STAGING_PATH }}
 
       - name: Notify on success
         if: success()

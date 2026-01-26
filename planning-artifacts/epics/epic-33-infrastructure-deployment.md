@@ -5,172 +5,265 @@
 **Típus:** DevOps / Infrastructure
 **Készítette:** BMAD Method
 **Dátum:** 2026-01-18
+**Frissítve:** 2026-01-26 (ADR-045 - Infrastruktúra Egyszerűsítés)
 
 ---
 
 ## ÖSSZEFOGLALÓ
 
-Self-hosted külső rendszerek telepítése és Docker/K8s infrastruktúra kialakítása. Az integrációs kód (Epic 28-30) már KÉSZ, de a rendszerek még nincsenek telepítve.
+Self-hosted külső rendszerek telepítése és **Docker Compose alapú** infrastruktúra kialakítása.
 
-| Rendszer | Típus | Forrás |
-|----------|-------|--------|
-| Twenty CRM | Git Fork | https://github.com/twentyhq/twenty |
-| Chatwoot | Git Fork | https://github.com/chatwoot/chatwoot |
-| Horilla HR | Git Fork | https://github.com/horlogg/horilla |
+> **FONTOS VÁLTOZÁS (2026-01-26):** Az ADR-045 döntés értelmében a Kubernetes és komplex monitoring stack **eltávolításra került**. Helyette egyszerűbb, a csapat által karbantartható Docker Compose + Sentry megoldás kerül bevezetésre.
+
+| Rendszer   | Típus    | Forrás                               |
+| ---------- | -------- | ------------------------------------ |
+| Twenty CRM | Git Fork | https://github.com/twentyhq/twenty   |
+| Chatwoot   | Git Fork | https://github.com/chatwoot/chatwoot |
+| Horilla HR | Git Fork | https://github.com/horlogg/horilla   |
+
+---
+
+## ARCHITEKTÚRA DÖNTÉS
+
+**Lásd:** [ADR-045: Infrastruktúra Egyszerűsítés](../adr/ADR-045-infrastructure-simplification.md)
+
+### Választott megoldás: "Boring Technology" Stack
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   PRODUCTION SETUP                       │
+├─────────────────────────────────────────────────────────┤
+│  VPS (Hetzner/DigitalOcean) €30-50/hó                   │
+│  ├── Docker Compose                                      │
+│  │   ├── kgc-api + kgc-web + kgc-admin                  │
+│  │   ├── PostgreSQL 15 + Redis 7                        │
+│  │   ├── Caddy (reverse proxy + auto SSL)               │
+│  │   └── Twenty CRM + Chatwoot + Horilla HR             │
+│  └── Portainer (opcionális GUI)                         │
+├─────────────────────────────────────────────────────────┤
+│  MONITORING: Sentry.io + UptimeRobot + /health          │
+│  CI/CD: GitHub Actions + SSH deploy script              │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Miért NEM Kubernetes?
+
+| Szempont     | K8s         | Docker Compose |
+| ------------ | ----------- | -------------- |
+| Tanulási idő | 2-6 hónap   | 1-2 nap        |
+| Havi költség | €200+       | €30-50         |
+| Csapat tudás | Nincs       | Van            |
+| Karbantartás | DevOps kell | Bárki kezeli   |
 
 ---
 
 ## STORY LISTA (7 story)
 
-### Story 33-1: Twenty CRM Docker Setup
+### Story 33-1: Twenty CRM Docker Setup ✅ DONE
 
 **Leírás:** Twenty CRM self-hosted telepítése Docker-ben, PostgreSQL adatbázissal.
 
 **Acceptance Criteria:**
-- [ ] Twenty CRM fork létrehozva git submodule-ként
-- [ ] Docker Compose konfiguráció `infra/docker/twenty-crm/`
-- [ ] PostgreSQL adatbázis külön container
-- [ ] Környezeti változók (.env.example)
-- [ ] Health check endpoint működik
-- [ ] KGC tenant-aware konfiguráció előkészítve
-- [ ] Dokumentáció: `infra/docker/twenty-crm/README.md`
 
-**Technikai részletek:**
-- Twenty CRM: Node.js + React
-- DB: PostgreSQL 15+
-- Port: 3001 (default)
-- SSO előkészítés KGC auth-hoz
+- [x] Twenty CRM fork létrehozva git submodule-ként
+- [x] Docker Compose konfiguráció `infra/docker/twenty-crm/`
+- [x] PostgreSQL adatbázis külön container
+- [x] Környezeti változók (.env.example)
+- [x] Health check endpoint működik
+- [x] KGC tenant-aware konfiguráció előkészítve
+- [x] Dokumentáció: `infra/docker/twenty-crm/README.md`
+
+**Státusz:** ✅ DONE (Code reviewed 2026-01-25)
 
 ---
 
-### Story 33-2: Chatwoot Docker Setup
+### Story 33-2: Chatwoot Docker Setup ✅ DONE
 
 **Leírás:** Chatwoot self-hosted telepítése Docker-ben, Redis + PostgreSQL-lel.
 
 **Acceptance Criteria:**
-- [ ] Chatwoot fork létrehozva git submodule-ként
-- [ ] Docker Compose konfiguráció `infra/docker/chatwoot/`
-- [ ] PostgreSQL + Redis containers
-- [ ] Sidekiq worker container
-- [ ] Környezeti változók (.env.example)
-- [ ] Webhook endpoint konfiguráció KGC-hez
-- [ ] Dokumentáció: `infra/docker/chatwoot/README.md`
 
-**Technikai részletek:**
-- Chatwoot: Ruby on Rails
-- DB: PostgreSQL 15+
-- Cache: Redis 7+
-- Port: 3002 (default)
+- [x] Chatwoot fork létrehozva git submodule-ként
+- [x] Docker Compose konfiguráció `infra/docker/chatwoot/`
+- [x] PostgreSQL + Redis containers
+- [x] Sidekiq worker container
+- [x] Környezeti változók (.env.example)
+- [x] Webhook endpoint konfiguráció KGC-hez
+- [x] Dokumentáció: `infra/docker/chatwoot/README.md`
+
+**Státusz:** ✅ DONE (Code reviewed 2026-01-25)
 
 ---
 
-### Story 33-3: Horilla HR Docker Setup
+### Story 33-3: Horilla HR Docker Setup ✅ DONE
 
 **Leírás:** Horilla HR self-hosted telepítése Docker-ben.
 
 **Acceptance Criteria:**
-- [ ] Horilla fork létrehozva git submodule-ként
-- [ ] Docker Compose konfiguráció `infra/docker/horilla-hr/`
-- [ ] PostgreSQL adatbázis container
-- [ ] Python dependencies (requirements.txt)
-- [ ] Környezeti változók (.env.example)
-- [ ] API endpoint konfiguráció KGC employee-sync-hez
-- [ ] Dokumentáció: `infra/docker/horilla-hr/README.md`
 
-**Technikai részletek:**
-- Horilla: Django (Python)
-- DB: PostgreSQL 15+
-- Port: 3003 (default)
+- [x] Horilla fork létrehozva git submodule-ként
+- [x] Docker Compose konfiguráció `infra/docker/horilla-hr/`
+- [x] PostgreSQL adatbázis container
+- [x] Python dependencies (requirements.txt)
+- [x] Környezeti változók (.env.example)
+- [x] API endpoint konfiguráció KGC employee-sync-hez
+- [x] Dokumentáció: `infra/docker/horilla-hr/README.md`
+
+**Státusz:** ✅ DONE (Code reviewed 2026-01-25)
 
 ---
 
-### Story 33-4: Full-Stack Docker Compose
+### Story 33-4: Full-Stack Docker Compose ✅ DONE
 
 **Leírás:** Teljes development stack egyetlen docker-compose.yml fájlban.
 
 **Acceptance Criteria:**
-- [ ] `infra/docker/docker-compose.yml` - full stack
-- [ ] `infra/docker/docker-compose.dev.yml` - dev overrides
-- [ ] KGC API + Web + Admin containers
-- [ ] Twenty CRM container
-- [ ] Chatwoot containers (app + sidekiq)
-- [ ] Horilla HR container
-- [ ] Shared PostgreSQL VAGY külön DB-k per service
-- [ ] Shared Redis VAGY külön instance-ok
-- [ ] Traefik/Nginx reverse proxy
-- [ ] Network isolation (kgc-network)
-- [ ] Volume mounts for persistence
-- [ ] `make up` / `make down` parancsok
 
-**Parancsok:**
-```bash
-# Development
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+- [x] `infra/docker/docker-compose.yml` - full stack
+- [x] `infra/docker/docker-compose.dev.yml` - dev overrides
+- [x] KGC API + Web + Admin containers
+- [x] Twenty CRM container
+- [x] Chatwoot containers (app + sidekiq)
+- [x] Horilla HR container
+- [x] Shared PostgreSQL VAGY külön DB-k per service
+- [x] Shared Redis VAGY külön instance-ok
+- [x] Traefik/Nginx reverse proxy
+- [x] Network isolation (kgc-network)
+- [x] Volume mounts for persistence
+- [x] `make up` / `make down` parancsok
 
-# Production
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
+**Státusz:** ✅ DONE (2026-01-25)
 
 ---
 
-### Story 33-5: Kubernetes Manifests (Production)
+### Story 33-5: Production Docker Compose + Caddy 🆕 MÓDOSÍTOTT
 
-**Leírás:** Production-ready K8s deployment manifests.
+**Leírás:** Production-ready Docker Compose konfiguráció Caddy reverse proxy-val és automatikus SSL-lel.
+
+> **ADR-045 változás:** Kubernetes manifests helyett Docker Compose + Caddy megoldás.
 
 **Acceptance Criteria:**
-- [ ] `infra/k8s/` könyvtár struktúra
-- [ ] Namespace: `kgc-production`
-- [ ] KGC API Deployment + Service + Ingress
-- [ ] KGC Web Deployment + Service + Ingress
-- [ ] Twenty CRM StatefulSet + Service
-- [ ] Chatwoot Deployment + Service
-- [ ] Horilla HR Deployment + Service
-- [ ] PostgreSQL StatefulSet (vagy external DB config)
-- [ ] Redis StatefulSet
-- [ ] ConfigMaps és Secrets
-- [ ] HPA (Horizontal Pod Autoscaler) KGC API-hoz
-- [ ] PersistentVolumeClaims
-- [ ] Ingress rules (subdomain routing)
 
-**Ingress példa:**
+- [ ] `infra/docker/docker-compose.prod.yml` - production config
+- [ ] Caddy reverse proxy automatikus Let's Encrypt SSL-lel
+- [ ] Production environment változók (.env.prod.example)
+- [ ] Backup script (`scripts/backup.sh`) - PostgreSQL pg_dump
+- [ ] Restore script (`scripts/restore.sh`)
+- [ ] Health check minden service-en
+- [ ] Dokumentáció: `infra/docker/PRODUCTION.md`
+
+**Technikai részletek:**
+
 ```yaml
-- host: app.kgc.hu      → KGC Web
-- host: api.kgc.hu      → KGC API
-- host: crm.kgc.hu      → Twenty CRM
-- host: support.kgc.hu  → Chatwoot
-- host: hr.kgc.hu       → Horilla HR
+# Caddy konfiguráció példa
+app.kgc.hu {
+reverse_proxy kgc-web:3000
+}
+api.kgc.hu {
+reverse_proxy kgc-api:4000
+}
+crm.kgc.hu {
+reverse_proxy twenty-crm:3001
+}
 ```
 
----
-
-### Story 33-6: CI/CD Pipeline Setup
-
-**Leírás:** GitHub Actions CI/CD pipeline a full stack deploymenthez.
-
-**Acceptance Criteria:**
-- [ ] `.github/workflows/ci.yml` - lint, test, build
-- [ ] `.github/workflows/deploy-staging.yml`
-- [ ] `.github/workflows/deploy-production.yml`
-- [ ] Docker image build és push (GitHub Container Registry)
-- [ ] Automatic K8s deployment on merge to main
-- [ ] Environment secrets management
-- [ ] Slack/Discord notification on deploy
-- [ ] Rollback capability
+**Story Point:** 5 (csökkentve 13-ról)
 
 ---
 
-### Story 33-7: Monitoring & Observability Stack
+### Story 33-6: Egyszerű CI/CD Pipeline 🆕 MÓDOSÍTOTT
 
-**Leírás:** Prometheus + Grafana + Loki monitoring stack.
+**Leírás:** GitHub Actions alapú CI/CD pipeline egyszerű SSH deployment-tel.
+
+> **ADR-045 változás:** Komplex K8s deployment helyett egyszerű SSH + rsync megoldás.
 
 **Acceptance Criteria:**
-- [ ] `infra/monitoring/` könyvtár
-- [ ] Prometheus konfiguráció (scrape configs)
-- [ ] Grafana dashboards (KGC, Twenty, Chatwoot, Horilla)
-- [ ] Loki log aggregation
-- [ ] Alert rules (CPU, memory, error rate)
-- [ ] Docker Compose integration
-- [ ] K8s ServiceMonitor resources
+
+- [ ] `.github/workflows/ci.yml` - lint, test, typecheck, build
+- [ ] `.github/workflows/deploy.yml` - SSH deploy to production
+- [ ] Docker image build (opcionális GHCR push)
+- [ ] `scripts/deploy.sh` - rsync + docker compose restart
+- [ ] `scripts/rollback.sh` - előző verzióra visszaállás
+- [ ] Environment secrets management (GitHub Secrets)
+- [ ] Slack/Discord notification (opcionális)
+- [ ] Dokumentáció: `.github/DEPLOYMENT.md`
+
+**CI Pipeline:**
+
+```yaml
+# .github/workflows/ci.yml
+jobs:
+  lint:
+    - pnpm lint
+  test:
+    - pnpm test
+  typecheck:
+    - pnpm typecheck
+  build:
+    - pnpm build
+```
+
+**Deploy script (egyszerűsített):**
+
+```bash
+#!/bin/bash
+# scripts/deploy.sh
+rsync -avz --delete ./dist/ user@server:/app/
+ssh user@server "cd /app && docker compose -f docker-compose.prod.yml up -d"
+```
+
+**Story Point:** 3 (csökkentve 8-ról)
+
+---
+
+### Story 33-7: Sentry + Health Monitoring 🆕 MÓDOSÍTOTT
+
+**Leírás:** Egyszerűsített monitoring Sentry.io error tracking-gel és health check endpoint-okkal.
+
+> **ADR-045 változás:** Prometheus + Grafana + Loki stack helyett Sentry.io + UptimeRobot.
+
+**Acceptance Criteria:**
+
+- [ ] Sentry.io integráció KGC API-ban (@sentry/nestjs)
+- [ ] Sentry.io integráció KGC Web-ben (@sentry/nextjs)
+- [ ] `/health` endpoint minden service-en (200 OK ha működik)
+- [ ] `/ready` endpoint (DB connection check)
+- [ ] UptimeRobot konfiguráció dokumentáció
+- [ ] Error alerting beállítás (Sentry → Slack/Email)
+- [ ] Dokumentáció: `infra/monitoring/README.md`
+
+**Health endpoint példa:**
+
+```typescript
+// packages/core/common/src/health/health.controller.ts
+@Get('/health')
+health() {
+  return { status: 'ok', timestamp: new Date().toISOString() };
+}
+
+@Get('/ready')
+async ready() {
+  const dbConnected = await this.prisma.$queryRaw`SELECT 1`;
+  return { status: 'ready', database: !!dbConnected };
+}
+```
+
+**Story Point:** 2 (csökkentve 5-ről)
+
+---
+
+## ELTÁVOLÍTOTT STORY-K (ADR-045)
+
+A következő story-k **TÖRÖLVE** lettek az egyszerűsítés miatt:
+
+| Eredeti Story                 | Indoklás                         |
+| ----------------------------- | -------------------------------- |
+| ~~Kubernetes manifests~~      | K8s túl komplex a csapat számára |
+| ~~Prometheus scrape configs~~ | Sentry.io elegendő               |
+| ~~Grafana dashboards~~        | Nem szükséges                    |
+| ~~Loki log aggregation~~      | Docker logs + Sentry elegendő    |
+| ~~HPA auto-scaling~~          | Manuális scaling elegendő        |
+| ~~ServiceMonitor resources~~  | K8s-specifikus, nem releváns     |
 
 ---
 
@@ -188,40 +281,51 @@ Epic 33 függőségei:
 
 ```
 33-1 (Twenty)  ──┐
-33-2 (Chatwoot) ─┼──► 33-4 (Full Stack) ──► 33-5 (K8s) ──► 33-6 (CI/CD)
-33-3 (Horilla) ──┘                                              │
-                                                                ▼
-                                                         33-7 (Monitoring)
+33-2 (Chatwoot) ─┼──► 33-4 (Full Stack) ──► 33-5 (Prod Compose) ──► 33-6 (CI/CD)
+33-3 (Horilla) ──┘           ✅                    │                      │
+      ✅                                           ▼                      ▼
+                                            33-7 (Sentry)          (parallel)
 ```
 
-Az első 3 story párhuzamosan futtatható.
+Az első 4 story KÉSZ. A 33-5, 33-6, 33-7 párhuzamosan futtatható.
 
 ---
 
-## TECHNIKAI DÖNTÉSEK
+## TECHNIKAI DÖNTÉSEK (Frissítve ADR-045)
 
-| Kérdés | Döntés | Indoklás |
-|--------|--------|----------|
-| Shared vs Separate DB | Separate | Izolált adatok, könnyebb backup |
-| Reverse Proxy | Traefik | K8s-native, automatic SSL |
-| Container Registry | GHCR | GitHub integration |
-| Secret Management | K8s Secrets + Sealed Secrets | GitOps kompatibilis |
-
----
-
-## BECSÜLT STORY PONTOK
-
-| Story | Komplexitás | Story Point |
-|-------|-------------|-------------|
-| 33-1 Twenty CRM | Medium | 5 |
-| 33-2 Chatwoot | Medium | 5 |
-| 33-3 Horilla HR | Medium | 5 |
-| 33-4 Full Stack | Large | 8 |
-| 33-5 K8s | Large | 13 |
-| 33-6 CI/CD | Medium | 8 |
-| 33-7 Monitoring | Medium | 5 |
-| **ÖSSZESEN** | - | **49** |
+| Kérdés            | Eredeti Döntés       | Új Döntés (ADR-045)         |
+| ----------------- | -------------------- | --------------------------- |
+| Orchestration     | Kubernetes           | **Docker Compose**          |
+| Reverse Proxy     | Traefik (K8s)        | **Caddy** (auto SSL)        |
+| Monitoring        | Prometheus + Grafana | **Sentry.io + UptimeRobot** |
+| CI/CD Deploy      | K8s manifests apply  | **SSH + rsync**             |
+| Auto-scaling      | HPA                  | **Manuális (vertical)**     |
+| Secret Management | K8s Sealed Secrets   | **GitHub Secrets + .env**   |
 
 ---
 
-*Készítette: BMAD Method - Infrastructure Epic*
+## BECSÜLT STORY PONTOK (Frissítve)
+
+| Story             | Eredeti SP | Új SP  | Megtakarítás |
+| ----------------- | ---------- | ------ | ------------ |
+| 33-1 Twenty CRM   | 5          | 5      | -            |
+| 33-2 Chatwoot     | 5          | 5      | -            |
+| 33-3 Horilla HR   | 5          | 5      | -            |
+| 33-4 Full Stack   | 8          | 8      | -            |
+| 33-5 Prod Compose | ~~13~~     | **5**  | -8           |
+| 33-6 CI/CD        | ~~8~~      | **3**  | -5           |
+| 33-7 Monitoring   | ~~5~~      | **2**  | -3           |
+| **ÖSSZESEN**      | ~~49~~     | **33** | **-16 SP**   |
+
+---
+
+## HIVATKOZÁSOK
+
+- **ADR-045:** [Infrastruktúra Egyszerűsítés](../adr/ADR-045-infrastructure-simplification.md)
+- **Boring Technology:** https://boringtechnology.club/
+- **YAGNI Principle:** https://martinfowler.com/bliki/Yagni.html
+
+---
+
+_Készítette: BMAD Method - Infrastructure Epic_
+_Frissítve: 2026-01-26 - ADR-045 döntés alapján_

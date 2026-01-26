@@ -9,10 +9,10 @@ import {
   CreateDiscrepancySchema,
   ResolveDiscrepancyDto,
   ResolveDiscrepancySchema,
-} from '../dto/receipt.dto';
-import { DiscrepancyType, IDiscrepancy, ReceiptStatus } from '../interfaces/receipt.interface';
-import { IAuditService } from './avizo.service';
-import { IReceiptItemRepository, IReceiptRepository } from './receipt.service';
+} from '../dto/receipt.dto.js';
+import { DiscrepancyType, IDiscrepancy, ReceiptStatus } from '../interfaces/receipt.interface.js';
+import { IAuditService } from './avizo.service.js';
+import { IReceiptItemRepository, IReceiptRepository } from './receipt.service.js';
 
 export interface IDiscrepancyRepository {
   create(data: Partial<IDiscrepancy>): Promise<IDiscrepancy>;
@@ -75,6 +75,19 @@ export class DiscrepancyService {
 
     // Calculate difference
     const difference = validInput.actualQuantity - validInput.expectedQuantity;
+
+    // M4 FIX: Validate discrepancy type consistency with difference
+    const discrepancyType = validInput.type as DiscrepancyType;
+    if (discrepancyType === DiscrepancyType.SHORTAGE && difference >= 0) {
+      throw new Error(
+        `Invalid discrepancy: SHORTAGE type requires actualQuantity < expectedQuantity (difference: ${difference})`
+      );
+    }
+    if (discrepancyType === DiscrepancyType.SURPLUS && difference <= 0) {
+      throw new Error(
+        `Invalid discrepancy: SURPLUS type requires actualQuantity > expectedQuantity (difference: ${difference})`
+      );
+    }
 
     const discrepancy = await this.discrepancyRepository.create({
       receiptId,

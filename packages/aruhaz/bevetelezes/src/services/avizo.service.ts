@@ -9,8 +9,13 @@ import {
   CreateAvizoSchema,
   UpdateAvizoDto,
   UpdateAvizoSchema,
-} from '../dto/avizo.dto';
-import { AvizoStatus, IAvizo, IAvizoCreateResult, IAvizoItem } from '../interfaces/avizo.interface';
+} from '../dto/avizo.dto.js';
+import {
+  AvizoStatus,
+  IAvizo,
+  IAvizoCreateResult,
+  IAvizoItem,
+} from '../interfaces/avizo.interface.js';
 
 export interface IAvizoRepository {
   create(data: Partial<IAvizo>): Promise<IAvizo>;

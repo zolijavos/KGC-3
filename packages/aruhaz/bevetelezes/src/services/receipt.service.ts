@@ -4,15 +4,15 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { CreateReceiptDto, CreateReceiptSchema } from '../dto/receipt.dto';
-import { AvizoStatus, IAvizo, IAvizoItem } from '../interfaces/avizo.interface';
+import { CreateReceiptDto, CreateReceiptSchema } from '../dto/receipt.dto.js';
+import { AvizoStatus, IAvizo, IAvizoItem } from '../interfaces/avizo.interface.js';
 import {
   IReceipt,
   IReceiptItem,
   RECEIPT_TOLERANCE_PERCENT,
   ReceiptStatus,
-} from '../interfaces/receipt.interface';
-import { IAuditService, IAvizoItemRepository, IAvizoRepository } from './avizo.service';
+} from '../interfaces/receipt.interface.js';
+import { IAuditService, IAvizoItemRepository, IAvizoRepository } from './avizo.service.js';
 
 export interface IReceiptRepository {
   create(data: Partial<IReceipt>): Promise<IReceipt>;
@@ -133,10 +133,14 @@ export class ReceiptService {
     await this.receiptItemRepository.createMany(itemsToCreate);
 
     // Update avizo item received quantities if linked to avizo
+    // H5 FIX: Only update avizo items that belong to this tenant's avizo
     if (validInput.avizoId && avizoItems.length > 0) {
       for (const item of validInput.items) {
         if (item.avizoItemId) {
-          const avizoItem = avizoItems.find(ai => ai.id === item.avizoItemId);
+          // Verify avizoItemId belongs to the loaded avizo items (tenant-safe)
+          const avizoItem = avizoItems.find(
+            ai => ai.id === item.avizoItemId && ai.tenantId === tenantId
+          );
           if (avizoItem) {
             await this.avizoItemRepository.update(item.avizoItemId, {
               receivedQuantity: avizoItem.receivedQuantity + item.receivedQuantity,
@@ -174,20 +178,42 @@ export class ReceiptService {
       throw new Error('Receipt has unresolved discrepancies');
     }
 
-    // Get items and update inventory
+    // Get items for inventory update
     const items = await this.receiptItemRepository.findByReceiptId(receiptId);
-    for (const item of items) {
-      if (item.receivedQuantity > 0) {
+    const itemsToUpdate = items.filter(item => item.receivedQuantity > 0);
+
+    // H3/H4 FIX: Update all inventory first, collect results
+    // If any fails, we haven't changed receipt status yet
+    const inventoryUpdates: Array<{
+      productId: string;
+      quantity: number;
+      locationCode?: string;
+    }> = [];
+
+    for (const item of itemsToUpdate) {
+      try {
         await this.inventoryService.increaseStock(
           tenantId,
           item.productId,
           item.receivedQuantity,
           item.locationCode
         );
+        inventoryUpdates.push({
+          productId: item.productId,
+          quantity: item.receivedQuantity,
+          ...(item.locationCode !== undefined && { locationCode: item.locationCode }),
+        });
+      } catch (error) {
+        // If inventory update fails, throw with context about partial updates
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(
+          `Inventory update failed for product ${item.productCode}: ${errorMessage}. ` +
+            `${inventoryUpdates.length} items were updated before failure.`
+        );
       }
     }
 
-    // Update receipt status
+    // All inventory updates succeeded, now update receipt status
     const updatedReceipt = await this.receiptRepository.update(receiptId, {
       status: ReceiptStatus.COMPLETED,
       completedAt: new Date(),
@@ -211,6 +237,7 @@ export class ReceiptService {
       metadata: {
         receiptNumber: receipt.receiptNumber,
         itemCount: items.length,
+        inventoryUpdates: inventoryUpdates.length,
       },
     });
 

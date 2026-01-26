@@ -4,24 +4,24 @@
  */
 
 import { Injectable } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import {
-  IBooking,
-  IBookingItem,
-  IAvailabilityCheck,
-  ITimeSlot,
-  BookingStatus,
-  BookingType,
-  PaymentStatus,
-} from '../interfaces/booking.interface';
-import {
-  CreateBookingDto,
-  CreateBookingSchema,
   CheckAvailabilityDto,
   CheckAvailabilitySchema,
+  CreateBookingDto,
+  CreateBookingSchema,
   GetTimeSlotsDto,
   GetTimeSlotsSchema,
 } from '../dto/booking.dto';
-import { randomBytes } from 'crypto';
+import {
+  BookingStatus,
+  BookingType,
+  IAvailabilityCheck,
+  IBooking,
+  IBookingItem,
+  ITimeSlot,
+  PaymentStatus,
+} from '../interfaces/booking.interface';
 
 export interface IBookingRepository {
   create(data: Partial<IBooking>): Promise<IBooking>;
@@ -45,9 +45,11 @@ export interface IEquipmentService {
     tenantId: string,
     equipmentId: string,
     startDate: Date,
-    endDate: Date,
+    endDate: Date
   ): Promise<{ available: boolean; conflictingBookings: string[] }>;
-  getEquipmentById(id: string): Promise<{ id: string; code: string; name: string; dailyRate: number } | null>;
+  getEquipmentById(
+    id: string
+  ): Promise<{ id: string; code: string; name: string; dailyRate: number } | null>;
 }
 
 export interface INotificationService {
@@ -76,12 +78,12 @@ export class BookingService {
     private readonly itemRepository: IBookingItemRepository,
     private readonly equipmentService: IEquipmentService,
     private readonly notificationService: INotificationService,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
   async createBooking(
     input: CreateBookingDto,
-    tenantId: string,
+    tenantId: string
   ): Promise<{ booking: IBooking; items: IBookingItem[] }> {
     const validationResult = CreateBookingSchema.safeParse(input);
     if (!validationResult.success) {
@@ -102,10 +104,12 @@ export class BookingService {
           tenantId,
           item.equipmentId,
           validInput.startDate,
-          validInput.endDate || validInput.startDate,
+          validInput.endDate || validInput.startDate
         );
         if (!availability.available) {
-          throw new Error(`Equipment ${item.equipmentName} is not available for the selected dates`);
+          throw new Error(
+            `Equipment ${item.equipmentName} is not available for the selected dates`
+          );
         }
       }
     }
@@ -118,29 +122,37 @@ export class BookingService {
 
     // Calculate totals
     const endDate = validInput.endDate || validInput.startDate;
-    const totalDays = Math.max(1, Math.ceil((endDate.getTime() - validInput.startDate.getTime()) / (1000 * 60 * 60 * 24)));
+    const totalDays = Math.max(
+      1,
+      Math.ceil((endDate.getTime() - validInput.startDate.getTime()) / (1000 * 60 * 60 * 24))
+    );
 
     let totalAmount = 0;
-    const itemsToCreate: Partial<IBookingItem>[] = validInput.items.map((item) => {
+    const itemsToCreate: Partial<IBookingItem>[] = validInput.items.map(item => {
       const itemTotal = item.dailyRate * item.quantity * totalDays;
       totalAmount += itemTotal;
-      return {
+      const itemData: Partial<IBookingItem> = {
         tenantId,
-        equipmentId: item.equipmentId,
-        equipmentCode: item.equipmentCode,
         equipmentName: item.equipmentName,
         quantity: item.quantity,
         dailyRate: item.dailyRate,
         totalDays,
         itemTotal,
       };
+      if (item.equipmentId !== undefined) {
+        itemData.equipmentId = item.equipmentId;
+      }
+      if (item.equipmentCode !== undefined) {
+        itemData.equipmentCode = item.equipmentCode;
+      }
+      return itemData;
     });
 
     // Set expiration time
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + BOOKING_EXPIRATION_HOURS);
 
-    const booking = await this.bookingRepository.create({
+    const bookingData: Partial<IBooking> = {
       tenantId,
       bookingNumber,
       type: validInput.type as BookingType,
@@ -149,17 +161,24 @@ export class BookingService {
       customerEmail: validInput.customerEmail,
       customerPhone: validInput.customerPhone,
       startDate: validInput.startDate,
-      endDate: validInput.endDate,
-      notes: validInput.notes,
       totalAmount,
-      depositAmount: validInput.depositAmount,
       paymentStatus: PaymentStatus.PENDING,
       confirmationToken,
       expiresAt,
-    });
+    };
+    if (validInput.endDate !== undefined) {
+      bookingData.endDate = validInput.endDate;
+    }
+    if (validInput.notes !== undefined) {
+      bookingData.notes = validInput.notes;
+    }
+    if (validInput.depositAmount !== undefined) {
+      bookingData.depositAmount = validInput.depositAmount;
+    }
+    const booking = await this.bookingRepository.create(bookingData);
 
     // Create booking items
-    const itemsWithBookingId = itemsToCreate.map((item) => ({
+    const itemsWithBookingId = itemsToCreate.map(item => ({
       ...item,
       bookingId: booking.id,
     }));
@@ -187,7 +206,7 @@ export class BookingService {
 
   async checkAvailability(
     input: CheckAvailabilityDto,
-    tenantId: string,
+    tenantId: string
   ): Promise<IAvailabilityCheck[]> {
     const validationResult = CheckAvailabilitySchema.safeParse(input);
     if (!validationResult.success) {
@@ -202,7 +221,7 @@ export class BookingService {
         tenantId,
         equipmentId,
         validInput.startDate,
-        validInput.endDate,
+        validInput.endDate
       );
 
       results.push({
@@ -217,10 +236,7 @@ export class BookingService {
     return results;
   }
 
-  async getTimeSlots(
-    input: GetTimeSlotsDto,
-    tenantId: string,
-  ): Promise<ITimeSlot[]> {
+  async getTimeSlots(input: GetTimeSlotsDto, tenantId: string): Promise<ITimeSlot[]> {
     const validationResult = GetTimeSlotsSchema.safeParse(input);
     if (!validationResult.success) {
       throw new Error(`Validation failed: ${validationResult.error.message}`);
@@ -243,11 +259,11 @@ export class BookingService {
     const existingBookings = await this.bookingRepository.findByDateRange(
       tenantId,
       dayStart,
-      dayEnd,
+      dayEnd
     );
 
     const bookedCount = existingBookings.filter(
-      (b) => b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.PENDING,
+      b => b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.PENDING
     ).length;
 
     for (let hour = startHour; hour < endHour; hour += slotDuration) {
@@ -269,7 +285,7 @@ export class BookingService {
 
   async getBookingByNumber(
     bookingNumber: string,
-    tenantId: string,
+    tenantId: string
   ): Promise<{ booking: IBooking; items: IBookingItem[] }> {
     const booking = await this.bookingRepository.findByBookingNumber(bookingNumber);
     if (!booking) {

@@ -131,11 +131,6 @@ interface RejectAdjustmentInput {
   reason: string;
 }
 
-/** Export Variances Input */
-interface ExportVariancesQuery {
-  format?: 'CSV' | 'XLSX';
-}
-
 @ApiTags('Leltár (Stock Count)')
 @ApiSecurity('bearer')
 @Controller('stock-counts')
@@ -263,7 +258,7 @@ export class StockCountController {
   @ApiOperation({ summary: 'Leltár részletei' })
   @ApiResponse({ status: 200, description: 'Leltár részletei' })
   @ApiResponse({ status: 404, description: 'Leltár nem található' })
-  async getStockCount(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+  async getStockCount(@Param('id') id: string, @Req() _req: AuthenticatedRequest) {
     const stockCount = await this.stockCountService.getStockCount(id);
 
     if (!stockCount) {
@@ -462,7 +457,7 @@ export class StockCountController {
   ) {
     const items = await this.countRecordingService.getCountItems(stockCountId, {
       uncountedOnly: uncountedOnly === 'true',
-      zone: zone?.trim(),
+      locationCode: zone?.trim(),
       recountOnly: recountOnly === 'true',
     });
 

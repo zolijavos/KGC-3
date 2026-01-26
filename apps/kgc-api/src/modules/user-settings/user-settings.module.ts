@@ -35,7 +35,8 @@ export class UserSettingsModule {
       },
     ];
 
-    const controllers = [UserSettingsController];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const controllers: any[] = [UserSettingsController];
 
     if (options.enableTenantAdmin !== false) {
       controllers.push(TenantDefaultFavoritesController);

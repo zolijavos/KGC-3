@@ -21,6 +21,7 @@ import { InvoiceModule } from './modules/invoice/invoice.module';
 import { PartnersModule } from './modules/partners/partners.module';
 import { ProductsModule } from './modules/products/products.module';
 import { RentalModule } from './modules/rental/rental.module';
+import { ReportingModule } from './modules/reporting/reporting.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 
@@ -187,6 +188,9 @@ class WebhookController {
 
     // BevetelezesModule - Goods Receipt (Epic 21)
     BevetelezesModule.forRoot({ prisma }),
+
+    // ReportingModule - Reporting Engine (Epic 27)
+    ReportingModule.forRoot({ prisma }),
   ],
   controllers: [AppController, WebhookController],
   providers: [

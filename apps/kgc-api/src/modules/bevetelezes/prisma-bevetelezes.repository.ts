@@ -30,6 +30,25 @@ import {
 } from '@prisma/client';
 
 // ============================================
+// Validation helpers
+// ============================================
+
+function validateRequiredFields<T extends Record<string, unknown>>(
+  data: T,
+  fields: string[],
+  entityName: string
+): void {
+  const missingFields = fields.filter(
+    field =>
+      (data as Record<string, unknown>)[field] === undefined ||
+      (data as Record<string, unknown>)[field] === null
+  );
+  if (missingFields.length > 0) {
+    throw new Error(`Missing required fields for ${entityName}: ${missingFields.join(', ')}`);
+  }
+}
+
+// ============================================
 // Mapping helpers
 // ============================================
 
@@ -102,6 +121,14 @@ export class PrismaAvizoRepository implements IAvizoRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async create(data: Partial<IAvizo>): Promise<IAvizo> {
+    // M2 FIX: Validate required fields explicitly
+    validateRequiredFields(
+      data,
+      ['tenantId', 'avizoNumber', 'supplierId', 'supplierName', 'expectedDate', 'createdBy'],
+      'Avizo'
+    );
+
+    // After validation, these fields are guaranteed to exist
     const result = await this.prisma.avizo.create({
       data: {
         tenantId: data.tenantId!,
@@ -172,7 +199,8 @@ export class PrismaAvizoRepository implements IAvizoRepository {
     const startOfYear = new Date(year, 0, 1);
     const endOfYear = new Date(year + 1, 0, 1);
 
-    const count = await this.prisma.avizo.count({
+    // Use MAX to get highest sequence, handles concurrent inserts better than COUNT
+    const result = await this.prisma.avizo.aggregate({
       where: {
         tenantId,
         createdAt: {
@@ -180,9 +208,23 @@ export class PrismaAvizoRepository implements IAvizoRepository {
           lt: endOfYear,
         },
       },
+      _max: {
+        avizoNumber: true,
+      },
     });
 
-    return count + 1;
+    // Extract sequence from avizoNumber format: AV-YYYY-NNNN
+    const maxAvizoNumber = result._max.avizoNumber;
+    if (!maxAvizoNumber) {
+      return 1;
+    }
+
+    const match = maxAvizoNumber.match(/AV-\d{4}-(\d+)$/);
+    if (!match?.[1]) {
+      return 1;
+    }
+
+    return parseInt(match[1], 10) + 1;
   }
 
   private mapToDomain(data: Prisma.AvizoGetPayload<object>): IAvizo {
@@ -294,7 +336,15 @@ export class PrismaReceiptRepository implements IReceiptRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async create(data: Partial<IReceipt> & { warehouseId?: string }): Promise<IReceipt> {
+    // M2 FIX: Validate required fields explicitly
+    validateRequiredFields(
+      data,
+      ['tenantId', 'receiptNumber', 'supplierId', 'supplierName', 'receivedDate', 'processedBy'],
+      'GoodsReceipt'
+    );
+
     // Warehouse ID is required - use provided value or fall back to default warehouse
+    // After validation, tenantId is guaranteed to exist
     const warehouseId = data.warehouseId ?? (await this.getDefaultWarehouseId(data.tenantId!));
 
     const result = await this.prisma.goodsReceipt.create({
@@ -355,7 +405,8 @@ export class PrismaReceiptRepository implements IReceiptRepository {
     const startOfYear = new Date(year, 0, 1);
     const endOfYear = new Date(year + 1, 0, 1);
 
-    const count = await this.prisma.goodsReceipt.count({
+    // Use MAX to get highest sequence, handles concurrent inserts better than COUNT
+    const result = await this.prisma.goodsReceipt.aggregate({
       where: {
         tenantId,
         createdAt: {
@@ -363,30 +414,42 @@ export class PrismaReceiptRepository implements IReceiptRepository {
           lt: endOfYear,
         },
       },
+      _max: {
+        receiptNumber: true,
+      },
     });
 
-    return count + 1;
+    // Extract sequence from receiptNumber format: BEV-YYYY-NNNN
+    const maxReceiptNumber = result._max.receiptNumber;
+    if (!maxReceiptNumber) {
+      return 1;
+    }
+
+    const match = maxReceiptNumber.match(/BEV-\d{4}-(\d+)$/);
+    if (!match?.[1]) {
+      return 1;
+    }
+
+    return parseInt(match[1], 10) + 1;
   }
 
   /**
    * Get default warehouse ID for a tenant.
-   * Falls back to creating a placeholder if none exists.
+   * @throws Error if no warehouse is configured for the tenant
    */
   private async getDefaultWarehouseId(tenantId: string): Promise<string> {
-    // Try to find an existing warehouse for this tenant
     const warehouse = await this.prisma.warehouse.findFirst({
       where: { tenantId },
       select: { id: true },
     });
 
-    if (warehouse) {
-      return warehouse.id;
+    if (!warehouse) {
+      throw new Error(
+        `No warehouse configured for tenant ${tenantId}. Please create a default warehouse before processing receipts.`
+      );
     }
 
-    // If no warehouse exists, this is a configuration error
-    // Log warning and use a placeholder (should be fixed in production setup)
-    console.warn(`No warehouse found for tenant ${tenantId}. Using placeholder warehouse ID.`);
-    return `default-warehouse-${tenantId}`;
+    return warehouse.id;
   }
 
   private mapToDomain(data: Prisma.GoodsReceiptGetPayload<object>): IReceipt {
@@ -504,6 +567,22 @@ export class PrismaDiscrepancyRepository implements IDiscrepancyRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async create(data: Partial<IDiscrepancy>): Promise<IDiscrepancy> {
+    // M2 FIX: Validate required fields explicitly
+    validateRequiredFields(
+      data,
+      [
+        'receiptId',
+        'receiptItemId',
+        'tenantId',
+        'type',
+        'expectedQuantity',
+        'actualQuantity',
+        'difference',
+        'createdBy',
+      ],
+      'ReceiptDiscrepancy'
+    );
+
     const result = await this.prisma.receiptDiscrepancy.create({
       data: {
         receiptId: data.receiptId!,

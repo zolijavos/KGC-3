@@ -90,26 +90,26 @@ export interface ICreateServiceNormInput {
   description: string;
   laborMinutes: number;
   laborRate: number;
-  difficultyLevel?: DifficultyLevel;
-  productCategory?: string;
-  repairType?: string;
+  difficultyLevel?: DifficultyLevel | undefined;
+  productCategory?: string | undefined;
+  repairType?: string | undefined;
   validFrom: Date;
-  validUntil?: Date;
-  externalId?: string;
+  validUntil?: Date | undefined;
+  externalId?: string | undefined;
 }
 
 /**
  * Norma frissítés input
  */
 export interface IUpdateServiceNormInput {
-  description?: string;
-  laborMinutes?: number;
-  laborRate?: number;
-  difficultyLevel?: DifficultyLevel;
-  productCategory?: string;
-  repairType?: string;
-  validUntil?: Date;
-  isActive?: boolean;
+  description?: string | undefined;
+  laborMinutes?: number | undefined;
+  laborRate?: number | undefined;
+  difficultyLevel?: DifficultyLevel | undefined;
+  productCategory?: string | undefined;
+  repairType?: string | undefined;
+  validUntil?: Date | undefined;
+  isActive?: boolean | undefined;
 }
 
 /**
@@ -121,12 +121,12 @@ export interface IImportServiceNormInput {
   description: string;
   laborMinutes: number;
   laborRate: number;
-  difficultyLevel?: DifficultyLevel;
-  productCategory?: string;
-  repairType?: string;
+  difficultyLevel?: DifficultyLevel | undefined;
+  productCategory?: string | undefined;
+  repairType?: string | undefined;
   validFrom: Date;
-  validUntil?: Date;
-  externalId?: string;
+  validUntil?: Date | undefined;
+  externalId?: string | undefined;
 }
 
 /**

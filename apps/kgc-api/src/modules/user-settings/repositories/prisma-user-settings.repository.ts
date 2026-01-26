@@ -4,7 +4,7 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
   IUserSettingsRepository,
   TenantDefaultFavorites,
@@ -47,7 +47,7 @@ export class PrismaUserSettingsRepository implements IUserSettingsRepository {
       data: {
         userId: data.userId,
         tenantId: data.tenantId,
-        favorites: data.favorites ?? [],
+        favorites: (data.favorites ?? []) as unknown as Prisma.InputJsonValue,
         version: 1,
       },
     });

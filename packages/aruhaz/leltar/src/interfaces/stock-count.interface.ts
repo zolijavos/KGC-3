@@ -212,6 +212,8 @@ export interface IStockCountFilter {
   tenantId?: string | undefined;
   /** Telephely azonosító */
   locationId?: string | undefined;
+  /** Raktár azonosító */
+  warehouseId?: string | undefined;
   /** Státusz */
   status?: StockCountStatus | undefined;
   /** Típus */
@@ -220,4 +222,8 @@ export interface IStockCountFilter {
   dateFrom?: Date | undefined;
   /** Záró dátum */
   dateTo?: Date | undefined;
+  /** Lapozás: limit */
+  limit?: number | undefined;
+  /** Lapozás: offset */
+  offset?: number | undefined;
 }
