@@ -1,0 +1,164 @@
+# ==============================================================================
+# KGC ERP v7.0 - Caddy Configuration
+# Epic 33-5: Production Reverse Proxy (ADR-045)
+# ==============================================================================
+#
+# Caddy automatically:
+#   - Obtains and renews SSL certificates from Let's Encrypt
+#   - Redirects HTTP to HTTPS
+#   - Enables HTTP/2
+#
+# Environment variables (set in .env.prod):
+#   - KGC_DOMAIN: Main domain (e.g., app.kgc.hu)
+#   - API_DOMAIN: API domain (e.g., api.kgc.hu)
+#   - CRM_DOMAIN: Twenty CRM domain (e.g., crm.kgc.hu)
+#   - SUPPORT_DOMAIN: Chatwoot domain (e.g., support.kgc.hu)
+#   - HR_DOMAIN: Horilla HR domain (e.g., hr.kgc.hu)
+#
+# ==============================================================================
+
+# Global options
+{
+	email {$ADMIN_EMAIL:admin@kgc.hu}
+
+	# Staging CA for testing (uncomment for testing, comment for production)
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# ==============================================================================
+# KGC Web Application (Main Frontend)
+# ==============================================================================
+{$KGC_DOMAIN:app.kgc.hu} {
+	encode gzip zstd
+
+	# Health check endpoint
+	handle /health {
+		respond "OK" 200
+	}
+
+	# Proxy to frontend
+	reverse_proxy kgc-web:80 {
+		health_uri /health
+		health_interval 30s
+	}
+
+	# Security headers
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/kgc-web.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
+
+# ==============================================================================
+# KGC API (Backend)
+# ==============================================================================
+{$API_DOMAIN:api.kgc.hu} {
+	encode gzip zstd
+
+	# Health check endpoint (direct)
+	handle /health {
+		reverse_proxy kgc-api:3000
+	}
+
+	# Ready check (with DB)
+	handle /ready {
+		reverse_proxy kgc-api:3000
+	}
+
+	# API proxy
+	reverse_proxy kgc-api:3000 {
+		health_uri /api/health
+		health_interval 30s
+
+		# Headers for backend
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	# Security headers (CORS is handled by NestJS with proper origin validation)
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/kgc-api.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
+
+# ==============================================================================
+# Twenty CRM
+# ==============================================================================
+{$CRM_DOMAIN:crm.kgc.hu} {
+	encode gzip zstd
+
+	reverse_proxy twenty-server:3000 {
+		health_uri /healthz
+		health_interval 30s
+	}
+
+	header -Server
+
+	log {
+		output file /var/log/caddy/twenty-crm.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
+
+# ==============================================================================
+# Chatwoot (Customer Support)
+# ==============================================================================
+{$SUPPORT_DOMAIN:support.kgc.hu} {
+	encode gzip zstd
+
+	reverse_proxy chatwoot-rails:3000 {
+		health_uri /api
+		health_interval 30s
+	}
+
+	header -Server
+
+	log {
+		output file /var/log/caddy/chatwoot.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
+
+# ==============================================================================
+# Horilla HR
+# ==============================================================================
+{$HR_DOMAIN:hr.kgc.hu} {
+	encode gzip zstd
+
+	reverse_proxy horilla-app:8000 {
+		health_interval 30s
+	}
+
+	header -Server
+
+	log {
+		output file /var/log/caddy/horilla.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}

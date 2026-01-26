@@ -312,12 +312,14 @@ development_status:
   # ============================================
   # STATUS: ⚠️ Shell implementations only
 
-  # Epic 21: Goods Receipt (@kgc/bevetelezes) - 3 stories
-  # CODE: 12 ts files | Depends on Product model
-  epic-21: blocked-prisma
-  21-1-avizo-kezeles: blocked-prisma
-  21-2-bevetelezes-workflow: backlog
-  21-3-bevetelezes-elteres-kezeles: backlog
+  # Epic 21: Goods Receipt (@kgc/bevetelezes) - 3 stories ✅ COMPLETE
+  # CODE: Package (services + DTOs) + API (controllers + module) + Prisma repos (~800 lines)
+  # PRISMA: ✅ Avizo, AvizoItem, GoodsReceipt, GoodsReceiptItem, ReceiptDiscrepancy
+  # API: AvizoController (6 endpoints) + ReceiptController (4 endpoints) + DiscrepancyController (3 endpoints)
+  epic-21: done
+  21-1-avizo-kezeles: done # AvizoService + AvizoController + PrismaAvizoRepository (2026-01-26)
+  21-2-bevetelezes-workflow: done # ReceiptService + ReceiptController + PrismaReceiptRepository (2026-01-26)
+  21-3-bevetelezes-elteres-kezeles: done # DiscrepancyService + DiscrepancyController + PrismaDiscrepancyRepository (2026-01-26)
   epic-21-retrospective: optional
 
   # Epic 22: Point of Sale (@kgc/sales-pos) - 3 stories
@@ -397,16 +399,16 @@ development_status:
   29-2-ai-escalation-chatwoot-ba: done # escalation.service.ts complete
   epic-29-chatwoot-retrospective: optional
 
-  # Epic 29-NEW: User Favorites (ADR-044) - 5 stories
+  # Epic 29-NEW: User Favorites (ADR-044) - 5 stories ✅ COMPLETE
   # CODE: UserSettingsModule + Controller + 25 tests | PRISMA: ✅ UserSettings, TenantDefaultFavorites
-  # FRONTEND: Zustand store + FavoriteButton + FavoritesSidebar + DnD
-  # Updated 2026-01-25: Backend + Frontend complete, only command palette remaining
-  epic-29-favorites: in-progress
+  # FRONTEND: Zustand store + FavoriteButton + FavoritesSidebar + DnD + CommandPalette
+  # Updated 2026-01-26: All 5 stories complete including command palette
+  epic-29-favorites: done
   29-1-user-favorites-api: done # UserSettingsController (7 endpoints) + 25 tests (2026-01-25)
   29-2-favorites-zustand-store: done # Zustand + localStorage persist + offline queue (2026-01-25)
   29-3-favorite-button-sidebar: done # FavoriteButton + FavoritesSidebar + @dnd-kit drag-drop (2026-01-25)
   29-4-tenant-default-favorites: done # TenantDefaultFavoritesController (2 endpoints)
-  29-5-command-palette-integration: backlog # Frontend - Ctrl+K integration (cmdk)
+  29-5-command-palette-integration: done # cmdk + Ctrl+K + Header search button (2026-01-26)
   epic-29-favorites-retrospective: optional
 
   # Epic 30: Horilla HR Integration - 1 story
@@ -438,16 +440,18 @@ development_status:
   # INFRASTRUCTURE LAYER (1 epic) - Post-MVP
   # ============================================
 
-  # Epic 33: Infrastructure & Deployment - 7 stories
-  # Updated 2026-01-25: Stories 33-1 to 33-4 complete
-  epic-33: in-progress
+  # Epic 33: Infrastructure & Deployment - 7 stories ✅ COMPLETE
+  # Updated 2026-01-26: ADR-045 - Infrastruktúra Egyszerűsítés
+  # K8s TÖRÖLVE → Docker Compose + Caddy + Sentry megoldás
+  # Story Points: 49 → 33 (-16 SP megtakarítás)
+  epic-33: done
   33-1-twenty-crm-docker-setup: done # Code reviewed 2026-01-25
   33-2-chatwoot-docker-setup: done # Code reviewed 2026-01-25
   33-3-horilla-hr-docker-setup: done # Code reviewed 2026-01-25
   33-4-full-stack-docker-compose: done # Full stack: API+Web Dockerfiles, unified compose (2026-01-25)
-  33-5-kubernetes-manifests-production: backlog
-  33-6-ci-cd-pipeline-setup: backlog
-  33-7-monitoring-observability-stack: backlog
+  33-5-production-docker-compose-caddy: done # ADR-045: docker-compose.prod.yml + Caddyfile + backup.sh (2026-01-26)
+  33-6-simple-ci-cd-pipeline: done # ADR-045: deploy.sh + rollback.sh + updated workflow (2026-01-26)
+  33-7-sentry-health-monitoring: done # ADR-045: /health + /ready endpoints + monitoring docs (2026-01-26)
   epic-33-retrospective: optional
 
   # ============================================
@@ -506,19 +510,29 @@ development_status:
 # ✅ EXISTS (Task - Epic 12) - VERIFIED 2026-01-25:
 #   - Task - needs Prisma repo
 #
-# ❌ MISSING:
-#   - GoodsReceipt, ReceiptItem (Epic 21)
+# ✅ EXISTS (Goods Receipt - Epic 21) - ADDED 2026-01-26:
+#   - Avizo, AvizoItem, GoodsReceipt, GoodsReceiptItem, ReceiptDiscrepancy
+#
+# All Prisma models are now complete! No missing models.
 
 # ============================================
-# SUMMARY (Updated 2026-01-25 - Epic 20 Complete + Epic 29 Favorites API)
+# SUMMARY (Updated 2026-01-26 - Epic 21 + 29-favorites + 33 DONE)
 # ============================================
-# ✅ DONE: 23 epics (1-6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 29-chatwoot, 30, 31, 32, 34)
-# 🟡 IN-PROGRESS: 3 epics (24, 29-favorites, 33)
-# 🔴 BLOCKED-PRISMA: 5 epics (21, 23, 25, 26, 27, 28)
+# ✅ DONE: 26 epics (1-6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 29-chatwoot, 29-favorites, 30, 31, 32, 33, 34)
+# 🔴 BLOCKED-PRISMA: 5 epics (23, 25, 26, 27, 28)
 # ⚪ BACKLOG: 1 epic (22)
 #
-# LATEST UPDATE (2026-01-25):
+# LATEST UPDATE (2026-01-26):
 # ===========================
+# 1. Epic 21 (bevetelezes) - PRISMA MODELS ADDED:
+#    - Added 5 new models: Avizo, AvizoItem, GoodsReceipt, GoodsReceiptItem, ReceiptDiscrepancy
+#    - Added 3 new enums: AvizoStatus, ReceiptStatus, DiscrepancyTypeEnum
+#    - Prisma repository template in apps/kgc-api/src/modules/bevetelezes/
+#    - Fixed exactOptionalPropertyTypes issues in services
+#    - All 3 stories now ready-for-dev: 21-1, 21-2, 21-3
+#
+# PREVIOUS UPDATE (2026-01-25):
+# =============================
 # 1. Epic 20 (service-norma) - VERIFIED COMPLETE:
 #    - ServiceNormaController (590 lines, 15 REST endpoints)
 #    - 29 passing tests (norma-import: 10, norma-labor: 10, norma-version: 9)
@@ -545,6 +559,12 @@ development_status:
 #    - prisma-company-vehicle.repository.ts (222 lines)
 #
 # NEXT PRIORITY:
-# - Epic 29-5: Command palette (Ctrl+K) integration
-# - Epic 24: Leltár Prisma integration
-# - Epic 21: Add GoodsReceipt Prisma model
+# - Epic 22: Point of Sale (sales-pos) - requires new models
+# - Epic 23-28: Blocked on domain Prisma models
+#
+# LATEST UPDATE (2026-01-26):
+# ===========================
+# Epic 33 (Infrastructure) - ✅ COMPLETE (ADR-045 egyszerűsítés):
+#   - 33-5: docker-compose.prod.yml + Caddyfile (auto SSL)
+#   - 33-6: deploy.sh + rollback.sh + GitHub Actions update
+#   - 33-7: /health + /ready endpoints + Sentry docs

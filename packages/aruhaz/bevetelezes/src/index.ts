@@ -8,22 +8,48 @@ export { BevetelezesModule } from './bevetelezes.module';
 
 // Services
 export { AvizoService } from './services/avizo.service';
-export type { IAvizoRepository, IAvizoItemRepository, IAuditService } from './services/avizo.service';
-export { ReceiptService } from './services/receipt.service';
-export type { IReceiptRepository, IReceiptItemRepository, IInventoryService } from './services/receipt.service';
+export type {
+  IAuditService,
+  IAvizoItemRepository,
+  IAvizoRepository,
+} from './services/avizo.service';
 export { DiscrepancyService } from './services/discrepancy.service';
-export type { IDiscrepancyRepository, ISupplierNotificationService } from './services/discrepancy.service';
+export type {
+  IDiscrepancyRepository,
+  ISupplierNotificationService,
+} from './services/discrepancy.service';
+export { ReceiptService } from './services/receipt.service';
+export type {
+  IInventoryService,
+  IReceiptItemRepository,
+  IReceiptRepository,
+} from './services/receipt.service';
 
 // Interfaces
-export type { IAvizo, IAvizoItem, IAvizoCreateResult } from './interfaces/avizo.interface';
 export { AvizoStatus } from './interfaces/avizo.interface';
+export type { IAvizo, IAvizoCreateResult, IAvizoItem } from './interfaces/avizo.interface';
 
-export type { IReceipt, IReceiptItem, IDiscrepancy } from './interfaces/receipt.interface';
-export { ReceiptStatus, DiscrepancyType, RECEIPT_TOLERANCE_PERCENT } from './interfaces/receipt.interface';
+export {
+  DiscrepancyType,
+  RECEIPT_TOLERANCE_PERCENT,
+  ReceiptStatus,
+} from './interfaces/receipt.interface';
+export type { IDiscrepancy, IReceipt, IReceiptItem } from './interfaces/receipt.interface';
 
 // DTOs
-export type { CreateAvizoDto, UpdateAvizoDto } from './dto/avizo.dto';
 export { CreateAvizoSchema, UpdateAvizoSchema } from './dto/avizo.dto';
+export type { CreateAvizoDto, UpdateAvizoDto } from './dto/avizo.dto';
 
-export type { CreateReceiptDto, CreateDiscrepancyDto, ResolveDiscrepancyDto } from './dto/receipt.dto';
-export { CreateReceiptSchema, CreateDiscrepancySchema, ResolveDiscrepancySchema } from './dto/receipt.dto';
+export {
+  CreateDiscrepancySchema,
+  CreateReceiptSchema,
+  ResolveDiscrepancySchema,
+} from './dto/receipt.dto';
+export type {
+  CreateDiscrepancyDto,
+  CreateReceiptDto,
+  ResolveDiscrepancyDto,
+} from './dto/receipt.dto';
+
+// Note: Prisma repositories should be implemented in apps/kgc-api/src/modules/bevetelezes/
+// where PrismaClient is available. Use the repository interfaces from services/.

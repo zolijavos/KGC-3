@@ -13,4 +13,5 @@ export default defineConfig({
   splitting: false,
   sourcemap: true,
   clean: true,
+  external: ['@prisma/client'],
 });

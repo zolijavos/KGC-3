@@ -4,15 +4,15 @@
  */
 
 import { Injectable } from '@nestjs/common';
+import { CreateReceiptDto, CreateReceiptSchema } from '../dto/receipt.dto';
+import { AvizoStatus, IAvizo, IAvizoItem } from '../interfaces/avizo.interface';
 import {
   IReceipt,
   IReceiptItem,
-  ReceiptStatus,
   RECEIPT_TOLERANCE_PERCENT,
+  ReceiptStatus,
 } from '../interfaces/receipt.interface';
-import { IAvizo, IAvizoItem, AvizoStatus } from '../interfaces/avizo.interface';
-import { CreateReceiptDto, CreateReceiptSchema } from '../dto/receipt.dto';
-import { IAvizoRepository, IAvizoItemRepository, IAuditService } from './avizo.service';
+import { IAuditService, IAvizoItemRepository, IAvizoRepository } from './avizo.service';
 
 export interface IReceiptRepository {
   create(data: Partial<IReceipt>): Promise<IReceipt>;
@@ -33,7 +33,7 @@ export interface IInventoryService {
     tenantId: string,
     productId: string,
     quantity: number,
-    locationCode?: string,
+    locationCode?: string
   ): Promise<void>;
 }
 
@@ -45,13 +45,13 @@ export class ReceiptService {
     private readonly avizoRepository: IAvizoRepository,
     private readonly avizoItemRepository: IAvizoItemRepository,
     private readonly inventoryService: IInventoryService,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
   async createReceipt(
     input: CreateReceiptDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IReceipt> {
     const validationResult = CreateReceiptSchema.safeParse(input);
     if (!validationResult.success) {
@@ -105,7 +105,7 @@ export class ReceiptService {
     const receipt = await this.receiptRepository.create({
       tenantId,
       receiptNumber,
-      avizoId: validInput.avizoId,
+      ...(validInput.avizoId !== undefined && { avizoId: validInput.avizoId }),
       supplierId: validInput.supplierId,
       supplierName: validInput.supplierName,
       receivedDate: new Date(),
@@ -114,21 +114,21 @@ export class ReceiptService {
       totalQuantity,
       hasDiscrepancy,
       processedBy: userId,
-      notes: validInput.notes,
+      ...(validInput.notes !== undefined && { notes: validInput.notes }),
     });
 
     // Create receipt items
-    const itemsToCreate = validInput.items.map((item) => ({
+    const itemsToCreate: Partial<IReceiptItem>[] = validInput.items.map(item => ({
       receiptId: receipt.id,
       tenantId,
-      avizoItemId: item.avizoItemId,
+      ...(item.avizoItemId !== undefined && { avizoItemId: item.avizoItemId }),
       productId: item.productId,
       productCode: item.productCode,
       productName: item.productName,
       expectedQuantity: item.expectedQuantity,
       receivedQuantity: item.receivedQuantity,
       unitPrice: item.unitPrice,
-      locationCode: item.locationCode,
+      ...(item.locationCode !== undefined && { locationCode: item.locationCode }),
     }));
     await this.receiptItemRepository.createMany(itemsToCreate);
 
@@ -136,7 +136,7 @@ export class ReceiptService {
     if (validInput.avizoId && avizoItems.length > 0) {
       for (const item of validInput.items) {
         if (item.avizoItemId) {
-          const avizoItem = avizoItems.find((ai) => ai.id === item.avizoItemId);
+          const avizoItem = avizoItems.find(ai => ai.id === item.avizoItemId);
           if (avizoItem) {
             await this.avizoItemRepository.update(item.avizoItemId, {
               receivedQuantity: avizoItem.receivedQuantity + item.receivedQuantity,
@@ -182,7 +182,7 @@ export class ReceiptService {
           tenantId,
           item.productId,
           item.receivedQuantity,
-          item.locationCode,
+          item.locationCode
         );
       }
     }
@@ -196,9 +196,7 @@ export class ReceiptService {
     // Update avizo status if linked
     if (receipt.avizoId) {
       const avizoItems = await this.avizoItemRepository.findByAvizoId(receipt.avizoId);
-      const allReceived = avizoItems.every(
-        (item) => item.receivedQuantity >= item.expectedQuantity,
-      );
+      const allReceived = avizoItems.every(item => item.receivedQuantity >= item.expectedQuantity);
       await this.avizoRepository.update(receipt.avizoId, {
         status: allReceived ? AvizoStatus.RECEIVED : AvizoStatus.PARTIAL,
       });

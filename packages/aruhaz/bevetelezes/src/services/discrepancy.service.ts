@@ -4,15 +4,15 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { IDiscrepancy, DiscrepancyType, ReceiptStatus } from '../interfaces/receipt.interface';
 import {
   CreateDiscrepancyDto,
   CreateDiscrepancySchema,
   ResolveDiscrepancyDto,
   ResolveDiscrepancySchema,
 } from '../dto/receipt.dto';
-import { IReceiptRepository, IReceiptItemRepository } from './receipt.service';
+import { DiscrepancyType, IDiscrepancy, ReceiptStatus } from '../interfaces/receipt.interface';
 import { IAuditService } from './avizo.service';
+import { IReceiptItemRepository, IReceiptRepository } from './receipt.service';
 
 export interface IDiscrepancyRepository {
   create(data: Partial<IDiscrepancy>): Promise<IDiscrepancy>;
@@ -27,7 +27,7 @@ export interface ISupplierNotificationService {
     supplierId: string,
     supplierName: string,
     discrepancy: IDiscrepancy,
-    receiptNumber: string,
+    receiptNumber: string
   ): Promise<void>;
 }
 
@@ -38,14 +38,14 @@ export class DiscrepancyService {
     private readonly receiptRepository: IReceiptRepository,
     private readonly receiptItemRepository: IReceiptItemRepository,
     private readonly supplierNotificationService: ISupplierNotificationService,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
   async createDiscrepancy(
     receiptId: string,
     input: CreateDiscrepancyDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IDiscrepancy> {
     const validationResult = CreateDiscrepancySchema.safeParse(input);
     if (!validationResult.success) {
@@ -68,7 +68,7 @@ export class DiscrepancyService {
 
     // Verify receipt item
     const items = await this.receiptItemRepository.findByReceiptId(receiptId);
-    const receiptItem = items.find((item) => item.id === validInput.receiptItemId);
+    const receiptItem = items.find(item => item.id === validInput.receiptItemId);
     if (!receiptItem) {
       throw new Error('Receipt item not found');
     }
@@ -84,7 +84,7 @@ export class DiscrepancyService {
       expectedQuantity: validInput.expectedQuantity,
       actualQuantity: validInput.actualQuantity,
       difference,
-      reason: validInput.reason,
+      ...(validInput.reason !== undefined && { reason: validInput.reason }),
       supplierNotified: false,
       createdBy: userId,
     });
@@ -118,7 +118,7 @@ export class DiscrepancyService {
     discrepancyId: string,
     input: ResolveDiscrepancyDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IDiscrepancy> {
     const validationResult = ResolveDiscrepancySchema.safeParse(input);
     if (!validationResult.success) {
@@ -144,7 +144,7 @@ export class DiscrepancyService {
           receipt.supplierId,
           receipt.supplierName,
           discrepancy,
-          receipt.receiptNumber,
+          receipt.receiptNumber
         );
       }
     }
@@ -158,7 +158,7 @@ export class DiscrepancyService {
 
     // Check if all discrepancies are resolved and reset receipt status
     const unresolved = await this.discrepancyRepository.findUnresolvedByReceiptId(
-      discrepancy.receiptId,
+      discrepancy.receiptId
     );
     if (unresolved.length === 0) {
       await this.receiptRepository.update(discrepancy.receiptId, {

@@ -4,8 +4,13 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { IAvizo, IAvizoItem, IAvizoCreateResult, AvizoStatus } from '../interfaces/avizo.interface';
-import { CreateAvizoDto, CreateAvizoSchema, UpdateAvizoDto, UpdateAvizoSchema } from '../dto/avizo.dto';
+import {
+  CreateAvizoDto,
+  CreateAvizoSchema,
+  UpdateAvizoDto,
+  UpdateAvizoSchema,
+} from '../dto/avizo.dto';
+import { AvizoStatus, IAvizo, IAvizoCreateResult, IAvizoItem } from '../interfaces/avizo.interface';
 
 export interface IAvizoRepository {
   create(data: Partial<IAvizo>): Promise<IAvizo>;
@@ -38,13 +43,13 @@ export class AvizoService {
   constructor(
     private readonly avizoRepository: IAvizoRepository,
     private readonly itemRepository: IAvizoItemRepository,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
   async createAvizo(
     input: CreateAvizoDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IAvizoCreateResult> {
     const validationResult = CreateAvizoSchema.safeParse(input);
     if (!validationResult.success) {
@@ -71,12 +76,12 @@ export class AvizoService {
       status: AvizoStatus.PENDING,
       totalItems,
       totalQuantity,
-      notes: validInput.notes,
+      ...(validInput.notes !== undefined && { notes: validInput.notes }),
       createdBy: userId,
     });
 
     // Create items
-    const itemsToCreate = validInput.items.map((item) => ({
+    const itemsToCreate = validInput.items.map(item => ({
       avizoId: avizo.id,
       tenantId,
       productId: item.productId,
@@ -129,7 +134,7 @@ export class AvizoService {
     avizoId: string,
     input: UpdateAvizoDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IAvizo> {
     const validationResult = UpdateAvizoSchema.safeParse(input);
     if (!validationResult.success) {

@@ -1,0 +1,128 @@
+# ==============================================================================
+# KGC ERP v7.0 - Production Docker Compose with Caddy
+# Epic 33-5: Production Setup (ADR-045)
+# ==============================================================================
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d
+#
+# Caddy automatically handles:
+#   - SSL certificates (Let's Encrypt)
+#   - HTTP/2
+#   - Automatic HTTPS redirect
+#
+# ==============================================================================
+
+name: kgc-erp-production
+
+services:
+  # ============================================================================
+  # CADDY REVERSE PROXY (Auto SSL)
+  # ============================================================================
+  caddy:
+    image: caddy:2-alpine
+    container_name: kgc-caddy
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      kgc-api:
+        condition: service_healthy
+      kgc-web:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+    restart: unless-stopped
+    networks:
+      - kgc-network
+
+  # ============================================================================
+  # KGC SERVICES OVERRIDES (Production)
+  # ============================================================================
+
+  kgc-api:
+    environment:
+      NODE_ENV: production
+      SENTRY_DSN: ${SENTRY_DSN_API:-}
+      SENTRY_ENVIRONMENT: production
+    # Remove direct port exposure in production (Caddy handles it)
+    ports: []
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+
+  kgc-web:
+    # Remove direct port exposure in production (Caddy handles it)
+    ports: []
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  kgc-db:
+    # Remove direct port exposure in production (security)
+    ports: []
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+
+  kgc-redis:
+    # Remove direct port exposure in production (security)
+    ports: []
+
+  kgc-minio:
+    # Keep console port for admin access but API is internal
+    ports:
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+
+  # Twenty CRM - internal only
+  twenty-server:
+    ports: []
+
+  twenty-db:
+    ports: []
+
+  twenty-redis:
+    ports: []
+
+  # Chatwoot - internal only
+  chatwoot-rails:
+    ports: []
+
+  chatwoot-db:
+    ports: []
+
+  chatwoot-redis:
+    ports: []
+
+  # Horilla HR - internal only
+  horilla-app:
+    ports: []
+
+  horilla-db:
+    ports: []
+
+# ==============================================================================
+# ADDITIONAL VOLUMES FOR CADDY
+# ==============================================================================
+volumes:
+  caddy-data:
+    name: kgc-caddy-data
+  caddy-config:
+    name: kgc-caddy-config

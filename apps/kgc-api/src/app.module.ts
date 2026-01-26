@@ -15,6 +15,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PrismaClient } from '@prisma/client';
 import { BergepModule } from './modules/bergep/bergep.module';
+import { BevetelezesModule } from './modules/bevetelezes/bevetelezes.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { InvoiceModule } from './modules/invoice/invoice.module';
 import { PartnersModule } from './modules/partners/partners.module';
@@ -28,25 +29,72 @@ const prisma = new PrismaClient({
   log: process.env['NODE_ENV'] === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
 });
 
-// Health check controller
+// Health check controller (Epic 33-7: Sentry + Health Monitoring)
+@ApiTags('health')
 @Controller()
 class AppController {
+  /**
+   * Basic health check - always returns OK if the service is running
+   * Used by: UptimeRobot, Caddy health checks, container orchestrators
+   */
   @Get('health')
+  @ApiOperation({ summary: 'Basic health check' })
+  @ApiResponse({ status: 200, description: 'Service is running' })
   health() {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
       service: 'kgc-api',
-      version: '3.0.0',
+      version: process.env['npm_package_version'] ?? '7.0.0',
+      environment: process.env['NODE_ENV'] ?? 'development',
+    };
+  }
+
+  /**
+   * Readiness check - verifies database connectivity
+   * Returns 503 if database is not available
+   * Used by: Load balancers, K8s readiness probes
+   */
+  @Get('ready')
+  @ApiOperation({ summary: 'Readiness check (includes DB connectivity)' })
+  @ApiResponse({ status: 200, description: 'Service is ready to accept requests' })
+  @ApiResponse({ status: 503, description: 'Service is not ready (DB unavailable)' })
+  async ready() {
+    const checks: Record<string, { status: string; latency?: number }> = {};
+    const startTime = Date.now();
+
+    // Check database connectivity
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      checks['database'] = {
+        status: 'ok',
+        latency: Date.now() - startTime,
+      };
+    } catch {
+      checks['database'] = { status: 'error' };
+      return {
+        status: 'not_ready',
+        timestamp: new Date().toISOString(),
+        checks,
+      };
+    }
+
+    return {
+      status: 'ready',
+      timestamp: new Date().toISOString(),
+      checks,
     };
   }
 
   @Get()
+  @ApiOperation({ summary: 'API root information' })
   root() {
     return {
       name: 'KGC ERP API',
-      version: '3.0.0',
+      version: process.env['npm_package_version'] ?? '7.0.0',
       docs: '/api/docs',
+      health: '/api/v1/health',
+      ready: '/api/v1/ready',
     };
   }
 }
@@ -136,6 +184,9 @@ class WebhookController {
 
     // BergepModule - Bérgép kezelés (Epic 13)
     BergepModule.forRoot({ prisma }),
+
+    // BevetelezesModule - Goods Receipt (Epic 21)
+    BevetelezesModule.forRoot({ prisma }),
   ],
   controllers: [AppController, WebhookController],
   providers: [

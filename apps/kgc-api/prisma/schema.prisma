@@ -127,6 +127,30 @@ enum AlertStatus {
   SNOOZED // Elhalasztva
 }
 
+/// Avizo (Purchase Order Notification) status (Epic 21)
+enum AvizoStatus {
+  PENDING // Várható - még nem érkezett
+  PARTIAL // Részlegesen átvéve
+  RECEIVED // Teljesen átvéve
+  CANCELLED // Törölve
+}
+
+/// Goods receipt status (Epic 21)
+enum ReceiptStatus {
+  DRAFT // Vázlat - folyamatban
+  IN_PROGRESS // Bevételezés folyamatban
+  COMPLETED // Befejezve
+  DISCREPANCY // Eltérés - vizsgálat szükséges
+}
+
+/// Discrepancy type for goods receipt (Epic 21)
+enum DiscrepancyTypeEnum {
+  SHORTAGE // Hiány - kevesebb érkezett
+  SURPLUS // Többlet - több érkezett
+  DAMAGED // Sérült áru
+  WRONG_ITEM // Hibás tétel
+}
+
 // ============================================
 // TENANT MODELS
 // ============================================
@@ -357,6 +381,7 @@ model Warehouse {
   locationStructures LocationStructure[]
   rentals            Rental[]
   stockAlerts        StockAlert[]
+  goodsReceipts      GoodsReceipt[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -946,7 +971,9 @@ model Supplier {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
-  products Product[]
+  products      Product[]
+  avizos        Avizo[]
+  goodsReceipts GoodsReceipt[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -1026,14 +1053,16 @@ model Product {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz
 
   // Relations
-  category        ProductCategory?  @relation(fields: [categoryId], references: [id])
-  supplier        Supplier?         @relation(fields: [supplierId], references: [id])
-  priceRules      PriceRule[]
-  rentalEquipment RentalEquipment[]
-  inventoryItems  InventoryItem[]
-  worksheetItems  WorksheetItem[]
-  invoiceItems    InvoiceItem[]
-  quoteItems      QuoteItem[]
+  category          ProductCategory?   @relation(fields: [categoryId], references: [id])
+  supplier          Supplier?          @relation(fields: [supplierId], references: [id])
+  priceRules        PriceRule[]
+  rentalEquipment   RentalEquipment[]
+  inventoryItems    InventoryItem[]
+  worksheetItems    WorksheetItem[]
+  invoiceItems      InvoiceItem[]
+  quoteItems        QuoteItem[]
+  avizoItems        AvizoItem[]
+  goodsReceiptItems GoodsReceiptItem[]
 
   @@unique([tenantId, sku])
   @@unique([tenantId, barcode])
@@ -2412,10 +2441,10 @@ model StockCount {
   tenantId String @map("tenant_id") @db.Uuid
 
   // Alapadatok
-  countNumber  String         @map("count_number") @db.VarChar(50)
-  name         String         @db.VarChar(255)
-  type         StockCountType
-  status       StockCountStatus @default(DRAFT)
+  countNumber String           @map("count_number") @db.VarChar(50)
+  name        String           @db.VarChar(255)
+  type        StockCountType
+  status      StockCountStatus @default(DRAFT)
 
   // Helyszín
   locationId  String @map("location_id") @db.Uuid
@@ -2434,8 +2463,8 @@ model StockCount {
   responsibleUserId String @map("responsible_user_id") @db.Uuid
 
   // Részleltár szűrők (JSON arrays)
-  categoryIds Json? @map("category_ids") @default("[]")
-  zoneIds     Json? @map("zone_ids") @default("[]")
+  categoryIds Json? @default("[]") @map("category_ids")
+  zoneIds     Json? @default("[]") @map("zone_ids")
 
   // Statisztikák
   totalItems    Int @default(0) @map("total_items")
@@ -2449,9 +2478,9 @@ model StockCount {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
-  items            StockCountItem[]
-  counterSessions  CounterSession[]
-  adjustments      StockAdjustment[]
+  items           StockCountItem[]
+  counterSessions CounterSession[]
+  adjustments     StockAdjustment[]
 
   @@unique([tenantId, countNumber])
   @@index([tenantId])
@@ -2470,11 +2499,11 @@ model StockCountItem {
   stockCountId String @map("stock_count_id") @db.Uuid
 
   // Cikk adatok
-  productId   String  @map("product_id") @db.Uuid
-  productName String  @map("product_name") @db.VarChar(255)
-  sku         String  @db.VarChar(100)
-  barcode     String? @db.VarChar(100)
-  locationCode String @map("location_code") @db.VarChar(50) // K-P-D
+  productId    String  @map("product_id") @db.Uuid
+  productName  String  @map("product_name") @db.VarChar(255)
+  sku          String  @db.VarChar(100)
+  barcode      String? @db.VarChar(100)
+  locationCode String  @map("location_code") @db.VarChar(50) // K-P-D
 
   // Mennyiségek
   bookQuantity    Decimal  @map("book_quantity") @db.Decimal(12, 3)
@@ -2483,20 +2512,20 @@ model StockCountItem {
   varianceValue   Decimal? @map("variance_value") @db.Decimal(12, 2) // Ft
 
   // Számlálás adatok
-  countedByUserId String?      @map("counted_by_user_id") @db.Uuid
-  countedAt       DateTime?    @map("counted_at") @db.Timestamptz
+  countedByUserId String?       @map("counted_by_user_id") @db.Uuid
+  countedAt       DateTime?     @map("counted_at") @db.Timestamptz
   countingMode    CountingMode? @map("counting_mode")
-  scannedCode     String?      @map("scanned_code") @db.VarChar(100)
+  scannedCode     String?       @map("scanned_code") @db.VarChar(100)
 
   // Státusz
   recountRequired Boolean @default(false) @map("recount_required")
   recountReason   String? @map("recount_reason") @db.VarChar(255)
 
   // Eltérés dokumentálás (24-3)
-  varianceType        VarianceType?
-  reasonCategory      VarianceReasonCategory? @map("reason_category")
-  reasonDescription   String?                 @map("reason_description") @db.Text
-  adjustmentStatus    AdjustmentStatus?       @map("adjustment_status")
+  varianceType      VarianceType?
+  reasonCategory    VarianceReasonCategory? @map("reason_category")
+  reasonDescription String?                 @map("reason_description") @db.Text
+  adjustmentStatus  AdjustmentStatus?       @map("adjustment_status")
 
   notes String? @db.Text
 
@@ -2545,8 +2574,8 @@ model CounterSession {
 
 /// StockAdjustment - Készlet korrekció (Epic 24: Story 24-3)
 model StockAdjustment {
-  id       String @id @default(uuid()) @db.Uuid
-  tenantId String @map("tenant_id") @db.Uuid
+  id           String @id @default(uuid()) @db.Uuid
+  tenantId     String @map("tenant_id") @db.Uuid
   stockCountId String @map("stock_count_id") @db.Uuid
 
   // Korrekció adatok
@@ -2579,4 +2608,199 @@ model StockAdjustment {
   @@index([status])
   @@index([createdByUserId])
   @@map("stock_adjustments")
+}
+
+// ============================================
+// GOODS RECEIPT MODELS (Epic 21)
+// ============================================
+
+/// Avizo - Beszállítói értesítés / Megrendelés visszaigazolás
+model Avizo {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  avizoNumber  String      @map("avizo_number") @db.VarChar(50)
+  supplierId   String      @map("supplier_id") @db.Uuid
+  supplierName String      @map("supplier_name") @db.VarChar(255)
+  status       AvizoStatus @default(PENDING)
+
+  // Dátumok
+  expectedDate DateTime @map("expected_date") @db.Date
+
+  // Összesítő
+  totalItems    Int @default(0) @map("total_items")
+  totalQuantity Int @default(0) @map("total_quantity")
+
+  // Dokumentum
+  pdfUrl String? @map("pdf_url") @db.VarChar(500)
+  notes  String? @db.Text
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  supplier Supplier       @relation(fields: [supplierId], references: [id])
+  items    AvizoItem[]
+  receipts GoodsReceipt[]
+
+  @@unique([tenantId, avizoNumber])
+  @@index([tenantId])
+  @@index([supplierId])
+  @@index([status])
+  @@index([expectedDate])
+  @@map("avizos")
+}
+
+/// AvizoItem - Avizo tétel (várt szállítmány tételei)
+model AvizoItem {
+  id       String @id @default(uuid()) @db.Uuid
+  avizoId  String @map("avizo_id") @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  productId   String @map("product_id") @db.Uuid
+  productCode String @map("product_code") @db.VarChar(50)
+  productName String @map("product_name") @db.VarChar(255)
+
+  expectedQuantity Int     @map("expected_quantity")
+  receivedQuantity Int     @default(0) @map("received_quantity")
+  unitPrice        Decimal @map("unit_price") @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  avizo        Avizo              @relation(fields: [avizoId], references: [id], onDelete: Cascade)
+  product      Product            @relation(fields: [productId], references: [id])
+  receiptItems GoodsReceiptItem[]
+
+  @@index([avizoId])
+  @@index([productId])
+  @@map("avizo_items")
+}
+
+/// GoodsReceipt - Bevételezés (Áru átvétel)
+model GoodsReceipt {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  receiptNumber String        @map("receipt_number") @db.VarChar(50)
+  avizoId       String?       @map("avizo_id") @db.Uuid
+  supplierId    String        @map("supplier_id") @db.Uuid
+  supplierName  String        @map("supplier_name") @db.VarChar(255)
+  status        ReceiptStatus @default(DRAFT)
+
+  // Dátumok
+  receivedDate DateTime  @map("received_date") @db.Date
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz
+
+  // Összesítő
+  totalItems     Int     @default(0) @map("total_items")
+  totalQuantity  Int     @default(0) @map("total_quantity")
+  hasDiscrepancy Boolean @default(false) @map("has_discrepancy")
+
+  // Feldolgozás
+  processedBy String @map("processed_by") @db.Uuid
+  warehouseId String @map("warehouse_id") @db.Uuid
+
+  notes String? @db.Text
+
+  // Audit
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  avizo         Avizo?               @relation(fields: [avizoId], references: [id])
+  supplier      Supplier             @relation(fields: [supplierId], references: [id])
+  warehouse     Warehouse            @relation(fields: [warehouseId], references: [id])
+  items         GoodsReceiptItem[]
+  discrepancies ReceiptDiscrepancy[]
+
+  @@unique([tenantId, receiptNumber])
+  @@index([tenantId])
+  @@index([avizoId])
+  @@index([supplierId])
+  @@index([status])
+  @@index([receivedDate])
+  @@index([warehouseId])
+  @@map("goods_receipts")
+}
+
+/// GoodsReceiptItem - Bevételezés tétel
+model GoodsReceiptItem {
+  id        String @id @default(uuid()) @db.Uuid
+  receiptId String @map("receipt_id") @db.Uuid
+  tenantId  String @map("tenant_id") @db.Uuid
+
+  avizoItemId String? @map("avizo_item_id") @db.Uuid
+  productId   String  @map("product_id") @db.Uuid
+  productCode String  @map("product_code") @db.VarChar(50)
+  productName String  @map("product_name") @db.VarChar(255)
+
+  expectedQuantity Int     @map("expected_quantity")
+  receivedQuantity Int     @map("received_quantity")
+  unitPrice        Decimal @map("unit_price") @db.Decimal(12, 2)
+
+  // Raktárhely
+  locationCode String? @map("location_code") @db.VarChar(50)
+
+  // Sarzs / Sorozatszám tracking
+  batchNumber  String?   @map("batch_number") @db.VarChar(50)
+  serialNumber String?   @map("serial_number") @db.VarChar(100)
+  expiryDate   DateTime? @map("expiry_date") @db.Date
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  receipt     GoodsReceipt        @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  avizoItem   AvizoItem?          @relation(fields: [avizoItemId], references: [id])
+  product     Product             @relation(fields: [productId], references: [id])
+  discrepancy ReceiptDiscrepancy?
+
+  @@index([receiptId])
+  @@index([avizoItemId])
+  @@index([productId])
+  @@index([batchNumber])
+  @@index([serialNumber])
+  @@map("goods_receipt_items")
+}
+
+/// ReceiptDiscrepancy - Bevételezési eltérés
+model ReceiptDiscrepancy {
+  id            String @id @default(uuid()) @db.Uuid
+  receiptId     String @map("receipt_id") @db.Uuid
+  receiptItemId String @unique @map("receipt_item_id") @db.Uuid
+  tenantId      String @map("tenant_id") @db.Uuid
+
+  type             DiscrepancyTypeEnum @map("discrepancy_type")
+  expectedQuantity Int                 @map("expected_quantity")
+  actualQuantity   Int                 @map("actual_quantity")
+  difference       Int                 @default(0)
+
+  // Dokumentálás
+  reason             String?   @db.Text
+  supplierNotified   Boolean   @default(false) @map("supplier_notified")
+  supplierNotifiedAt DateTime? @map("supplier_notified_at") @db.Timestamptz
+
+  // Megoldás
+  resolvedAt     DateTime? @map("resolved_at") @db.Timestamptz
+  resolvedBy     String?   @map("resolved_by") @db.Uuid
+  resolutionNote String?   @map("resolution_note") @db.Text
+
+  // Audit
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  receipt     GoodsReceipt     @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  receiptItem GoodsReceiptItem @relation(fields: [receiptItemId], references: [id], onDelete: Cascade)
+
+  @@index([receiptId])
+  @@index([type])
+  @@index([supplierNotified])
+  @@index([resolvedAt])
+  @@map("receipt_discrepancies")
 }

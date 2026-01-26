@@ -4,7 +4,11 @@ import { useThemeStore } from '@/stores/theme-store';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export function Header() {
+interface HeaderProps {
+  onCommandPaletteOpen?: () => void;
+}
+
+export function Header({ onCommandPaletteOpen }: HeaderProps) {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useThemeStore();
   const { user, logout } = useAuthStore();
@@ -68,8 +72,34 @@ export function Header() {
         <span className="text-sm text-muted-foreground">KGC ERP</span>
       </div>
 
-      {/* Right side - Theme toggle, Admin dropdown & User */}
+      {/* Right side - Search, Theme toggle, Admin dropdown & User */}
       <div className="flex items-center gap-3">
+        {/* Search button (Ctrl+K) */}
+        <button
+          onClick={onCommandPaletteOpen}
+          className="flex h-9 items-center gap-2 rounded-lg border bg-background px-3 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          title="Keresés (Ctrl+K)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <span className="hidden text-sm sm:inline">Keresés</span>
+          <kbd className="hidden rounded bg-muted px-1.5 py-0.5 text-xs font-medium sm:inline">
+            Ctrl+K
+          </kbd>
+        </button>
+
         {/* Theme toggle button */}
         <button
           onClick={toggleTheme}
