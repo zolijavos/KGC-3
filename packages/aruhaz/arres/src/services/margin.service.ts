@@ -22,6 +22,7 @@ export interface IProductRepository {
   findById(id: string): Promise<IProductInfo | null>;
   findByIds(ids: string[]): Promise<IProductInfo[]>;
   findByCategoryId(categoryId: string): Promise<IProductInfo[]>;
+  findAll(tenantId: string): Promise<IProductInfo[]>;
 }
 
 export interface IProductInfo {
@@ -58,6 +59,11 @@ export interface ISalesRepository {
     periodEnd: Date,
     granularity: 'DAY' | 'WEEK' | 'MONTH'
   ): Promise<Array<{ date: Date; quantitySold: number; revenue: number }>>;
+  getAllSalesByPeriod(
+    tenantId: string,
+    periodStart: Date,
+    periodEnd: Date
+  ): Promise<Array<{ productId: string; quantitySold: number; revenue: number }>>;
 }
 
 /**
@@ -120,7 +126,19 @@ export class MarginService implements IMarginService {
     const avgPurchasePrice = purchasePrice?.weightedAveragePrice ?? 0;
 
     const marginAmount = product.sellingPrice - avgPurchasePrice;
-    const marginPercent = avgPurchasePrice > 0 ? (marginAmount / product.sellingPrice) * 100 : 100;
+
+    // Division by zero kezelése
+    let marginPercent: number;
+    if (product.sellingPrice === 0) {
+      // Ha nincs eladási ár, árrés% nem értelmezhető
+      marginPercent = avgPurchasePrice > 0 ? -100 : 0;
+    } else if (avgPurchasePrice === 0) {
+      // Ha nincs beszerzési ár, 100% árrés
+      marginPercent = 100;
+    } else {
+      marginPercent = (marginAmount / product.sellingPrice) * 100;
+    }
+
     const markupPercent = avgPurchasePrice > 0 ? (marginAmount / avgPurchasePrice) * 100 : 0;
 
     return {
@@ -345,28 +363,164 @@ export class MarginService implements IMarginService {
 
   /**
    * Top N legjövedelmezőbb cikk
+   * @param limit - Visszaadott termékek maximális száma
+   * @param periodStart - Periódus kezdete
+   * @param periodEnd - Periódus vége
+   * @param tenantId - Tenant azonosító (kötelező a multi-tenant működéshez)
    */
   async getTopProfitableProducts(
-    _limit: number,
-    _periodStart: Date,
-    _periodEnd: Date
+    limit: number,
+    periodStart: Date,
+    periodEnd: Date,
+    tenantId?: string
   ): Promise<IProductMarginSummary[]> {
-    // TODO: Implement with proper database query
-    // For now, return empty array
-    return [];
+    // Tenant ID szükséges a multi-tenant működéshez
+    // Alapértelmezetten üres tömböt adunk vissza ha nincs megadva
+    if (!tenantId) {
+      return [];
+    }
+
+    // Összes termék lekérése
+    const products = await this.productRepository.findAll(tenantId);
+    if (products.length === 0) {
+      return [];
+    }
+
+    const productIds = products.map(p => p.id);
+
+    // Beszerzési árak és eladások lekérése
+    const purchasePrices = await this.purchasePriceRepository.findByProductIds(productIds);
+    const purchasePriceMap = new Map<string, IProductPurchasePrice>();
+    for (const pp of purchasePrices) {
+      purchasePriceMap.set(pp.productId, pp);
+    }
+
+    const allSales = await this.salesRepository.getAllSalesByPeriod(
+      tenantId,
+      periodStart,
+      periodEnd
+    );
+    const salesMap = new Map<string, { quantitySold: number; revenue: number }>();
+    for (const sale of allSales) {
+      salesMap.set(sale.productId, { quantitySold: sale.quantitySold, revenue: sale.revenue });
+    }
+
+    // Margin summary kalkuláció minden termékre
+    const summaries: IProductMarginSummary[] = [];
+
+    for (const product of products) {
+      const purchasePrice = purchasePriceMap.get(product.id);
+      const sales = salesMap.get(product.id);
+
+      if (!sales || sales.quantitySold === 0) {
+        continue; // Nincs eladás, kihagyjuk
+      }
+
+      const avgPurchasePrice = purchasePrice?.weightedAveragePrice ?? 0;
+      const marginAmount = product.sellingPrice - avgPurchasePrice;
+      const marginPercent =
+        avgPurchasePrice > 0 ? (marginAmount / product.sellingPrice) * 100 : 100;
+      const totalMargin = marginAmount * sales.quantitySold;
+
+      summaries.push({
+        productId: product.id,
+        productName: product.name,
+        categoryId: product.categoryId,
+        averagePurchasePrice: avgPurchasePrice,
+        currentSellingPrice: product.sellingPrice,
+        marginAmount,
+        marginPercent,
+        quantitySold: sales.quantitySold,
+        totalMargin,
+        revenue: sales.revenue,
+      });
+    }
+
+    // Rendezés totalMargin szerint csökkenő sorrendben
+    summaries.sort((a, b) => b.totalMargin - a.totalMargin);
+
+    // Limitálás
+    return summaries.slice(0, limit);
   }
 
   /**
    * Legalacsonyabb árrésű cikkek
    */
   async getLowMarginProducts(
-    _thresholdPercent: number,
-    _periodStart: Date,
-    _periodEnd: Date
+    thresholdPercent: number,
+    periodStart: Date,
+    periodEnd: Date,
+    tenantId?: string
   ): Promise<IProductMarginSummary[]> {
-    // TODO: Implement with proper database query
-    // For now, return empty array
-    return [];
+    // Ha nincs tenantId, üres tömböt adunk vissza (biztonságos default)
+    if (!tenantId) {
+      return [];
+    }
+
+    // Összes termék lekérése
+    const products = await this.productRepository.findAll(tenantId);
+    if (products.length === 0) {
+      return [];
+    }
+
+    const productIds = products.map(p => p.id);
+
+    // Beszerzési árak és eladások lekérése
+    const purchasePrices = await this.purchasePriceRepository.findByProductIds(productIds);
+    const purchasePriceMap = new Map<string, IProductPurchasePrice>();
+    for (const pp of purchasePrices) {
+      purchasePriceMap.set(pp.productId, pp);
+    }
+
+    const allSales = await this.salesRepository.getAllSalesByPeriod(
+      tenantId,
+      periodStart,
+      periodEnd
+    );
+    const salesMap = new Map<string, { quantitySold: number; revenue: number }>();
+    for (const sale of allSales) {
+      salesMap.set(sale.productId, { quantitySold: sale.quantitySold, revenue: sale.revenue });
+    }
+
+    // Margin summary kalkuláció és szűrés
+    const lowMarginProducts: IProductMarginSummary[] = [];
+
+    for (const product of products) {
+      const purchasePrice = purchasePriceMap.get(product.id);
+      const sales = salesMap.get(product.id);
+
+      const avgPurchasePrice = purchasePrice?.weightedAveragePrice ?? 0;
+      const marginAmount = product.sellingPrice - avgPurchasePrice;
+      const marginPercent =
+        product.sellingPrice > 0 ? (marginAmount / product.sellingPrice) * 100 : 0;
+
+      // Csak alacsony árrésű termékek
+      if (marginPercent >= thresholdPercent) {
+        continue;
+      }
+
+      const quantitySold = sales?.quantitySold ?? 0;
+      const revenue = sales?.revenue ?? 0;
+      const totalMargin = marginAmount * quantitySold;
+
+      lowMarginProducts.push({
+        productId: product.id,
+        productName: product.name,
+        categoryId: product.categoryId,
+        averagePurchasePrice: avgPurchasePrice,
+        currentSellingPrice: product.sellingPrice,
+        marginAmount,
+        marginPercent,
+        quantitySold,
+        totalMargin,
+        revenue,
+      });
+    }
+
+    // Rendezés marginPercent szerint növekvő sorrendben (legrosszabbak elöl)
+    lowMarginProducts.sort((a, b) => a.marginPercent - b.marginPercent);
+
+    return lowMarginProducts;
   }
 
   /**

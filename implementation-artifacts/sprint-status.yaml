@@ -322,20 +322,26 @@ development_status:
   21-3-bevetelezes-elteres-kezeles: done # DiscrepancyService + DiscrepancyController + PrismaDiscrepancyRepository (2026-01-26)
   epic-21-retrospective: done # Retrospective 2026-01-26: 38 tests, 9 code review fixes
 
-  # Epic 22: Point of Sale (@kgc/sales-pos) - 3 stories
-  # CODE: @kgc/sales-pos package (84 tests) + API module
+  # Epic 22: Point of Sale (@kgc/sales-pos) - 3 stories ✅ COMPLETE
+  # CODE: @kgc/sales-pos package (112 tests) + API module
   # PRISMA: ✅ CashRegisterSession, SaleTransaction, SaleItem, SalePayment
-  epic-22: in-progress
+  # Updated 2026-01-26: All 3 stories complete with 112 tests
+  epic-22: done
   22-1-ertekesites-kasszabol: done # Session + Cart + Transaction - 62 tests (2026-01-26)
   22-2-fizetesi-modok: done # Payment methods (cash, card, mixed) - 22 tests, code review 2026-01-26
-  22-3-napi-penztarzaras: backlog # Daily cash closing + report
+  22-3-napi-penztarzaras: done # Z-report + variance approval - 28 tests (2026-01-26)
   epic-22-retrospective: optional
 
-  # Epic 23: Pricing & Margin (@kgc/arres) - 2 stories
-  # CODE: 9 ts files | PRISMA: ✅ Product model EXISTS
-  epic-23: backlog
-  23-1-beszerzesi-ar-tracking: backlog
-  23-2-arres-kalkulacio-es-riport: backlog
+  # Epic 23: Pricing & Margin (@kgc/arres) - 2 stories ✅ COMPLETE
+  # CODE: @kgc/arres package (79 tests) + interfaces + services
+  # PRISMA: ✅ Product model EXISTS
+  # Updated 2026-01-26: All 2 stories complete with 79 tests
+  # - PurchasePriceService: record, history, trend, supplier comparison, alerts
+  # - MarginService: calculate, batch, category/product summary, reports, top/low margin
+  # - Code Review: 8 issues found (2 MEDIUM fixed, 6 LOW deferred)
+  epic-23: done
+  23-1-beszerzesi-ar-tracking: done # PurchasePriceService + 33 tests (2026-01-26)
+  23-2-arres-kalkulacio-es-riport: done # MarginService + 46 tests (2026-01-26)
   epic-23-retrospective: optional
 
   # Epic 24: Stock Count (@kgc/leltar) - 3 stories ✅ COMPLETE
@@ -358,11 +364,17 @@ development_status:
   # ============================================
   # STATUS: ⚪ BACKLOG - Prisma models ready, awaiting implementation
 
-  # Epic 25: Equipment-Service Integration - 2 stories
-  # CODE: 8 ts files | PRISMA: ✅ Rental + Service models EXIST
-  epic-25: backlog
-  25-1-bergep-szervizbe-kuldes-automatizalas: backlog
-  25-2-szerviz-kesz-bergep-visszaall: backlog
+  # Epic 25: Equipment-Service Integration - 2 stories ✅ COMPLETE
+  # CODE: @kgc/bergep-szerviz package (18 tests) + API module (30 tests)
+  # PRISMA: ✅ Rental + Service models EXIST
+  # Updated 2026-01-26: Full implementation with API layer
+  # - EquipmentDispatchService: dispatchToService, getActiveDispatch, getDispatchHistory
+  # - ServiceReturnService: returnFromService, autoCompleteOnWorksheetDone
+  # - BergepSzervizController: 5 REST endpoints
+  # - 48 tests total (package: 18, API: 30)
+  epic-25: done
+  25-1-bergep-szervizbe-kuldes-automatizalas: done # EquipmentDispatchService + 9 tests (2026-01-26)
+  25-2-szerviz-kesz-bergep-visszaall: done # ServiceReturnService + 9 tests (2026-01-26)
   epic-25-retrospective: optional
 
   # Epic 26: Online Booking - 2 stories
@@ -372,12 +384,18 @@ development_status:
   26-2-foglalas-megerosites: backlog
   epic-26-retrospective: optional
 
-  # Epic 27: Reporting Engine - 3 stories
-  # CODE: 11 ts files | PRISMA: ✅ All domain models EXIST
-  epic-27: backlog
-  27-1-dashboard-widgetek: backlog
-  27-2-reszletes-riportok: backlog
-  27-3-cross-tenant-riportok: backlog
+  # Epic 27: Reporting Engine - 3 stories ✅ COMPLETE
+  # CODE: 35+ ts files + 77 tests | PRISMA: ✅ All domain models EXIST
+  # Updated 2026-01-26: Full API layer + ReportExporter (CSV/PDF/Excel)
+  # - DashboardController (5 endpoints): widgets CRUD, widget data
+  # - ReportsController (8 endpoints): reports, export, cross-tenant
+  # - ReportExporterService: CSV, PDF (text-based), Excel (XML)
+  # - 6 in-memory repositories for development/testing
+  # - 77 tests (dashboard: 24, reports: 27, exporter: 26)
+  epic-27: done
+  27-1-dashboard-widgetek: done # DashboardController + widget management (2026-01-26)
+  27-2-reszletes-riportok: done # ReportsController + export (CSV/PDF/Excel) (2026-01-26)
+  27-3-cross-tenant-riportok: done # Cross-tenant reports + tenant comparison (2026-01-26)
   epic-27-retrospective: optional
 
   # ============================================
@@ -517,13 +535,20 @@ development_status:
 # All Prisma models are now complete! No missing models.
 
 # ============================================
-# SUMMARY (Updated 2026-01-26 - Status cleanup)
+# SUMMARY (Updated 2026-01-26 - Epic 23 Complete)
 # ============================================
-# ✅ DONE: 26 epics (1-6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 29-chatwoot, 29-favorites, 30, 31, 32, 33, 34)
-# ⚪ BACKLOG: 6 epics (22, 23, 25, 26, 27, 28) - Prisma models ready, awaiting implementation
+# ✅ DONE: 30 epics (1-6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27, 29-chatwoot, 29-favorites, 30, 31, 32, 33, 34)
+# 🟡 IN-PROGRESS: 0 epics
+# ⚪ BACKLOG: 2 epics (26, 28) - Prisma models ready, awaiting implementation
 #
 # LATEST UPDATE (2026-01-26):
 # ===========================
+# 2. Epic 25 (bergep-szerviz) - ✅ COMPLETE:
+#    - @kgc/bergep-szerviz package: EquipmentDispatchService + ServiceReturnService
+#    - BergepSzervizController: 5 REST endpoints (dispatch, return, active, history, auto-complete)
+#    - 48 tests total (package: 18, API: 30)
+#    - Stories: 25-1 (dispatch), 25-2 (return) all DONE
+#
 # 1. Epic 21 (bevetelezes) - PRISMA MODELS ADDED:
 #    - Added 5 new models: Avizo, AvizoItem, GoodsReceipt, GoodsReceiptItem, ReceiptDiscrepancy
 #    - Added 3 new enums: AvizoStatus, ReceiptStatus, DiscrepancyTypeEnum

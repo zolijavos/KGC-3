@@ -146,27 +146,34 @@ export interface IMarginService {
   /**
    * Árrés riport exportálása
    */
-  exportMarginReport(
-    reportId: string,
-    format: 'CSV' | 'XLSX' | 'PDF'
-  ): Promise<Buffer>;
+  exportMarginReport(reportId: string, format: 'CSV' | 'XLSX' | 'PDF'): Promise<Buffer>;
 
   /**
    * Top N legjövedelmezőbb cikk
+   * @param limit - Visszaadott termékek maximális száma
+   * @param periodStart - Periódus kezdete
+   * @param periodEnd - Periódus vége
+   * @param tenantId - Tenant azonosító (opcionális, multi-tenant működéshez)
    */
   getTopProfitableProducts(
     limit: number,
     periodStart: Date,
-    periodEnd: Date
+    periodEnd: Date,
+    tenantId?: string
   ): Promise<IProductMarginSummary[]>;
 
   /**
    * Legalacsonyabb árrésű cikkek (figyelmeztetés)
+   * @param thresholdPercent - Árrés küszöb százalék
+   * @param periodStart - Periódus kezdete
+   * @param periodEnd - Periódus vége
+   * @param tenantId - Tenant azonosító (opcionális, multi-tenant működéshez)
    */
   getLowMarginProducts(
     thresholdPercent: number,
     periodStart: Date,
-    periodEnd: Date
+    periodEnd: Date,
+    tenantId?: string
   ): Promise<IProductMarginSummary[]>;
 
   /**
