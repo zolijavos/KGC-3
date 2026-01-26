@@ -25,6 +25,7 @@
   "dependencies": {
     "@kgc/auth": "workspace:*",
     "@kgc/bergep": "workspace:*",
+    "@kgc/bevetelezes": "workspace:^",
     "@kgc/common": "workspace:*",
     "@kgc/feladatlista": "workspace:*",
     "@kgc/inventory": "workspace:*",

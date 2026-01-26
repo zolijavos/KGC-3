@@ -52,6 +52,7 @@
       "@kgc/sales-pos": ["packages/aruhaz/sales-pos/src"],
       "@kgc/sales-invoice": ["packages/aruhaz/sales-invoice/src"],
       "@kgc/sales-quote": ["packages/aruhaz/sales-quote/src"],
+      "@kgc/bevetelezes": ["packages/aruhaz/bevetelezes/src"],
       "@kgc/nav-online": ["packages/integration/nav-online/src"],
       "@kgc/mypos": ["packages/integration/mypos/src"],
       "@kgc/szamlazz-hu": ["packages/integration/szamlazz-hu/src"],

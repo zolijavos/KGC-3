@@ -81,7 +81,7 @@ class StubSupplierNotificationService implements ISupplierNotificationService {
     receiptNumber: string
   ): Promise<void> {
     this.logger.log(
-      `NOTIFICATION: Discrepancy ${discrepancy.type} (${discrepancy.difference}) for ${receiptNumber} sent to ${supplierName}`
+      `NOTIFICATION: Discrepancy ${discrepancy.type} (${discrepancy.difference}) for ${receiptNumber} sent to ${supplierName} (${supplierId})`
     );
     // TODO: Integrate with email/notification service
   }

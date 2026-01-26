@@ -18,10 +18,12 @@ import {
   ResolveDiscrepancyDto,
   UpdateAvizoDto,
 } from '@kgc/bevetelezes';
-import { CurrentTenant, CurrentUser, JwtAuthGuard, type JwtPayload } from '@kgc/common';
+import { JwtAuthGuard, type JwtUser } from '@kgc/common';
 import {
   Body,
   Controller,
+  createParamDecorator,
+  ExecutionContext,
   Get,
   HttpCode,
   HttpStatus,
@@ -31,6 +33,23 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+
+// CurrentUser decorator - extracts user from JWT
+const CurrentUser = createParamDecorator(
+  (data: keyof JwtUser | undefined, ctx: ExecutionContext): JwtUser | string | undefined => {
+    const request = ctx.switchToHttp().getRequest<{ user?: JwtUser }>();
+    const user = request.user;
+    return data ? user?.[data] : user;
+  }
+);
+
+// CurrentTenant decorator - extracts tenantId from authenticated user
+const CurrentTenant = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): string => {
+    const request = ctx.switchToHttp().getRequest<{ user?: JwtUser }>();
+    return request.user?.tenantId ?? '';
+  }
+);
 import {
   ApiBearerAuth,
   ApiBody,
@@ -84,9 +103,9 @@ export class AvizoController {
   async createAvizo(
     @Body() dto: CreateAvizoDto,
     @CurrentTenant() tenantId: string,
-    @CurrentUser() user: JwtPayload
+    @CurrentUser() user: JwtUser
   ) {
-    return this.avizoService.createAvizo(dto, tenantId, user.sub);
+    return this.avizoService.createAvizo(dto, tenantId, user.id);
   }
 
   @Get('pending')
@@ -131,9 +150,9 @@ export class AvizoController {
     @Param('id') id: string,
     @Body() dto: UpdateAvizoDto,
     @CurrentTenant() tenantId: string,
-    @CurrentUser() user: JwtPayload
+    @CurrentUser() user: JwtUser
   ) {
-    return this.avizoService.updateAvizo(id, dto, tenantId, user.sub);
+    return this.avizoService.updateAvizo(id, dto, tenantId, user.id);
   }
 
   @Post(':id/cancel')
@@ -144,9 +163,9 @@ export class AvizoController {
   async cancelAvizo(
     @Param('id') id: string,
     @CurrentTenant() tenantId: string,
-    @CurrentUser() user: JwtPayload
+    @CurrentUser() user: JwtUser
   ) {
-    return this.avizoService.cancelAvizo(id, tenantId, user.sub);
+    return this.avizoService.cancelAvizo(id, tenantId, user.id);
   }
 }
 
@@ -195,9 +214,9 @@ export class ReceiptController {
   async createReceipt(
     @Body() dto: CreateReceiptDto,
     @CurrentTenant() tenantId: string,
-    @CurrentUser() user: JwtPayload
+    @CurrentUser() user: JwtUser
   ) {
-    return this.receiptService.createReceipt(dto, tenantId, user.sub);
+    return this.receiptService.createReceipt(dto, tenantId, user.id);
   }
 
   @Get(':id')
@@ -225,9 +244,9 @@ export class ReceiptController {
   async completeReceipt(
     @Param('id') id: string,
     @CurrentTenant() tenantId: string,
-    @CurrentUser() user: JwtPayload
+    @CurrentUser() user: JwtUser
   ) {
-    return this.receiptService.completeReceipt(id, tenantId, user.sub);
+    return this.receiptService.completeReceipt(id, tenantId, user.id);
   }
 }
 
@@ -263,9 +282,9 @@ export class DiscrepancyController {
     @Param('receiptId') receiptId: string,
     @Body() dto: CreateDiscrepancyDto,
     @CurrentTenant() tenantId: string,
-    @CurrentUser() user: JwtPayload
+    @CurrentUser() user: JwtUser
   ) {
-    return this.discrepancyService.createDiscrepancy(receiptId, dto, tenantId, user.sub);
+    return this.discrepancyService.createDiscrepancy(receiptId, dto, tenantId, user.id);
   }
 
   @Get()
@@ -304,8 +323,8 @@ export class DiscrepancyController {
     @Param('discrepancyId') discrepancyId: string,
     @Body() dto: ResolveDiscrepancyDto,
     @CurrentTenant() tenantId: string,
-    @CurrentUser() user: JwtPayload
+    @CurrentUser() user: JwtUser
   ) {
-    return this.discrepancyService.resolveDiscrepancy(discrepancyId, dto, tenantId, user.sub);
+    return this.discrepancyService.resolveDiscrepancy(discrepancyId, dto, tenantId, user.id);
   }
 }
