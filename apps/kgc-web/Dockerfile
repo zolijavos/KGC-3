@@ -19,9 +19,6 @@ COPY apps/kgc-web/package.json ./apps/kgc-web/
 
 # Copy shared packages that kgc-web depends on
 COPY packages/shared/ui/package.json ./packages/shared/ui/
-COPY packages/shared/utils/package.json ./packages/shared/utils/
-COPY packages/shared/types/package.json ./packages/shared/types/
-COPY packages/shared/i18n/package.json ./packages/shared/i18n/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile

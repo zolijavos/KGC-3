@@ -6,8 +6,7 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { IWorksheet, WorksheetStatus, WorksheetPriority } from '../interfaces/worksheet.interface';
-import { IAuditService } from './worksheet.service';
+import { IWorksheet, WorksheetPriority, WorksheetStatus } from '../interfaces/worksheet.interface';
 
 /**
  * Priority ranking - lower number = higher priority
@@ -59,10 +58,7 @@ export interface IWorksheetQueueRepository {
  */
 @Injectable()
 export class WorksheetQueueService {
-  constructor(
-    private readonly worksheetRepository: IWorksheetQueueRepository,
-    private readonly auditService: IAuditService,
-  ) {}
+  constructor(private readonly worksheetRepository: IWorksheetQueueRepository) {}
 
   /**
    * Get priority rank (lower = higher priority)
@@ -84,29 +80,26 @@ export class WorksheetQueueService {
     }
 
     const queue = await this.getQueue(tenantId);
-    const position = queue.findIndex((ws) => ws.id === worksheetId);
+    const position = queue.findIndex(ws => ws.id === worksheetId);
     return position + 1;
   }
 
   /**
    * Get sorted worksheet queue
    */
-  async getQueue(
-    tenantId: string,
-    options?: IQueueFilterOptions,
-  ): Promise<IQueuedWorksheet[]> {
+  async getQueue(tenantId: string, options?: IQueueFilterOptions): Promise<IQueuedWorksheet[]> {
     const statuses = options?.statuses ?? [WorksheetStatus.FELVEVE, WorksheetStatus.VARHATO];
     const worksheets = await this.worksheetRepository.findByStatus(statuses, tenantId);
 
     // Filter by assignee if provided
     let filtered = worksheets;
     if (options?.assignedToId) {
-      filtered = worksheets.filter((ws) => ws.assignedToId === options.assignedToId);
+      filtered = worksheets.filter(ws => ws.assignedToId === options.assignedToId);
     }
 
     // Filter by priority if provided
     if (options?.priority) {
-      filtered = filtered.filter((ws) => ws.priority === options.priority);
+      filtered = filtered.filter(ws => ws.priority === options.priority);
     }
 
     // Sort by priority (lower rank first), then by receivedAt (older first)
@@ -130,7 +123,7 @@ export class WorksheetQueueService {
    */
   async getNextWorksheet(
     tenantId: string,
-    options?: IQueueFilterOptions,
+    options?: IQueueFilterOptions
   ): Promise<IQueuedWorksheet | null> {
     const queue = await this.getQueue(tenantId, options);
     return queue[0] ?? null;
@@ -141,7 +134,7 @@ export class WorksheetQueueService {
    */
   async getWorksheetsByPriority(
     priority: WorksheetPriority,
-    tenantId: string,
+    tenantId: string
   ): Promise<IQueuedWorksheet[]> {
     return this.getQueue(tenantId, { priority });
   }

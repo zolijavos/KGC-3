@@ -21,7 +21,7 @@
  * ```
  */
 
-import type { StoreConfig, QueryOptions, TransactionMode } from './types';
+import type { QueryOptions, StoreConfig, TransactionMode } from './types';
 
 export class IndexedDBStore {
   private db: IDBDatabase | null = null;
@@ -70,7 +70,7 @@ export class IndexedDBStore {
         resolve(this.db);
       };
 
-      request.onupgradeneeded = (event) => {
+      request.onupgradeneeded = event => {
         const db = (event.target as IDBOpenDBRequest).result;
         this.createStores(db);
       };
@@ -103,7 +103,9 @@ export class IndexedDBStore {
       const request = indexedDB.deleteDatabase(this.config.name);
 
       request.onerror = () => {
-        reject(new Error(`Failed to delete database: ${request.error?.message ?? 'Unknown error'}`));
+        reject(
+          new Error(`Failed to delete database: ${request.error?.message ?? 'Unknown error'}`)
+        );
       };
 
       request.onsuccess = () => {
@@ -154,7 +156,9 @@ export class IndexedDBStore {
         const cursorRequest = target.openCursor(null, options?.direction);
 
         cursorRequest.onerror = () => {
-          reject(new Error(`Failed to get records: ${cursorRequest.error?.message ?? 'Unknown error'}`));
+          reject(
+            new Error(`Failed to get records: ${cursorRequest.error?.message ?? 'Unknown error'}`)
+          );
         };
 
         cursorRequest.onsuccess = () => {
@@ -321,7 +325,7 @@ export class IndexedDBStore {
 
       callback(stores)
         .then(resolve)
-        .catch((error) => {
+        .catch(error => {
           transaction.abort();
           reject(error);
         });
@@ -383,11 +387,7 @@ export class IndexedDBStore {
   /**
    * Query records by index value.
    */
-  async getByIndex<T>(
-    storeName: string,
-    indexName: string,
-    value: IDBValidKey
-  ): Promise<T[]> {
+  async getByIndex<T>(storeName: string, indexName: string, value: IDBValidKey): Promise<T[]> {
     const db = await this.open();
 
     return new Promise((resolve, reject) => {
@@ -413,10 +413,13 @@ export class IndexedDBStore {
     for (const storeConfig of this.config.stores) {
       // Create store if it doesn't exist
       if (!db.objectStoreNames.contains(storeConfig.name)) {
-        const store = db.createObjectStore(storeConfig.name, {
+        const storeParams: IDBObjectStoreParameters = {
           keyPath: storeConfig.keyPath,
-          autoIncrement: storeConfig.autoIncrement,
-        });
+        };
+        if (storeConfig.autoIncrement !== undefined) {
+          storeParams.autoIncrement = storeConfig.autoIncrement;
+        }
+        const store = db.createObjectStore(storeConfig.name, storeParams);
 
         // Create indexes
         if (storeConfig.indexes) {

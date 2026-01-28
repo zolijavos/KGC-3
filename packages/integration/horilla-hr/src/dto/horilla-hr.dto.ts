@@ -19,10 +19,31 @@ export const SyncEmployeesSchema = z.object({
   statusFilter: z.enum(['ACTIVE', 'INACTIVE', 'ON_LEAVE', 'TERMINATED']).optional(),
 });
 
+export const SyncDirectionEnum = z.enum(['HORILLA_TO_KGC', 'KGC_TO_HORILLA', 'BIDIRECTIONAL']);
+export const ConflictResolutionEnum = z.enum([
+  'LAST_WRITE_WINS',
+  'HORILLA_WINS',
+  'KGC_WINS',
+  'MANUAL',
+]);
+
+export const SyncEmployeesExtendedSchema = z.object({
+  direction: SyncDirectionEnum.default('HORILLA_TO_KGC'),
+  fullSync: z.boolean().default(false),
+  departmentFilter: z.string().optional(),
+  statusFilter: z.enum(['ACTIVE', 'INACTIVE', 'ON_LEAVE', 'TERMINATED']).optional(),
+  userIds: z.array(z.string().uuid()).optional(),
+  conflictResolution: ConflictResolutionEnum.default('LAST_WRITE_WINS'),
+});
+
+export type SyncEmployeesExtendedDto = z.infer<typeof SyncEmployeesExtendedSchema>;
+
 export const CreateEmployeeMappingSchema = z.object({
   horillaEmployeeId: z.string().min(1),
   kgcUserId: z.string().uuid(),
-  syncDirection: z.enum(['HORILLA_TO_KGC', 'KGC_TO_HORILLA', 'BIDIRECTIONAL']).default('HORILLA_TO_KGC'),
+  syncDirection: z
+    .enum(['HORILLA_TO_KGC', 'KGC_TO_HORILLA', 'BIDIRECTIONAL'])
+    .default('HORILLA_TO_KGC'),
 });
 
 export type HorillaConfigDto = z.infer<typeof HorillaConfigSchema>;

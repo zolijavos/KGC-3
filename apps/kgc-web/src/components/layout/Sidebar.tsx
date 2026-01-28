@@ -1,3 +1,5 @@
+import { selectSortedFavorites, useFavoritesStore } from '@kgc/ui';
+import { Star, X } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -97,8 +99,8 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { label: 'CRM (Twenty)', href: '/integrations/crm' },
       { label: 'HR (Horilla)', href: '/integrations/hr' },
-      { label: 'Twenty CRM (új ablak)', href: 'http://crm-dev.mflerp.com', external: true },
-      { label: 'Horilla HR (új ablak)', href: 'http://hr-dev.mflerp.com', external: true },
+      { label: 'Twenty CRM (új ablak)', href: 'https://crm-demo.mflerp.com', external: true },
+      { label: 'Horilla HR (új ablak)', href: 'https://hr-demo.mflerp.com', external: true },
     ],
   },
   {
@@ -118,11 +120,22 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
+// Flatten NAV_ITEMS for favorites lookup
+const FLAT_NAV_ITEMS = NAV_ITEMS.flatMap(item =>
+  item.children
+    ? item.children.map(child => ({ ...child, group: item.label }))
+    : [{ label: item.label, href: item.href!, group: 'Navigáció' }]
+);
+
 export function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(['Bérlés', 'Munkalap']);
+
+  // Favorites
+  const favorites = useFavoritesStore(selectSortedFavorites);
+  const { removeFavorite } = useFavoritesStore();
 
   const toggleExpanded = (label: string) => {
     setExpandedItems(prev =>
@@ -248,6 +261,50 @@ export function Sidebar() {
             </button>
           </div>
         )}
+
+        {/* Favorites Section */}
+        {!collapsed && favorites.length > 0 && (
+          <div className="mb-3 border-b border-white/10 pb-3">
+            <div className="mb-1 flex items-center gap-2 px-4 text-xs font-semibold uppercase tracking-wider text-kgc-accent">
+              <Star className="h-3 w-3 fill-current" />
+              Kedvencek
+            </div>
+            {favorites.map(fav => {
+              const navItem = FLAT_NAV_ITEMS.find(
+                item =>
+                  item.label === fav.label || item.href === `/${fav.menuItemId.replace(/-/g, '/')}`
+              );
+              // Try to find by menuItemId pattern (e.g., "rental" -> "/rental")
+              const href = navItem?.href ?? `/${fav.menuItemId.replace(/-/g, '/')}`;
+
+              return (
+                <div
+                  key={fav.menuItemId}
+                  className={`group flex items-center gap-2 px-4 py-1.5 text-sm transition-colors ${
+                    isActive(href)
+                      ? 'bg-kgc-accent/20 text-kgc-accent'
+                      : 'text-white/70 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <button onClick={() => navigate(href)} className="flex-1 text-left">
+                    {fav.label ?? navItem?.label ?? fav.menuItemId}
+                  </button>
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      removeFavorite(fav.menuItemId);
+                    }}
+                    className="rounded p-0.5 opacity-0 transition-opacity hover:bg-white/20 group-hover:opacity-100"
+                    title="Eltávolítás"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {NAV_ITEMS.map(item => (
           <div key={item.label}>
             {item.href ? (

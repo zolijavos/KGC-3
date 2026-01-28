@@ -1,7 +1,6 @@
-import * as React from 'react';
+import type { SyncProgress as SyncProgressType } from '../../lib/sync';
 import { cn } from '../../lib/utils';
 import { Progress } from '../ui/progress';
-import type { SyncProgress as SyncProgressType } from '../../lib/sync';
 
 export interface SyncProgressProps {
   /** Current sync progress */
@@ -39,13 +38,17 @@ export function SyncProgress({
   className,
 }: SyncProgressProps) {
   // Don't render if nothing to show
-  if (!progress.isSyncing && pendingCount === 0 && progress.failed === 0 && progress.conflicts === 0) {
+  if (
+    !progress.isSyncing &&
+    pendingCount === 0 &&
+    progress.failed === 0 &&
+    progress.conflicts === 0
+  ) {
     return null;
   }
 
-  const percentage = progress.total > 0
-    ? Math.round((progress.completed / progress.total) * 100)
-    : 0;
+  const percentage =
+    progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
 
   return (
     <div
@@ -76,11 +79,7 @@ export function SyncProgress({
             </span>
             <span className="text-sm font-medium">Syncing...</span>
           </div>
-          <Progress
-            value={percentage}
-            className="flex-1"
-            aria-label="Sync progress"
-          />
+          <Progress value={percentage} className="flex-1" aria-label="Sync progress" />
           <span className="text-sm text-muted-foreground">
             {progress.completed}/{progress.total}
           </span>
@@ -113,7 +112,9 @@ export function SyncProgress({
           <span className="relative flex h-2 w-2">
             <span className="relative inline-flex h-2 w-2 rounded-full bg-yellow-500" />
           </span>
-          <span>{progress.conflicts} conflict{progress.conflicts > 1 ? 's' : ''}</span>
+          <span>
+            {progress.conflicts} conflict{progress.conflicts > 1 ? 's' : ''}
+          </span>
         </div>
       )}
     </div>

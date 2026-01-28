@@ -31,11 +31,12 @@ export {
 // Payment hooks
 export {
   calculatePaymentState,
+  posPaymentKeys,
   useAddPartialPayment,
   useCompleteTransaction,
-  useFetchTransactionPayments,
   useProcessCardPayment,
   useProcessCashPayment,
+  useTransactionPayments,
   type PaymentFlowState,
 } from './use-pos-payment';
 

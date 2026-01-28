@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
+import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
 export default defineConfig({
@@ -19,7 +19,15 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'react/jsx-runtime'],
+      // Externalize all peer dependencies and packages that use React hooks
+      external: [
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        'zustand',
+        'zustand/shallow',
+        '@tanstack/react-query',
+      ],
       output: {
         globals: {
           react: 'React',

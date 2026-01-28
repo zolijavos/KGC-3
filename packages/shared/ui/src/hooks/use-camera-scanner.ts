@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
+  BarcodeFormat,
+  CameraScannerConfig,
+  OnErrorCallback,
+  OnScanCallback,
   ScanResult,
   ScannerError,
   ScannerState,
-  CameraScannerConfig,
-  OnScanCallback,
-  OnErrorCallback,
-  BarcodeFormat,
 } from '../lib/scanner';
 import { parseScanResult, playAudioFeedback } from '../lib/scanner';
 
@@ -47,18 +47,22 @@ export interface UseCameraScanner {
 
 /**
  * Map our BarcodeFormat to html5-qrcode format IDs
+ * Currently unused as formatsToSupport is not supported in Html5QrcodeCameraScanConfig
+ * Keep for potential future use when passed to Html5Qrcode constructor
+ * @internal
  */
-function getHtml5QrcodeFormats(formats: BarcodeFormat[]): number[] {
-  // Import dynamically to avoid SSR issues
+// @ts-expect-error - Keeping for future use when format support is needed
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _getHtml5QrcodeFormats(_formats: BarcodeFormat[]): number[] {
   const formatMap: Record<BarcodeFormat, number> = {
-    QR_CODE: 0,     // Html5QrcodeSupportedFormats.QR_CODE
-    CODE_128: 14,   // Html5QrcodeSupportedFormats.CODE_128
-    EAN_13: 11,     // Html5QrcodeSupportedFormats.EAN_13
-    EAN_8: 10,      // Html5QrcodeSupportedFormats.EAN_8
+    QR_CODE: 0, // Html5QrcodeSupportedFormats.QR_CODE
+    CODE_128: 14, // Html5QrcodeSupportedFormats.CODE_128
+    EAN_13: 11, // Html5QrcodeSupportedFormats.EAN_13
+    EAN_8: 10, // Html5QrcodeSupportedFormats.EAN_8
     UNKNOWN: 0,
   };
 
-  return formats.map((f) => formatMap[f]).filter((f) => f !== undefined);
+  return _formats.map(f => formatMap[f]).filter(f => f !== undefined);
 }
 
 /**
@@ -115,15 +119,15 @@ export function useCameraScanner(
       try {
         if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
           const devices = await navigator.mediaDevices.enumerateDevices();
-          const hasCamera = devices.some((d) => d.kind === 'videoinput');
-          setState((prev) => ({
+          const hasCamera = devices.some(d => d.kind === 'videoinput');
+          setState(prev => ({
             ...prev,
             isCameraAvailable: hasCamera,
             isInitialized: true,
           }));
         }
       } catch {
-        setState((prev) => ({
+        setState(prev => ({
           ...prev,
           isCameraAvailable: false,
           isInitialized: true,
@@ -146,7 +150,7 @@ export function useCameraScanner(
       playAudioFeedback(config.successSound);
 
       // Update state
-      setState((prev) => ({
+      setState(prev => ({
         ...prev,
         lastScan: result,
         error: null,
@@ -175,7 +179,7 @@ export function useCameraScanner(
 
       // Only report actual errors, not "not found" messages
       if (!errorMessage.toLowerCase().includes('scanning')) {
-        setState((prev) => ({ ...prev, error }));
+        setState(prev => ({ ...prev, error }));
         playAudioFeedback(config.errorSound);
         onError?.(error);
       }
@@ -194,7 +198,7 @@ export function useCameraScanner(
           type: 'INITIALIZATION_ERROR',
           message: 'Camera scanning is only available in browser',
         };
-        setState((prev) => ({ ...prev, error }));
+        setState(prev => ({ ...prev, error }));
         onError?.(error);
         return;
       }
@@ -219,18 +223,19 @@ export function useCameraScanner(
           : { facingMode: 'user' };
 
         // Start scanning
+        // Note: formatsToSupport should be passed to Html5Qrcode constructor, not start config
+        // For now, we omit it as the library's Html5QrcodeCameraScanConfig doesn't support it
         await scanner.start(
           cameraConfig,
           {
             fps: mergedConfig.fps,
             qrbox: mergedConfig.qrbox,
-            formatsToSupport: getHtml5QrcodeFormats(mergedConfig.formatsToSupport ?? ['CODE_128', 'QR_CODE']),
           },
           handleScanSuccess,
           handleScanError
         );
 
-        setState((prev) => ({
+        setState(prev => ({
           ...prev,
           isScanning: true,
           error: null,
@@ -244,7 +249,7 @@ export function useCameraScanner(
               type: 'SCAN_TIMEOUT',
               message: `Scanning timed out after ${mergedConfig.timeout}ms`,
             };
-            setState((prev) => ({ ...prev, error }));
+            setState(prev => ({ ...prev, error }));
             onError?.(error);
           }, mergedConfig.timeout);
         }
@@ -278,7 +283,7 @@ export function useCameraScanner(
           };
         }
 
-        setState((prev) => ({ ...prev, error }));
+        setState(prev => ({ ...prev, error }));
         onError?.(error);
       }
     },
@@ -306,7 +311,7 @@ export function useCameraScanner(
       scannerRef.current = null;
     }
 
-    setState((prev) => ({
+    setState(prev => ({
       ...prev,
       isScanning: false,
     }));
@@ -316,7 +321,7 @@ export function useCameraScanner(
    * Clear last scan
    */
   const clearLastScan = useCallback(() => {
-    setState((prev) => ({
+    setState(prev => ({
       ...prev,
       lastScan: null,
     }));

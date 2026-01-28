@@ -15,8 +15,8 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { WorksheetStatus, IWorksheet } from '../interfaces/worksheet.interface';
-import { IWorksheetRepository, IAuditService } from './worksheet.service';
+import { IWorksheet, WorksheetStatus } from '../interfaces/worksheet.interface';
+import type { IAuditService, IWorksheetRepository } from './worksheet.service';
 
 /**
  * Valid state transitions map
@@ -42,7 +42,7 @@ const STATE_TRANSITIONS: Record<WorksheetStatus, WorksheetStatus[]> = {
 export class WorksheetStateService {
   constructor(
     private readonly worksheetRepository: IWorksheetRepository,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
   /**
@@ -60,7 +60,7 @@ export class WorksheetStateService {
     toStatus: WorksheetStatus,
     tenantId: string,
     userId: string,
-    metadata?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ): Promise<IWorksheet> {
     // Find worksheet
     const worksheet = await this.worksheetRepository.findById(worksheetId);
@@ -147,7 +147,7 @@ export class WorksheetStateService {
     worksheetId: string,
     reason: string,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IWorksheet> {
     return this.transition(worksheetId, WorksheetStatus.VARHATO, tenantId, userId, {
       waitingReason: reason,
@@ -167,7 +167,7 @@ export class WorksheetStateService {
   async markForInvoicing(
     worksheetId: string,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IWorksheet> {
     return this.transition(worksheetId, WorksheetStatus.SZAMLAZANDO, tenantId, userId);
   }

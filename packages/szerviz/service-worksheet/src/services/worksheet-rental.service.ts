@@ -6,8 +6,13 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { IWorksheet, WorksheetType, WorksheetStatus, WorksheetPriority } from '../interfaces/worksheet.interface';
-import { IWorksheetRepository, IAuditService } from './worksheet.service';
+import {
+  IWorksheet,
+  WorksheetPriority,
+  WorksheetStatus,
+  WorksheetType,
+} from '../interfaces/worksheet.interface';
+import type { IAuditService, IWorksheetRepository } from './worksheet.service';
 
 /**
  * Rental info interface (from @kgc/rental-core)
@@ -50,7 +55,7 @@ export class WorksheetRentalService {
   constructor(
     private readonly worksheetRepository: IWorksheetRepository,
     private readonly rentalService: IRentalService,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
   /**
@@ -60,7 +65,7 @@ export class WorksheetRentalService {
     worksheetId: string,
     rentalId: string,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IWorksheet> {
     const worksheet = await this.worksheetRepository.findById(worksheetId);
     if (!worksheet) {
@@ -106,7 +111,7 @@ export class WorksheetRentalService {
   async unlinkFromRental(
     worksheetId: string,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IWorksheet> {
     const worksheet = await this.worksheetRepository.findById(worksheetId);
     if (!worksheet) {
@@ -122,13 +127,15 @@ export class WorksheetRentalService {
     const previousRentalId = worksheet.rentalId;
 
     // Update worksheet, remove rental link
-    // Use type assertion because exactOptionalPropertyTypes doesn't allow undefined assignment
-    // Repository implementation should treat undefined rentalId as "clear field"
-    const updateData = {
-      rentalId: undefined,
+    // Repository implementation should set rentalId to null when receiving null
+    const updateData: Partial<IWorksheet> = {
       type: WorksheetType.FIZETOS, // Revert to standard paid repair
-    } as { rentalId?: string; type: WorksheetType };
-    const updated = await this.worksheetRepository.update(worksheetId, updateData);
+    };
+    // Use null to signal "clear field" - repository converts to actual DB null
+    const updated = await this.worksheetRepository.update(worksheetId, {
+      ...updateData,
+      rentalId: null,
+    } as unknown as Partial<IWorksheet>);
 
     await this.auditService.log({
       action: 'worksheet_unlinked_from_rental',
@@ -147,10 +154,7 @@ export class WorksheetRentalService {
   /**
    * Get worksheets by rental ID
    */
-  async getWorksheetsByRental(
-    rentalId: string,
-    tenantId: string,
-  ): Promise<IWorksheet[]> {
+  async getWorksheetsByRental(rentalId: string, tenantId: string): Promise<IWorksheet[]> {
     // Verify rental exists
     const rental = await this.rentalService.findById(rentalId, tenantId);
     if (!rental) {
@@ -165,7 +169,7 @@ export class WorksheetRentalService {
    */
   async getWorksheetWithRental(
     worksheetId: string,
-    tenantId: string,
+    tenantId: string
   ): Promise<ILinkedWorksheetResult> {
     const worksheet = await this.worksheetRepository.findById(worksheetId);
     if (!worksheet) {
@@ -191,7 +195,7 @@ export class WorksheetRentalService {
     rentalId: string,
     damageDescription: string,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IWorksheet> {
     // Get rental info
     const rental = await this.rentalService.findById(rentalId, tenantId);
@@ -215,7 +219,9 @@ export class WorksheetRentalService {
       priority: WorksheetPriority.NORMAL,
       partnerId: rental.partnerId,
       deviceName: rental.deviceName,
-      ...(rental.deviceSerialNumber !== undefined && { deviceSerialNumber: rental.deviceSerialNumber }),
+      ...(rental.deviceSerialNumber !== undefined && {
+        deviceSerialNumber: rental.deviceSerialNumber,
+      }),
       faultDescription: damageDescription,
       internalNote: `Bérlésből származó sérülés. Bérlés szám: ${rental.rentalNumber}`,
       rentalId,
@@ -247,6 +253,6 @@ export class WorksheetRentalService {
   async hasOpenWorksheets(rentalId: string, tenantId: string): Promise<boolean> {
     const worksheets = await this.getWorksheetsByRental(rentalId, tenantId);
     const closedStatuses = [WorksheetStatus.LEZART, WorksheetStatus.TOROLVE];
-    return worksheets.some((ws) => !closedStatuses.includes(ws.status));
+    return worksheets.some(ws => !closedStatuses.includes(ws.status));
   }
 }

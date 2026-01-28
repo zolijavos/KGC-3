@@ -6,9 +6,13 @@
  */
 
 import { Injectable } from '@nestjs/common';
+import {
+  CreateDiagnosisDto,
+  CreateDiagnosisSchema,
+  UpdateDiagnosisDto,
+} from '../dto/diagnosis.dto';
 import { IDiagnosis, IDiagnosisResult } from '../interfaces/diagnosis.interface';
-import { CreateDiagnosisDto, CreateDiagnosisSchema, UpdateDiagnosisDto } from '../dto/diagnosis.dto';
-import { IWorksheetRepository, IAuditService } from './worksheet.service';
+import type { IAuditService, IWorksheetRepository } from './worksheet.service';
 
 /**
  * Diagnosis Repository interface
@@ -29,7 +33,7 @@ export class DiagnosisService {
   constructor(
     private readonly diagnosisRepository: IDiagnosisRepository,
     private readonly worksheetRepository: IWorksheetRepository,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
   /**
@@ -39,7 +43,7 @@ export class DiagnosisService {
     worksheetId: string,
     input: CreateDiagnosisDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IDiagnosisResult> {
     // Validate input
     const validationResult = CreateDiagnosisSchema.safeParse(input);
@@ -60,19 +64,24 @@ export class DiagnosisService {
       throw new Error('Hozzaferes megtagadva');
     }
 
-    // Create diagnosis
-    const diagnosis = await this.diagnosisRepository.create({
+    // Create diagnosis - only include optional properties if defined
+    const createData: Partial<IDiagnosis> = {
       worksheetId,
       tenantId,
       faultCategory: validInput.faultCategory,
-      faultCode: validInput.faultCode,
       description: validInput.description,
-      customerMessage: validInput.customerMessage,
-      repairRecommendation: validInput.repairRecommendation,
-      estimatedRepairTime: validInput.estimatedRepairTime,
       createdBy: userId,
       createdAt: new Date(),
-    });
+    };
+    if (validInput.faultCode !== undefined) createData.faultCode = validInput.faultCode;
+    if (validInput.customerMessage !== undefined)
+      createData.customerMessage = validInput.customerMessage;
+    if (validInput.repairRecommendation !== undefined)
+      createData.repairRecommendation = validInput.repairRecommendation;
+    if (validInput.estimatedRepairTime !== undefined)
+      createData.estimatedRepairTime = validInput.estimatedRepairTime;
+
+    const diagnosis = await this.diagnosisRepository.create(createData);
 
     // Update worksheet diagnosis field if empty
     let worksheetUpdated = false;
@@ -104,10 +113,7 @@ export class DiagnosisService {
   /**
    * Get diagnoses for worksheet
    */
-  async getDiagnosesByWorksheet(
-    worksheetId: string,
-    tenantId: string,
-  ): Promise<IDiagnosis[]> {
+  async getDiagnosesByWorksheet(worksheetId: string, tenantId: string): Promise<IDiagnosis[]> {
     // Check worksheet exists
     const worksheet = await this.worksheetRepository.findById(worksheetId);
     if (!worksheet) {
@@ -128,7 +134,7 @@ export class DiagnosisService {
     diagnosisId: string,
     input: UpdateDiagnosisDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IDiagnosis> {
     // Find diagnosis
     const diagnosis = await this.diagnosisRepository.findById(diagnosisId);
@@ -140,10 +146,18 @@ export class DiagnosisService {
       throw new Error('Hozzaferes megtagadva');
     }
 
-    // Update
-    const updated = await this.diagnosisRepository.update(diagnosisId, {
-      ...input,
-    });
+    // Update - filter out undefined properties
+    const updateData: Partial<IDiagnosis> = {};
+    if (input.description !== undefined) updateData.description = input.description;
+    if (input.faultCategory !== undefined) updateData.faultCategory = input.faultCategory;
+    if (input.faultCode !== undefined) updateData.faultCode = input.faultCode;
+    if (input.customerMessage !== undefined) updateData.customerMessage = input.customerMessage;
+    if (input.repairRecommendation !== undefined)
+      updateData.repairRecommendation = input.repairRecommendation;
+    if (input.estimatedRepairTime !== undefined)
+      updateData.estimatedRepairTime = input.estimatedRepairTime;
+
+    const updated = await this.diagnosisRepository.update(diagnosisId, updateData);
 
     // Audit log
     await this.auditService.log({
@@ -163,11 +177,7 @@ export class DiagnosisService {
   /**
    * Delete diagnosis
    */
-  async deleteDiagnosis(
-    diagnosisId: string,
-    tenantId: string,
-    userId: string,
-  ): Promise<void> {
+  async deleteDiagnosis(diagnosisId: string, tenantId: string, userId: string): Promise<void> {
     // Find diagnosis
     const diagnosis = await this.diagnosisRepository.findById(diagnosisId);
     if (!diagnosis) {

@@ -504,6 +504,53 @@ export class InvoiceController {
   }
 
   // ============================================
+  // NAV STATUS ENDPOINT
+  // ============================================
+
+  @Get(':id/nav-status')
+  @ApiOperation({ summary: 'Get NAV reporting status for invoice' })
+  @ApiParam({ name: 'id', description: 'Invoice ID' })
+  @ApiResponse({ status: 200, description: 'NAV status' })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
+  async getNavStatus(@Param('id') id: string): Promise<{
+    data: {
+      invoiceId: string;
+      status: 'PENDING' | 'SUBMITTED' | 'ACCEPTED' | 'REJECTED' | 'ERROR';
+      transactionId?: string;
+      submittedAt?: string;
+      acceptedAt?: string;
+      errorMessage?: string;
+    };
+  }> {
+    const invoice = await this.repository.findById(id);
+    if (!invoice) {
+      throw new NotFoundException(`Invoice not found: ${id}`);
+    }
+
+    // Mock NAV status based on invoice status
+    // In production, this would query the actual NAV reporting status
+    let navStatus: 'PENDING' | 'SUBMITTED' | 'ACCEPTED' | 'REJECTED' | 'ERROR' = 'PENDING';
+
+    if (invoice.status === 'ISSUED' || invoice.status === 'SENT') {
+      navStatus = 'SUBMITTED';
+    } else if (invoice.status === 'PAID' || invoice.status === 'PARTIALLY_PAID') {
+      navStatus = 'ACCEPTED';
+    } else if (invoice.status === 'CANCELLED') {
+      navStatus = 'REJECTED';
+    }
+
+    return {
+      data: {
+        invoiceId: id,
+        status: navStatus,
+        transactionId: invoice.status !== 'DRAFT' ? `NAV-${id.substring(0, 8)}` : undefined,
+        submittedAt: invoice.issuedAt?.toISOString(),
+        acceptedAt: navStatus === 'ACCEPTED' ? new Date().toISOString() : undefined,
+      },
+    };
+  }
+
+  // ============================================
   // RBAC CHECK ENDPOINTS
   // ============================================
 

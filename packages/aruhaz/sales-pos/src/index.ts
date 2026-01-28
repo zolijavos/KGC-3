@@ -9,6 +9,7 @@ export { SalesPosModule } from './sales-pos.module.js';
 // Services
 export { CartService } from './services/cart.service.js';
 export { PaymentService } from './services/payment.service.js';
+export type { ICompletePaymentResult } from './services/payment.service.js';
 export { SessionService } from './services/session.service.js';
 export { TransactionService } from './services/transaction.service.js';
 export { ZReportService } from './services/z-report.service.js';

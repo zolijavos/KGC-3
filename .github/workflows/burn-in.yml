@@ -1,0 +1,256 @@
+# KGC ERP v3.0 - Burn-In Test Pipeline
+# Éjszakai/heti stabilitás tesztelés több iterációval
+#
+# Célja: Flaky tesztek és rejtett hibák felderítése
+# Pattern: 10 iteráció, bármely hiba → FAIL
+
+name: Burn-In Tests
+
+on:
+  # Éjszakai futás (2:00 UTC = 3:00 CET)
+  schedule:
+    - cron: '0 2 * * *'
+
+  # Manuális trigger
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Number of iterations'
+        required: false
+        type: number
+        default: 10
+      test_filter:
+        description: 'Test filter (grep pattern)'
+        required: false
+        type: string
+        default: ''
+
+concurrency:
+  group: burn-in
+  cancel-in-progress: false
+
+env:
+  CI: true
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+jobs:
+  # ============================================
+  # P0 Critical Tests - Burn-In
+  # ============================================
+  burn-in-critical:
+    name: P0 Critical Burn-In (${{ github.event.inputs.iterations || 10 }} iterations)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kgc_burn
+          POSTGRES_PASSWORD: kgc_burn_password
+          POSTGRES_DB: kgc_burn
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    env:
+      DATABASE_URL: postgresql://kgc_burn:kgc_burn_password@localhost:5432/kgc_burn
+      REDIS_URL: redis://localhost:6379
+      E2E_BASE_URL: http://localhost:3000
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-burn-in
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Run migrations
+        run: pnpm db:migrate
+
+      - name: Seed test data
+        run: pnpm db:seed:e2e || echo "Seed script not found"
+
+      - name: Build applications
+        run: pnpm build
+
+      - name: Run Burn-In Loop
+        id: burn-in
+        run: |
+          ITERATIONS=${{ github.event.inputs.iterations || 10 }}
+          FILTER="${{ github.event.inputs.test_filter }}"
+          FAILED=0
+          SUCCESS=0
+
+          echo "Starting burn-in with $ITERATIONS iterations"
+          echo "Test filter: ${FILTER:-'(none)'}"
+
+          for i in $(seq 1 $ITERATIONS); do
+            echo "================================================"
+            echo "Iteration $i of $ITERATIONS"
+            echo "================================================"
+
+            if [ -n "$FILTER" ]; then
+              if pnpm test:e2e:critical --grep "$FILTER" --retries=0; then
+                SUCCESS=$((SUCCESS + 1))
+                echo "✅ Iteration $i passed"
+              else
+                FAILED=$((FAILED + 1))
+                echo "❌ Iteration $i FAILED"
+              fi
+            else
+              if pnpm test:e2e:critical --retries=0; then
+                SUCCESS=$((SUCCESS + 1))
+                echo "✅ Iteration $i passed"
+              else
+                FAILED=$((FAILED + 1))
+                echo "❌ Iteration $i FAILED"
+              fi
+            fi
+          done
+
+          echo ""
+          echo "================================================"
+          echo "BURN-IN SUMMARY"
+          echo "================================================"
+          echo "Total iterations: $ITERATIONS"
+          echo "Passed: $SUCCESS"
+          echo "Failed: $FAILED"
+          echo "Success rate: $(( SUCCESS * 100 / ITERATIONS ))%"
+
+          echo "iterations=$ITERATIONS" >> $GITHUB_OUTPUT
+          echo "passed=$SUCCESS" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED" >> $GITHUB_OUTPUT
+
+          if [ $FAILED -gt 0 ]; then
+            echo "❌ BURN-IN FAILED - $FAILED iterations had failures"
+            exit 1
+          else
+            echo "✅ BURN-IN PASSED - All $ITERATIONS iterations succeeded"
+          fi
+
+      - name: Upload failure artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: burn-in-failures
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 14
+
+      - name: Create burn-in report
+        if: always()
+        run: |
+          cat << EOF > burn-in-report.md
+          # Burn-In Test Report
+
+          **Date:** $(date -u +"%Y-%m-%d %H:%M UTC")
+          **Branch:** ${{ github.ref_name }}
+          **Commit:** ${{ github.sha }}
+
+          ## Results
+
+          | Metric | Value |
+          |--------|-------|
+          | Iterations | ${{ steps.burn-in.outputs.iterations }} |
+          | Passed | ${{ steps.burn-in.outputs.passed }} |
+          | Failed | ${{ steps.burn-in.outputs.failed }} |
+          | Success Rate | $(( ${{ steps.burn-in.outputs.passed }} * 100 / ${{ steps.burn-in.outputs.iterations }} ))% |
+
+          ## Status
+
+          ${{ steps.burn-in.outputs.failed == '0' && '✅ PASSED' || '❌ FAILED' }}
+
+          ---
+          *Generated by KGC ERP CI/CD Pipeline*
+          EOF
+
+      - name: Upload burn-in report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: burn-in-report
+          path: burn-in-report.md
+          retention-days: 30
+
+  # ============================================
+  # Notify on Failure
+  # ============================================
+  notify:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: burn-in-critical
+    if: failure()
+
+    steps:
+      - name: Create GitHub Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🔥 Burn-In Test Failure - ${new Date().toISOString().split('T')[0]}`;
+            const body = `
+            ## Burn-In Test Failure Alert
+
+            **Workflow:** ${context.workflow}
+            **Run:** ${context.runNumber}
+            **Commit:** ${context.sha}
+
+            ### Details
+
+            The nightly burn-in tests detected flaky or failing tests.
+
+            ### Action Required
+
+            1. Review the [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            2. Download failure artifacts for traces and screenshots
+            3. Identify and fix flaky tests
+            4. Re-run burn-in to verify fix
+
+            ### Labels
+
+            - \`flaky-test\`
+            - \`ci-failure\`
+            - \`priority:high\`
+            `;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['flaky-test', 'ci-failure', 'priority:high']
+            });

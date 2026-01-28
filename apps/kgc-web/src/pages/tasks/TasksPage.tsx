@@ -350,7 +350,93 @@ export function TasksPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewTaskModal, setShowNewTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+
+  // Form state for new/edit task
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    assigneeId: '1',
+    priority: 'medium' as TaskPriority,
+    dueDate: '',
+    tags: '',
+  });
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      assigneeId: '1',
+      priority: 'medium',
+      dueDate: '',
+      tags: '',
+    });
+  };
+
+  const openEditModal = (task: Task) => {
+    setFormData({
+      title: task.title,
+      description: task.description,
+      assigneeId: task.assignee.id,
+      priority: task.priority,
+      dueDate: task.dueDate.toISOString().split('T')[0] ?? '',
+      tags: task.tags.join(', '),
+    });
+    setEditingTask(task);
+    setSelectedTask(null);
+  };
+
+  const handleSaveTask = () => {
+    if (!formData.title.trim()) return;
+
+    const assignee = TEAM_MEMBERS.find(m => m.id === formData.assigneeId) ?? TEAM_MEMBERS[0];
+    if (!assignee) return;
+
+    if (editingTask) {
+      // Update existing task
+      setTasks(
+        tasks.map(t =>
+          t.id === editingTask.id
+            ? {
+                ...t,
+                title: formData.title,
+                description: formData.description,
+                assignee,
+                priority: formData.priority,
+                dueDate: new Date(formData.dueDate),
+                tags: formData.tags
+                  .split(',')
+                  .map(tag => tag.trim())
+                  .filter(Boolean),
+              }
+            : t
+        )
+      );
+      setEditingTask(null);
+    } else {
+      // Create new task
+      const newTask: Task = {
+        id: String(Date.now()),
+        title: formData.title,
+        description: formData.description,
+        status: 'todo',
+        priority: formData.priority,
+        assignee,
+        dueDate: new Date(formData.dueDate),
+        tags: formData.tags
+          .split(',')
+          .map(tag => tag.trim())
+          .filter(Boolean),
+        comments: 0,
+        attachments: 0,
+        createdAt: new Date(),
+      };
+      setTasks([...tasks, newTask]);
+      setShowNewTaskModal(false);
+    }
+    resetForm();
+  };
 
   const filteredTasks = tasks.filter(task => {
     if (filterAssignee !== 'all' && task.assignee.id !== filterAssignee) return false;
@@ -642,7 +728,10 @@ export function TasksPage() {
               >
                 Bezárás
               </button>
-              <button className="rounded-lg bg-kgc-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-kgc-primary/90">
+              <button
+                onClick={() => openEditModal(selectedTask)}
+                className="rounded-lg bg-kgc-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-kgc-primary/90"
+              >
                 Szerkesztés
               </button>
             </div>
@@ -650,14 +739,20 @@ export function TasksPage() {
         </div>
       )}
 
-      {/* New Task Modal */}
-      {showNewTaskModal && (
+      {/* New Task / Edit Task Modal */}
+      {(showNewTaskModal || editingTask) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="kgc-card-bg w-full max-w-lg rounded-xl shadow-xl">
             <div className="flex items-center justify-between border-b border-gray-200 p-6 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Új feladat</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                {editingTask ? 'Feladat szerkesztése' : 'Új feladat'}
+              </h2>
               <button
-                onClick={() => setShowNewTaskModal(false)}
+                onClick={() => {
+                  setShowNewTaskModal(false);
+                  setEditingTask(null);
+                  resetForm();
+                }}
                 className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -678,6 +773,8 @@ export function TasksPage() {
                 </label>
                 <input
                   type="text"
+                  value={formData.title}
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
                   className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 placeholder-gray-400 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
                   placeholder="Feladat címe..."
                 />
@@ -689,6 +786,8 @@ export function TasksPage() {
                 </label>
                 <textarea
                   rows={3}
+                  value={formData.description}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
                   className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 placeholder-gray-400 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
                   placeholder="Feladat leírása..."
                 />
@@ -699,7 +798,11 @@ export function TasksPage() {
                   <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Felelős
                   </label>
-                  <select className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                  <select
+                    value={formData.assigneeId}
+                    onChange={e => setFormData({ ...formData, assigneeId: e.target.value })}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  >
                     {TEAM_MEMBERS.map(member => (
                       <option key={member.id} value={member.id}>
                         {member.name}
@@ -711,7 +814,13 @@ export function TasksPage() {
                   <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Prioritás
                   </label>
-                  <select className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                  <select
+                    value={formData.priority}
+                    onChange={e =>
+                      setFormData({ ...formData, priority: e.target.value as TaskPriority })
+                    }
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  >
                     {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
                       <option key={key} value={key}>
                         {config.label}
@@ -727,6 +836,8 @@ export function TasksPage() {
                 </label>
                 <input
                   type="date"
+                  value={formData.dueDate}
+                  onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
                   className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                 />
               </div>
@@ -737,6 +848,8 @@ export function TasksPage() {
                 </label>
                 <input
                   type="text"
+                  value={formData.tags}
+                  onChange={e => setFormData({ ...formData, tags: e.target.value })}
                   className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 placeholder-gray-400 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
                   placeholder="Címkék vesszővel elválasztva..."
                 />
@@ -745,16 +858,20 @@ export function TasksPage() {
 
             <div className="flex justify-end gap-3 border-t border-gray-200 p-6 dark:border-gray-700">
               <button
-                onClick={() => setShowNewTaskModal(false)}
+                onClick={() => {
+                  setShowNewTaskModal(false);
+                  setEditingTask(null);
+                  resetForm();
+                }}
                 className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
               >
                 Mégse
               </button>
               <button
-                onClick={() => setShowNewTaskModal(false)}
+                onClick={handleSaveTask}
                 className="rounded-lg bg-kgc-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-kgc-primary/90"
               >
-                Létrehozás
+                {editingTask ? 'Mentés' : 'Létrehozás'}
               </button>
             </div>
           </div>

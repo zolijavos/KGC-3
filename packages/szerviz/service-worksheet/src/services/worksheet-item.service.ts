@@ -8,9 +8,9 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { IWorksheetItem, IWorksheetSummary } from '../interfaces/worksheet.interface';
 import { CreateWorksheetItemDto, CreateWorksheetItemSchema } from '../dto/worksheet.dto';
-import { IWorksheetRepository, IAuditService } from './worksheet.service';
+import { IWorksheetItem, IWorksheetSummary } from '../interfaces/worksheet.interface';
+import type { IAuditService, IWorksheetRepository } from './worksheet.service';
 
 // Constants
 const VAT_RATE = 27; // 27% AFA
@@ -49,7 +49,7 @@ export class WorksheetItemService {
     private readonly itemRepository: IWorksheetItemRepository,
     private readonly worksheetRepository: IWorksheetRepository,
     private readonly inventoryService: IInventoryService,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
   /**
@@ -59,7 +59,7 @@ export class WorksheetItemService {
     worksheetId: string,
     input: CreateWorksheetItemDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IWorksheetItem> {
     // Validate input
     const validationResult = CreateWorksheetItemSchema.safeParse(input);
@@ -89,18 +89,17 @@ export class WorksheetItemService {
       const reserved = await this.inventoryService.reserve(
         validInput.productId,
         validInput.quantity,
-        tenantId,
+        tenantId
       );
       if (!reserved) {
         throw new Error('Alkatresz nem elerheto a keszletben');
       }
     }
 
-    // Create item
-    const item = await this.itemRepository.create({
+    // Create item - only include productId if defined
+    const createData: Partial<IWorksheetItem> = {
       worksheetId,
       tenantId,
-      productId: validInput.productId,
       description: validInput.description,
       quantity: validInput.quantity,
       unitPrice: validInput.unitPrice,
@@ -109,7 +108,10 @@ export class WorksheetItemService {
       grossAmount,
       itemType: validInput.itemType,
       createdAt: new Date(),
-    });
+    };
+    if (validInput.productId !== undefined) createData.productId = validInput.productId;
+
+    const item = await this.itemRepository.create(createData);
 
     // Audit
     await this.auditService.log({
@@ -138,7 +140,7 @@ export class WorksheetItemService {
     description: string,
     hourlyRate: number = DEFAULT_LABOR_RATE,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IWorksheetItem> {
     if (hours <= 0) {
       throw new Error('Munkaora pozitiv kell legyen');
@@ -154,7 +156,7 @@ export class WorksheetItemService {
         itemType: 'MUNKADIJ',
       },
       tenantId,
-      userId,
+      userId
     );
   }
 
@@ -191,7 +193,7 @@ export class WorksheetItemService {
     worksheetId: string,
     daysStored: number,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IWorksheetItem | null> {
     const fee = this.calculateStorageFee(daysStored);
     if (fee === 0) {
@@ -208,7 +210,7 @@ export class WorksheetItemService {
         itemType: 'EGYEB',
       },
       tenantId,
-      userId,
+      userId
     );
   }
 
@@ -269,11 +271,7 @@ export class WorksheetItemService {
   /**
    * Remove item from worksheet
    */
-  async removeItem(
-    itemId: string,
-    tenantId: string,
-    userId: string,
-  ): Promise<void> {
+  async removeItem(itemId: string, tenantId: string, userId: string): Promise<void> {
     const item = await this.itemRepository.findById(itemId);
     if (!item) {
       throw new Error('Tetel nem talalhato');

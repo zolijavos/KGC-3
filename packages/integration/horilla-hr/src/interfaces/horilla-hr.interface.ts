@@ -23,6 +23,13 @@ export enum SyncStatus {
   FAILED = 'FAILED',
 }
 
+export enum ConflictResolutionStrategy {
+  LAST_WRITE_WINS = 'LAST_WRITE_WINS',
+  HORILLA_WINS = 'HORILLA_WINS',
+  KGC_WINS = 'KGC_WINS',
+  MANUAL = 'MANUAL',
+}
+
 export interface IHorillaEmployee {
   id: string;
   employeeId: string; // Horilla internal ID
@@ -83,4 +90,36 @@ export interface IHorillaConfig {
   syncInterval?: number; // in minutes
   defaultRole?: string;
   defaultLocationId?: string;
+}
+
+export interface ISyncError {
+  entityId: string;
+  entityType: 'EMPLOYEE' | 'USER';
+  error: string;
+  details?: Record<string, unknown>;
+}
+
+export interface ISyncResultExtended {
+  direction: SyncDirection;
+  entityType: 'EMPLOYEE';
+  totalCount: number;
+  successCount: number;
+  failedCount: number;
+  skippedCount: number;
+  createdCount: number;
+  updatedCount: number;
+  errors: ISyncError[];
+  startedAt: Date;
+  completedAt: Date;
+  durationMs: number;
+}
+
+export interface IConflictRecord {
+  kgcUserId: string;
+  horillaEmployeeId: string;
+  kgcLastModified: Date;
+  horillaLastModified: Date;
+  conflictFields: string[];
+  resolution: ConflictResolutionStrategy;
+  resolvedAt?: Date;
 }

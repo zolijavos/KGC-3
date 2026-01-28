@@ -1,10 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '../../lib/utils';
 import { usePushNotifications } from '../../hooks/use-push-notifications';
-import { Button } from '../ui/button';
 import type { NotificationData } from '../../lib/notifications';
+import { cn } from '../../lib/utils';
+import { Button } from '../ui/button';
 
 export interface NotificationPromptProps {
   /** Title text */
@@ -70,9 +70,7 @@ export const NotificationPrompt = React.forwardRef<HTMLDivElement, NotificationP
     });
 
     const { requestPermission, isSupported, permission, isPermissionGranted } =
-      usePushNotifications({
-        onClick: onNotificationClick,
-      });
+      usePushNotifications(onNotificationClick ? { onClick: onNotificationClick } : {});
 
     // Don't show if not supported, already granted, or dismissed
     if (!isSupported || isPermissionGranted || isDismissed) {
@@ -116,21 +114,11 @@ export const NotificationPrompt = React.forwardRef<HTMLDivElement, NotificationP
         </div>
         <div className="flex gap-2 shrink-0">
           {showDismiss && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDismiss}
-              data-testid="dismiss-btn"
-            >
+            <Button variant="ghost" size="sm" onClick={handleDismiss} data-testid="dismiss-btn">
               {dismissButtonText}
             </Button>
           )}
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleEnable}
-            data-testid="enable-btn"
-          >
+          <Button variant="default" size="sm" onClick={handleEnable} data-testid="enable-btn">
             {enableButtonText}
           </Button>
         </div>

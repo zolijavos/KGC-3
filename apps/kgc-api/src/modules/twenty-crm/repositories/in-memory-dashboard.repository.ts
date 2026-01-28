@@ -12,7 +12,7 @@ export class InMemoryDashboardConfigRepository implements IDashboardConfigReposi
   private configs: Map<string, IDashboardConfig> = new Map();
 
   async create(data: Partial<IDashboardConfig>): Promise<IDashboardConfig> {
-    const config: IDashboardConfig = {
+    const config = {
       id: data.id || randomUUID(),
       tenantId: data.tenantId!,
       name: data.name!,
@@ -20,12 +20,12 @@ export class InMemoryDashboardConfigRepository implements IDashboardConfigReposi
       embedUrl: data.embedUrl!,
       width: data.width || '100%',
       height: data.height || '600px',
-      refreshInterval: data.refreshInterval,
       permissions: data.permissions || [],
       isActive: data.isActive !== undefined ? data.isActive : true,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    } as IDashboardConfig;
+    if (data.refreshInterval !== undefined) config.refreshInterval = data.refreshInterval;
 
     this.configs.set(config.id, config);
     return config;

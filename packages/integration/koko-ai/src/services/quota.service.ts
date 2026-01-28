@@ -260,7 +260,10 @@ export class QuotaService {
 
     const validInput = validationResult.data;
 
-    await this.tenantConfigRepository.updateQuotaTier(validInput.tenantId, validInput.tier);
+    // Cast Zod enum to TypeScript enum
+    const tier = validInput.tier as QuotaTier;
+
+    await this.tenantConfigRepository.updateQuotaTier(validInput.tenantId, tier);
 
     await this.auditService.log({
       action: 'quota_tier_updated',
@@ -268,12 +271,12 @@ export class QuotaService {
       entityId: validInput.tenantId,
       userId,
       tenantId: validInput.tenantId,
-      metadata: { newTier: validInput.tier },
+      metadata: { newTier: tier },
     });
 
     return {
-      tier: validInput.tier,
-      config: QUOTA_CONFIGS[validInput.tier],
+      tier,
+      config: QUOTA_CONFIGS[tier],
     };
   }
 

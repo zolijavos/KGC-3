@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
-  NotificationState,
-  NotificationOptions,
-  NotificationPreferences,
-  NotificationPermission,
   NotificationCategory,
   NotificationData,
+  NotificationOptions,
+  NotificationPermission,
+  NotificationPreferences,
+  NotificationState,
   OnNotificationClick,
   OnNotificationClose,
   OnPermissionChange,
@@ -15,9 +15,9 @@ import type {
 } from '../lib/notifications';
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
-  isNotificationSupported,
-  getCurrentPermission,
   generateNotificationId,
+  getCurrentPermission,
+  isNotificationSupported,
 } from '../lib/notifications';
 
 const PREFERENCES_KEY = 'kgc-notification-preferences';
@@ -164,7 +164,7 @@ export function usePushNotifications(
     };
     queue.push(queuedNotification);
     saveQueue(queue);
-    setState((prev) => ({ ...prev, queuedCount: queue.length }));
+    setState(prev => ({ ...prev, queuedCount: queue.length }));
   }
 
   /**
@@ -175,13 +175,13 @@ export function usePushNotifications(
       return 'denied';
     }
 
-    setState((prev) => ({ ...prev, isRequesting: true }));
+    setState(prev => ({ ...prev, isRequesting: true }));
 
     try {
       const permission = await Notification.requestPermission();
       const permissionState = permission as NotificationPermission;
 
-      setState((prev) => ({
+      setState(prev => ({
         ...prev,
         permission: permissionState,
         isRequesting: false,
@@ -190,7 +190,7 @@ export function usePushNotifications(
       onPermissionChange?.(permissionState);
       return permissionState;
     } catch {
-      setState((prev) => ({ ...prev, isRequesting: false }));
+      setState(prev => ({ ...prev, isRequesting: false }));
       return 'denied';
     }
   }, [state.isSupported, onPermissionChange]);
@@ -227,7 +227,9 @@ export function usePushNotifications(
         const finalOptions: NotificationOptions = {
           ...notificationOptions,
           silent: !state.preferences.sound,
-          vibrate: state.preferences.vibrate ? notificationOptions.vibrate : undefined,
+          ...(state.preferences.vibrate && notificationOptions.vibrate
+            ? { vibrate: notificationOptions.vibrate }
+            : {}),
         };
 
         // Ensure data has required fields
@@ -240,17 +242,18 @@ export function usePushNotifications(
         };
 
         // Create notification
-        const notification = new Notification(finalOptions.title, {
+        // Build notification options, only including properties that have values
+        const notificationInit: globalThis.NotificationOptions = {
           body: finalOptions.body,
-          icon: finalOptions.icon,
-          badge: finalOptions.badge,
-          image: finalOptions.image,
-          tag: finalOptions.tag,
-          silent: finalOptions.silent,
-          vibrate: finalOptions.vibrate,
-          requireInteraction: finalOptions.requireInteraction,
           data,
-        });
+        };
+        if (finalOptions.icon) notificationInit.icon = finalOptions.icon;
+        if (finalOptions.badge) notificationInit.badge = finalOptions.badge;
+        if (finalOptions.tag) notificationInit.tag = finalOptions.tag;
+        if (finalOptions.silent !== undefined) notificationInit.silent = finalOptions.silent;
+        if (finalOptions.requireInteraction !== undefined)
+          notificationInit.requireInteraction = finalOptions.requireInteraction;
+        const notification = new Notification(finalOptions.title ?? '', notificationInit);
 
         // Store reference
         activeNotifications.current.set(data.id, notification);
@@ -278,43 +281,37 @@ export function usePushNotifications(
   /**
    * Update notification preferences
    */
-  const updatePreferences = useCallback(
-    (updates: Partial<NotificationPreferences>) => {
-      setState((prev) => {
-        const newPreferences = { ...prev.preferences, ...updates };
-        savePreferences(newPreferences);
-        return { ...prev, preferences: newPreferences };
-      });
-    },
-    []
-  );
+  const updatePreferences = useCallback((updates: Partial<NotificationPreferences>) => {
+    setState(prev => {
+      const newPreferences = { ...prev.preferences, ...updates };
+      savePreferences(newPreferences);
+      return { ...prev, preferences: newPreferences };
+    });
+  }, []);
 
   /**
    * Toggle a specific category
    */
-  const toggleCategory = useCallback(
-    (category: NotificationCategory, enabled: boolean) => {
-      setState((prev) => {
-        const newPreferences = {
-          ...prev.preferences,
-          categories: {
-            ...prev.preferences.categories,
-            [category]: enabled,
-          },
-        };
-        savePreferences(newPreferences);
-        return { ...prev, preferences: newPreferences };
-      });
-    },
-    []
-  );
+  const toggleCategory = useCallback((category: NotificationCategory, enabled: boolean) => {
+    setState(prev => {
+      const newPreferences = {
+        ...prev.preferences,
+        categories: {
+          ...prev.preferences.categories,
+          [category]: enabled,
+        },
+      };
+      savePreferences(newPreferences);
+      return { ...prev, preferences: newPreferences };
+    });
+  }, []);
 
   /**
    * Clear all queued notifications
    */
   const clearQueue = useCallback(() => {
     saveQueue([]);
-    setState((prev) => ({ ...prev, queuedCount: 0 }));
+    setState(prev => ({ ...prev, queuedCount: 0 }));
   }, []);
 
   /**
@@ -344,7 +341,7 @@ export function usePushNotifications(
     }
 
     saveQueue(remaining);
-    setState((prev) => ({ ...prev, queuedCount: remaining.length }));
+    setState(prev => ({ ...prev, queuedCount: remaining.length }));
   }, [state.permission, showNotification]);
 
   // Listen for online status changes
@@ -367,7 +364,7 @@ export function usePushNotifications(
 
     const handleChange = () => {
       const newPermission = getCurrentPermission();
-      setState((prev) => {
+      setState(prev => {
         if (prev.permission !== newPermission) {
           onPermissionChange?.(newPermission);
           return { ...prev, permission: newPermission };
@@ -378,7 +375,7 @@ export function usePushNotifications(
 
     navigator.permissions
       .query({ name: 'notifications' })
-      .then((status) => {
+      .then(status => {
         permissionStatus = status;
         status.addEventListener('change', handleChange);
       })

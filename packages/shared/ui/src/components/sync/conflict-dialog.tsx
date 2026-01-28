@@ -1,4 +1,6 @@
-import * as React from 'react';
+import type { ConflictInfo, ConflictResolution } from '../../lib/sync';
+import { cn } from '../../lib/utils';
+import { Button } from '../ui/button';
 import {
   Dialog,
   DialogContent,
@@ -7,9 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { cn } from '../../lib/utils';
-import type { ConflictInfo, ConflictResolution } from '../../lib/sync';
 
 export interface ConflictDialogProps {
   /** Whether the dialog is open */
@@ -60,18 +59,16 @@ function DataDisplay({
     <div
       className={cn(
         'flex-1 rounded-lg border p-3',
-        variant === 'local' ? 'border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950' : 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950'
+        variant === 'local'
+          ? 'border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950'
+          : 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950'
       )}
     >
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-medium">{label}</span>
-        <span className="text-xs text-muted-foreground">
-          {formatTimestamp(timestamp)}
-        </span>
+        <span className="text-xs text-muted-foreground">{formatTimestamp(timestamp)}</span>
       </div>
-      <pre className="max-h-48 overflow-auto rounded bg-background/50 p-2 text-xs">
-        {formatted}
-      </pre>
+      <pre className="max-h-48 overflow-auto rounded bg-background/50 p-2 text-xs">{formatted}</pre>
     </div>
   );
 }
@@ -116,7 +113,7 @@ export function ConflictDialog({
   const label = entityLabel ?? conflict.operation.type ?? 'Record';
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+    <Dialog open={open} onOpenChange={isOpen => !isOpen && onClose()}>
       <DialogContent className={cn('max-w-2xl', className)}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -127,8 +124,8 @@ export function ConflictDialog({
             Sync Conflict - {label}
           </DialogTitle>
           <DialogDescription>
-            A conflict was detected between your local changes and the server data.
-            Please choose which version to keep.
+            A conflict was detected between your local changes and the server data. Please choose
+            which version to keep.
           </DialogDescription>
         </DialogHeader>
 
@@ -148,22 +145,13 @@ export function ConflictDialog({
         </div>
 
         <DialogFooter className="flex-col gap-2 sm:flex-row">
-          <Button
-            variant="outline"
-            onClick={onClose}
-          >
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            variant="secondary"
-            onClick={() => onResolve('server-wins')}
-          >
+          <Button variant="secondary" onClick={() => onResolve('server-wins')}>
             Use Server Version
           </Button>
-          <Button
-            variant="default"
-            onClick={() => onResolve('client-wins')}
-          >
+          <Button variant="default" onClick={() => onResolve('client-wins')}>
             Keep Local Changes
           </Button>
         </DialogFooter>

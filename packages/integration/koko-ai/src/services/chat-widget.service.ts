@@ -5,14 +5,6 @@
 
 import { Injectable } from '@nestjs/common';
 import {
-  IConversation,
-  IMessage,
-  IWidgetConfig,
-  InteractionStatus,
-  Language,
-  Channel,
-} from '../interfaces/koko.interface';
-import {
   SendMessageDto,
   SendMessageSchema,
   StartConversationDto,
@@ -20,6 +12,14 @@ import {
   UpdateWidgetConfigDto,
   UpdateWidgetConfigSchema,
 } from '../dto/koko.dto';
+import {
+  Channel,
+  IConversation,
+  IMessage,
+  IWidgetConfig,
+  InteractionStatus,
+  Language,
+} from '../interfaces/koko.interface';
 
 export interface IConversationRepository {
   create(data: Partial<IConversation>): Promise<IConversation>;
@@ -40,7 +40,7 @@ export interface IIntentRouterService {
     message: string,
     conversationId: string,
     tenantId: string,
-    language: Language,
+    language: Language
   ): Promise<{
     response: string;
     confidence: number;
@@ -49,7 +49,10 @@ export interface IIntentRouterService {
 }
 
 export interface IQuotaService {
-  checkQuota(tenantId: string, estimatedTokens: number): Promise<{ allowed: boolean; reason?: string }>;
+  checkQuota(
+    tenantId: string,
+    estimatedTokens: number
+  ): Promise<{ allowed: boolean; reason?: string }>;
   recordUsage(tenantId: string, tokenCount: number): Promise<void>;
 }
 
@@ -86,13 +89,10 @@ export class ChatWidgetService {
     private readonly intentRouterService: IIntentRouterService,
     private readonly quotaService: IQuotaService,
     private readonly languageDetector: ILanguageDetector,
-    private readonly auditService: IAuditService,
+    private readonly auditService: IAuditService
   ) {}
 
-  async startConversation(
-    input: StartConversationDto,
-    tenantId: string,
-  ): Promise<IConversation> {
+  async startConversation(input: StartConversationDto, tenantId: string): Promise<IConversation> {
     const validationResult = StartConversationSchema.safeParse(input);
     if (!validationResult.success) {
       throw new Error(`Validation failed: ${validationResult.error.message}`);
@@ -103,20 +103,22 @@ export class ChatWidgetService {
     // Check if conversation already exists for this session
     const existingConversation = await this.conversationRepository.findBySessionId(
       tenantId,
-      validInput.sessionId,
+      validInput.sessionId
     );
     if (existingConversation) {
       return existingConversation;
     }
 
-    const conversation = await this.conversationRepository.create({
+    const conversationData: Parameters<typeof this.conversationRepository.create>[0] = {
       tenantId,
       sessionId: validInput.sessionId,
       channel: validInput.channel as Channel,
       language: (validInput.language as Language) || 'hu',
       messages: [],
-      metadata: validInput.metadata,
-    });
+    };
+    if (validInput.metadata !== undefined) conversationData.metadata = validInput.metadata;
+
+    const conversation = await this.conversationRepository.create(conversationData);
 
     await this.auditService.log({
       action: 'conversation_started',
@@ -132,7 +134,7 @@ export class ChatWidgetService {
 
   async sendMessage(
     input: SendMessageDto,
-    tenantId: string,
+    tenantId: string
   ): Promise<{ message: IMessage; response: IMessage }> {
     const validationResult = SendMessageSchema.safeParse(input);
     if (!validationResult.success) {
@@ -159,7 +161,7 @@ export class ChatWidgetService {
           channel: validInput.channel,
           language: validInput.language,
         },
-        tenantId,
+        tenantId
       );
     }
 
@@ -190,7 +192,7 @@ export class ChatWidgetService {
       validInput.message,
       conversation.id,
       tenantId,
-      language,
+      language
     );
 
     // Store AI response
@@ -220,10 +222,7 @@ export class ChatWidgetService {
     return { message: userMessage, response: aiMessage };
   }
 
-  async getConversation(
-    conversationId: string,
-    tenantId: string,
-  ): Promise<IConversation | null> {
+  async getConversation(conversationId: string, tenantId: string): Promise<IConversation | null> {
     const conversation = await this.conversationRepository.findById(conversationId);
     if (!conversation) {
       return null;
@@ -237,7 +236,7 @@ export class ChatWidgetService {
   async getConversationMessages(
     conversationId: string,
     tenantId: string,
-    limit?: number,
+    limit?: number
   ): Promise<IMessage[]> {
     const conversation = await this.conversationRepository.findById(conversationId);
     if (!conversation) {
@@ -249,10 +248,7 @@ export class ChatWidgetService {
     return this.conversationRepository.getMessages(conversationId, limit);
   }
 
-  async closeConversation(
-    conversationId: string,
-    tenantId: string,
-  ): Promise<IConversation> {
+  async closeConversation(conversationId: string, tenantId: string): Promise<IConversation> {
     const conversation = await this.conversationRepository.findById(conversationId);
     if (!conversation) {
       throw new Error('Conversation not found');
@@ -294,14 +290,24 @@ export class ChatWidgetService {
   async updateWidgetConfig(
     input: UpdateWidgetConfigDto,
     tenantId: string,
-    userId: string,
+    userId: string
   ): Promise<IWidgetConfig> {
     const validationResult = UpdateWidgetConfigSchema.safeParse(input);
     if (!validationResult.success) {
       throw new Error(`Validation failed: ${validationResult.error.message}`);
     }
 
-    const config = await this.widgetConfigRepository.upsert(tenantId, validationResult.data);
+    // Filter out undefined values for exactOptionalPropertyTypes compliance
+    const updateData: Parameters<typeof this.widgetConfigRepository.upsert>[1] = {};
+    if (validationResult.data.enabled !== undefined)
+      updateData.enabled = validationResult.data.enabled;
+    if (validationResult.data.position !== undefined)
+      updateData.position = validationResult.data.position;
+    if (validationResult.data.theme !== undefined) updateData.theme = validationResult.data.theme;
+    if (validationResult.data.businessHours !== undefined)
+      updateData.businessHours = validationResult.data.businessHours;
+
+    const config = await this.widgetConfigRepository.upsert(tenantId, updateData);
 
     await this.auditService.log({
       action: 'widget_config_updated',
@@ -335,7 +341,7 @@ export class ChatWidgetService {
       hour12: false,
     });
 
-    const todaySchedule = config.businessHours.schedule.find((s) => s.day === dayOfWeek);
+    const todaySchedule = config.businessHours.schedule.find(s => s.day === dayOfWeek);
     if (!todaySchedule) {
       return false;
     }

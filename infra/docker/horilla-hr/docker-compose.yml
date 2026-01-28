@@ -12,7 +12,7 @@ services:
     image: horilla/horilla:1.4
     container_name: kgc-horilla-app
     ports:
-      - '${HORILLA_PORT:-3003}:8000'
+      - '127.0.0.1:${HORILLA_PORT:-3003}:8000'
     depends_on:
       horilla-db:
         condition: service_healthy
@@ -79,7 +79,7 @@ services:
     image: postgres:16-alpine
     container_name: kgc-horilla-db
     ports:
-      - '${HORILLA_DB_PORT:-5434}:5432'
+      - '127.0.0.1:${HORILLA_DB_PORT:-5434}:5432'
     deploy:
       resources:
         limits:
@@ -124,5 +124,5 @@ volumes:
 # ===========================================
 networks:
   kgc-network:
-    name: kgc-network
-    external: true # Connect to existing KGC network for API integration
+    name: kgc-demo-network
+    external: true # Connect to existing KGC demo network for API integration

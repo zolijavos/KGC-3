@@ -1,9 +1,4 @@
-import type {
-  SyncOperation,
-  ConflictInfo,
-  ConflictResolution,
-  ConflictResolver,
-} from './types';
+import type { ConflictInfo, ConflictResolution, ConflictResolver, SyncOperation } from './types';
 
 /**
  * Result of resolving a conflict
@@ -38,7 +33,7 @@ export function createConflictInfo<T>(
     serverData,
     clientTimestamp: operation.metadata?.clientVersion ?? operation.createdAt,
     serverTimestamp,
-    resolution: undefined,
+    // resolution is optional and will be set when the conflict is resolved
   };
 }
 

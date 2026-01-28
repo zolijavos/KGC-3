@@ -12,17 +12,17 @@ export class InMemoryPartnerMappingRepository implements IPartnerMappingReposito
   private mappings: Map<string, IPartnerMapping> = new Map();
 
   async create(data: Partial<IPartnerMapping>): Promise<IPartnerMapping> {
-    const mapping: IPartnerMapping = {
+    const mapping = {
       id: data.id || randomUUID(),
       tenantId: data.tenantId!,
       kgcPartnerId: data.kgcPartnerId!,
       crmPartnerId: data.crmPartnerId!,
       syncStatus: data.syncStatus || SyncStatus.PENDING,
-      lastSyncedAt: data.lastSyncedAt,
-      syncError: data.syncError,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    } as IPartnerMapping;
+    if (data.lastSyncedAt !== undefined) mapping.lastSyncedAt = data.lastSyncedAt;
+    if (data.syncError !== undefined) mapping.syncError = data.syncError;
 
     this.mappings.set(mapping.id, mapping);
     return mapping;

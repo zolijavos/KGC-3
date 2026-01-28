@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { validate as isValidUuid, v4 as uuidv4 } from 'uuid';
 import { CreateTenantDto, validateCreateTenantDto } from '../dto/create-tenant.dto';
 import { TenantFilterDto } from '../dto/tenant-filter.dto';
@@ -329,7 +329,7 @@ export class TenantService {
         id: uuidv4(),
         tenantId,
         action,
-        changes,
+        changes: changes as Prisma.InputJsonValue,
         userId: userId ?? null,
       },
     });

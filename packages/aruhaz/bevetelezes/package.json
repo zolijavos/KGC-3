@@ -3,10 +3,15 @@
   "version": "0.0.1",
   "description": "KGC ERP - Goods Receipt (Bevételezes) management module",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      },
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"

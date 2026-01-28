@@ -7,46 +7,46 @@
 export { OnlineBookingModule } from './online-booking.module';
 
 // Services
-export {
-  BookingService,
-  IBookingRepository,
-  IBookingItemRepository,
-  IEquipmentService,
-  INotificationService as IBookingNotificationService,
+export { BookingService } from './services/booking.service';
+export type {
   IAuditService,
+  IBookingItemRepository,
+  INotificationService as IBookingNotificationService,
+  IBookingRepository,
+  IEquipmentService,
 } from './services/booking.service';
 
-export {
-  BookingConfirmationService,
+export { BookingConfirmationService } from './services/booking-confirmation.service';
+export type {
+  INotificationService as IConfirmationNotificationService,
   IPaymentService,
   IRentalService,
-  INotificationService as IConfirmationNotificationService,
 } from './services/booking-confirmation.service';
 
-// Interfaces
-export {
+// Interfaces - enums are runtime values, interfaces need export type
+export { BookingStatus, BookingType, PaymentStatus } from './interfaces/booking.interface';
+export type {
+  IAvailabilityCheck,
   IBooking,
+  IBookingConfirmation,
   IBookingItem,
   ITimeSlot,
-  IAvailabilityCheck,
-  IBookingConfirmation,
-  BookingStatus,
-  BookingType,
-  PaymentStatus,
 } from './interfaces/booking.interface';
 
-// DTOs
+// DTOs - schemas are runtime values, types need export type
 export {
-  CreateBookingDto,
-  CreateBookingSchema,
-  BookingItemDto,
   BookingItemSchema,
-  ConfirmBookingDto,
-  ConfirmBookingSchema,
-  CancelBookingDto,
   CancelBookingSchema,
-  CheckAvailabilityDto,
   CheckAvailabilitySchema,
-  GetTimeSlotsDto,
+  ConfirmBookingSchema,
+  CreateBookingSchema,
   GetTimeSlotsSchema,
+} from './dto/booking.dto';
+export type {
+  BookingItemDto,
+  CancelBookingDto,
+  CheckAvailabilityDto,
+  ConfirmBookingDto,
+  CreateBookingDto,
+  GetTimeSlotsDto,
 } from './dto/booking.dto';

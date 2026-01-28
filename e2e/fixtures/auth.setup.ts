@@ -1,4 +1,4 @@
-import { test as setup, expect } from '@playwright/test';
+import { expect, test as setup } from '@playwright/test';
 import path from 'path';
 
 /**
@@ -10,7 +10,7 @@ const STORAGE_STATE_DIR = path.join(__dirname, '../.auth');
 
 // Admin felhasználó bejelentkeztetése
 setup('authenticate as admin', async ({ page }) => {
-  await page.goto('/auth/login');
+  await page.goto('/login');
 
   // Login form kitöltése
   await page.getByLabel('Email').fill('admin@kgc-test.hu');
@@ -28,7 +28,7 @@ setup('authenticate as admin', async ({ page }) => {
 
 // Boltvezető felhasználó bejelentkeztetése
 setup('authenticate as store_manager', async ({ page }) => {
-  await page.goto('/auth/login');
+  await page.goto('/login');
 
   await page.getByLabel('Email').fill('boltvezeto@kgc-test.hu');
   await page.getByLabel('Jelszó').fill('TestManager123!');
@@ -43,7 +43,7 @@ setup('authenticate as store_manager', async ({ page }) => {
 
 // Eladó felhasználó bejelentkeztetése
 setup('authenticate as sales', async ({ page }) => {
-  await page.goto('/auth/login');
+  await page.goto('/login');
 
   await page.getByLabel('Email').fill('elado@kgc-test.hu');
   await page.getByLabel('Jelszó').fill('TestSales123!');

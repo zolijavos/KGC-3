@@ -1,13 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '../../lib/utils';
 import { useCameraScanner } from '../../hooks/use-camera-scanner';
-import type {
-  ScanResult,
-  ScannerError,
-  CameraScannerConfig,
-} from '../../lib/scanner';
+import type { CameraScannerConfig, ScanResult, ScannerError } from '../../lib/scanner';
+import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 
 export interface CameraScannerProps {
@@ -65,16 +61,10 @@ export const CameraScanner = React.forwardRef<HTMLDivElement, CameraScannerProps
     const scannerId = React.useId();
     const elementId = id ?? `scanner-${scannerId}`;
 
-    const {
-      startScanning,
-      stopScanning,
-      isScanning,
-      isCameraAvailable,
-      error,
-    } = useCameraScanner({
-      onScan,
-      onError,
-      config,
+    const { startScanning, stopScanning, isScanning, isCameraAvailable, error } = useCameraScanner({
+      ...(onScan ? { onScan } : {}),
+      ...(onError ? { onError } : {}),
+      ...(config ? { config } : {}),
     });
 
     // Auto-start if configured
@@ -112,11 +102,7 @@ export const CameraScanner = React.forwardRef<HTMLDivElement, CameraScannerProps
     }
 
     return (
-      <div
-        ref={ref}
-        className={cn('flex flex-col gap-4', className)}
-        data-testid="camera-scanner"
-      >
+      <div ref={ref} className={cn('flex flex-col gap-4', className)} data-testid="camera-scanner">
         {/* Scanner viewport */}
         <div
           id={elementId}
@@ -125,11 +111,7 @@ export const CameraScanner = React.forwardRef<HTMLDivElement, CameraScannerProps
         />
 
         {/* Error message */}
-        {error && (
-          <p className="text-sm text-destructive">
-            {error.message}
-          </p>
-        )}
+        {error && <p className="text-sm text-destructive">{error.message}</p>}
 
         {/* Controls */}
         {showControls && (

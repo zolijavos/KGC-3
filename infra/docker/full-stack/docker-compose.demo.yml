@@ -1,0 +1,277 @@
+# ==============================================================================
+# KGC ERP v7.0 - Demo Docker Compose
+# Domain: demo-kgc.mflerp.com
+# ==============================================================================
+#
+# Usage:
+#   docker compose -f docker-compose.demo.yml --env-file .env.demo up -d
+#
+# This is a STANDALONE compose file (not an overlay) for demo deployment.
+# It only includes core KGC services without integrations.
+#
+# ==============================================================================
+
+name: kgc-erp-demo
+
+# ==============================================================================
+# SHARED ANCHORS
+# ==============================================================================
+x-logging: &default-logging
+  driver: 'json-file'
+  options:
+    max-size: '10m'
+    max-file: '3'
+
+x-healthcheck-db: &healthcheck-db
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 30s
+
+x-healthcheck-app: &healthcheck-app
+  interval: 30s
+  timeout: 10s
+  retries: 5
+  start_period: 60s
+
+services:
+  # ============================================================================
+  # CADDY REVERSE PROXY (Auto SSL via Let's Encrypt)
+  # ============================================================================
+  caddy:
+    image: caddy:2-alpine
+    container_name: kgc-demo-caddy
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile.demo:/etc/caddy/Caddyfile:ro
+      - caddy-demo-data:/data
+      - caddy-demo-config:/config
+      - caddy-demo-logs:/var/log/caddy
+    depends_on:
+      kgc-api:
+        condition: service_healthy
+      kgc-web:
+        condition: service_healthy
+    environment:
+      DEMO_DOMAIN: ${DEMO_DOMAIN:-demo-kgc.mflerp.com}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@mflerp.com}
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+    logging: *default-logging
+    restart: unless-stopped
+    networks:
+      - kgc-demo-network
+
+  # ============================================================================
+  # KGC API (NestJS Backend)
+  # ============================================================================
+  kgc-api:
+    build:
+      context: ../../../
+      dockerfile: apps/kgc-api/Dockerfile
+    container_name: kgc-demo-api
+    ports:
+      - '127.0.0.1:3021:3000'
+    depends_on:
+      kgc-db:
+        condition: service_healthy
+      kgc-redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+    logging: *default-logging
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${KGC_DB_USER:-kgc}:${KGC_DB_PASSWORD}@kgc-db:5432/${KGC_DB_NAME:-kgc_demo}
+      REDIS_URL: redis://kgc-redis:6379
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-${JWT_SECRET}}
+      APP_BASE_URL: https://${DEMO_DOMAIN:-demo-kgc.mflerp.com}
+      CORS_ORIGIN: https://${DEMO_DOMAIN:-demo-kgc.mflerp.com}
+      # MinIO
+      MINIO_ENDPOINT: kgc-minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_USE_SSL: 'false'
+      # Rate limiting
+      RATE_LIMIT_ENABLED: 'true'
+      RATE_LIMIT_MAX: 100
+      # Optional Sentry
+      SENTRY_DSN: ${SENTRY_DSN_API:-}
+      SENTRY_ENVIRONMENT: demo
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://localhost:3000/api/v1/health',
+        ]
+      <<: *healthcheck-app
+    restart: unless-stopped
+    networks:
+      - kgc-demo-network
+
+  # ============================================================================
+  # KGC Web (Vite + React PWA Frontend)
+  # ============================================================================
+  kgc-web:
+    build:
+      context: ../../../
+      dockerfile: apps/kgc-web/Dockerfile
+      args:
+        VITE_API_URL: https://${DEMO_DOMAIN:-demo-kgc.mflerp.com}/api
+        VITE_APP_NAME: ${VITE_APP_NAME:-KGC_ERP}
+        VITE_APP_VERSION: ${VITE_APP_VERSION:-7.0.0}
+    container_name: kgc-demo-web
+    ports:
+      - '127.0.0.1:3020:80'
+    depends_on:
+      kgc-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 64M
+    logging: *default-logging
+    healthcheck:
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://127.0.0.1:80/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - kgc-demo-network
+
+  # ============================================================================
+  # PostgreSQL Database
+  # ============================================================================
+  kgc-db:
+    image: postgres:16-alpine
+    container_name: kgc-demo-db
+    # Port exposed for external access (optional, remove in production)
+    ports:
+      - '${KGC_DB_PORT:-5432}:5432'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+    logging: *default-logging
+    environment:
+      POSTGRES_USER: ${KGC_DB_USER:-kgc}
+      POSTGRES_PASSWORD: ${KGC_DB_PASSWORD:?KGC_DB_PASSWORD is required}
+      POSTGRES_DB: ${KGC_DB_NAME:-kgc_demo}
+    volumes:
+      - kgc-demo-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${KGC_DB_USER:-kgc} -d ${KGC_DB_NAME:-kgc_demo}']
+      <<: *healthcheck-db
+    restart: unless-stopped
+    networks:
+      - kgc-demo-network
+
+  # ============================================================================
+  # Redis Cache
+  # ============================================================================
+  kgc-redis:
+    image: redis:7-alpine
+    container_name: kgc-demo-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    expose:
+      - '6379'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 64M
+    logging: *default-logging
+    volumes:
+      - kgc-demo-redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - kgc-demo-network
+
+  # ============================================================================
+  # MinIO (S3-compatible Object Storage)
+  # ============================================================================
+  kgc-minio:
+    image: minio/minio:latest
+    container_name: kgc-demo-minio
+    ports:
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+    expose:
+      - '9000'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+    logging: *default-logging
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - kgc-demo-minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - kgc-demo-network
+
+# ==============================================================================
+# VOLUMES
+# ==============================================================================
+volumes:
+  kgc-demo-db-data:
+    name: kgc-demo-db-data
+  kgc-demo-redis-data:
+    name: kgc-demo-redis-data
+  kgc-demo-minio-data:
+    name: kgc-demo-minio-data
+  caddy-demo-data:
+    name: kgc-demo-caddy-data
+  caddy-demo-config:
+    name: kgc-demo-caddy-config
+  caddy-demo-logs:
+    name: kgc-demo-caddy-logs
+
+# ==============================================================================
+# NETWORKS
+# ==============================================================================
+networks:
+  kgc-demo-network:
+    name: kgc-demo-network
+    driver: bridge

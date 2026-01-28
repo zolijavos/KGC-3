@@ -23,11 +23,11 @@ export function WorksheetDetailPage() {
 
   if (!worksheet) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
         <div className="max-w-4xl mx-auto">
           <Card>
             <CardContent className="p-12 text-center">
-              <p className="text-gray-500 mb-4">Munkalap nem található</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">Munkalap nem található</p>
               <Button onClick={() => navigate('/worksheet')}>Vissza a listához</Button>
             </CardContent>
           </Card>
@@ -39,21 +39,21 @@ export function WorksheetDetailPage() {
   const getStatusColor = (status: WorksheetStatus) => {
     switch (status) {
       case WorksheetStatus.FELVEVE:
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300';
       case WorksheetStatus.FOLYAMATBAN:
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300';
       case WorksheetStatus.VARHATO:
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300';
       case WorksheetStatus.KESZ:
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
       case WorksheetStatus.SZAMLAZANDO:
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300';
       case WorksheetStatus.LEZART:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
       case WorksheetStatus.TOROLVE:
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
 
@@ -68,9 +68,9 @@ export function WorksheetDetailPage() {
   const otherItems = worksheet.items.filter(i => i.type === 'EGYEB');
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white border-b px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -78,8 +78,12 @@ export function WorksheetDetailPage() {
                 ← Vissza
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{worksheet.worksheetNumber}</h1>
-                <p className="text-sm text-gray-500">{worksheet.partnerName}</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {worksheet.worksheetNumber}
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">
+                  {worksheet.partnerName}
+                </p>
               </div>
               <span
                 className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(worksheet.status)}`}
@@ -90,8 +94,15 @@ export function WorksheetDetailPage() {
             <div className="flex gap-2">
               {worksheet.status === WorksheetStatus.KESZ && <Button>Számlázás</Button>}
               {worksheet.status === WorksheetStatus.FELVEVE && <Button>Munka indítása</Button>}
-              {worksheet.status === WorksheetStatus.FOLYAMATBAN && (
-                <Button variant="outline">Szerkesztés</Button>
+              {(worksheet.status === WorksheetStatus.FELVEVE ||
+                worksheet.status === WorksheetStatus.FOLYAMATBAN ||
+                worksheet.status === WorksheetStatus.VARHATO) && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(`/worksheet/${worksheet.id}/edit`)}
+                >
+                  Szerkesztés
+                </Button>
               )}
               <Button
                 variant="outline"
@@ -106,7 +117,7 @@ export function WorksheetDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex gap-1">
             {tabs.map(tab => (
@@ -115,8 +126,8 @@ export function WorksheetDetailPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                 }`}
               >
                 {tab.label}
@@ -140,28 +151,28 @@ export function WorksheetDetailPage() {
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-500">Megnevezés</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Megnevezés</p>
                       <p className="font-medium">{worksheet.product.name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Kategória</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Kategória</p>
                       <p className="font-medium">{CATEGORY_LABELS[worksheet.product.category]}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Gyártó / Modell</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Gyártó / Modell</p>
                       <p className="font-medium">
                         {worksheet.product.brand} {worksheet.product.model}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Gyári szám</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Gyári szám</p>
                       <p className="font-medium font-mono">
                         {worksheet.product.serialNumber || '-'}
                       </p>
                     </div>
                     {worksheet.product.warrantyExpiry && (
                       <div>
-                        <p className="text-sm text-gray-500">Garancia lejár</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Garancia lejár</p>
                         <p
                           className={`font-medium ${new Date(worksheet.product.warrantyExpiry) < new Date() ? 'text-red-600' : 'text-green-600'}`}
                         >
@@ -179,7 +190,9 @@ export function WorksheetDetailPage() {
                   <CardTitle>Hiba leírás</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700 whitespace-pre-wrap">{worksheet.faultDescription}</p>
+                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    {worksheet.faultDescription}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -192,14 +205,18 @@ export function WorksheetDetailPage() {
                   <CardContent className="space-y-4">
                     {worksheet.diagnosis && (
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">Diagnózis</p>
-                        <p className="text-gray-700 whitespace-pre-wrap">{worksheet.diagnosis}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Diagnózis</p>
+                        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                          {worksheet.diagnosis}
+                        </p>
                       </div>
                     )}
                     {worksheet.workPerformed && (
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">Elvégzett munka</p>
-                        <p className="text-gray-700 whitespace-pre-wrap">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                          Elvégzett munka
+                        </p>
+                        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                           {worksheet.workPerformed}
                         </p>
                       </div>
@@ -216,15 +233,21 @@ export function WorksheetDetailPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {worksheet.customerNote && (
-                      <div className="bg-blue-50 p-3 rounded-lg">
-                        <p className="text-sm text-blue-600 font-medium mb-1">Ügyfél megjegyzése</p>
-                        <p className="text-blue-800">{worksheet.customerNote}</p>
+                      <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg">
+                        <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mb-1">
+                          Ügyfél megjegyzése
+                        </p>
+                        <p className="text-blue-800 dark:text-blue-200">{worksheet.customerNote}</p>
                       </div>
                     )}
                     {worksheet.internalNote && (
-                      <div className="bg-yellow-50 p-3 rounded-lg">
-                        <p className="text-sm text-yellow-600 font-medium mb-1">Belső megjegyzés</p>
-                        <p className="text-yellow-800">{worksheet.internalNote}</p>
+                      <div className="bg-yellow-50 dark:bg-yellow-900/30 p-3 rounded-lg">
+                        <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium mb-1">
+                          Belső megjegyzés
+                        </p>
+                        <p className="text-yellow-800 dark:text-yellow-200">
+                          {worksheet.internalNote}
+                        </p>
                       </div>
                     )}
                   </CardContent>
@@ -241,12 +264,12 @@ export function WorksheetDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div>
-                    <p className="text-sm text-gray-500">Név</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Név</p>
                     <p className="font-medium">{worksheet.partnerName}</p>
                   </div>
                   {worksheet.partnerPhone && (
                     <div>
-                      <p className="text-sm text-gray-500">Telefon</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Telefon</p>
                       <a
                         href={`tel:${worksheet.partnerPhone}`}
                         className="font-medium text-blue-600 hover:underline"
@@ -257,7 +280,7 @@ export function WorksheetDetailPage() {
                   )}
                   {worksheet.partnerEmail && (
                     <div>
-                      <p className="text-sm text-gray-500">E-mail</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">E-mail</p>
                       <a
                         href={`mailto:${worksheet.partnerEmail}`}
                         className="font-medium text-blue-600 hover:underline text-sm"
@@ -276,28 +299,28 @@ export function WorksheetDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div>
-                    <p className="text-sm text-gray-500">Típus</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Típus</p>
                     <p className="font-medium">{TYPE_LABELS[worksheet.worksheetType]}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Prioritás</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Prioritás</p>
                     <p className="font-medium">{PRIORITY_LABELS[worksheet.priority]}</p>
                   </div>
                   {worksheet.costLimit && (
                     <div>
-                      <p className="text-sm text-gray-500">Költséghatár</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Költséghatár</p>
                       <p className="font-medium">{formatCurrency(worksheet.costLimit)}</p>
                     </div>
                   )}
                   {worksheet.assignedTo && (
                     <div>
-                      <p className="text-sm text-gray-500">Felelős</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Felelős</p>
                       <p className="font-medium">{worksheet.assignedTo}</p>
                     </div>
                   )}
                   {worksheet.estimatedCompletionDate && (
                     <div>
-                      <p className="text-sm text-gray-500">Várható elkészülés</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Várható elkészülés</p>
                       <p className="font-medium">{formatDate(worksheet.estimatedCompletionDate)}</p>
                     </div>
                   )}
@@ -393,7 +416,7 @@ export function WorksheetDetailPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b text-left text-sm text-gray-500">
+                        <tr className="border-b text-left text-sm text-gray-500 dark:text-gray-400">
                           <th className="pb-2">Megnevezés</th>
                           <th className="pb-2 text-right">Mennyiség</th>
                           <th className="pb-2 text-right">Egységár</th>
@@ -445,7 +468,7 @@ export function WorksheetDetailPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b text-left text-sm text-gray-500">
+                        <tr className="border-b text-left text-sm text-gray-500 dark:text-gray-400">
                           <th className="pb-2">Munka</th>
                           <th className="pb-2 text-right">Mennyiség</th>
                           <th className="pb-2 text-right">Egységár</th>
@@ -495,7 +518,7 @@ export function WorksheetDetailPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b text-left text-sm text-gray-500">
+                        <tr className="border-b text-left text-sm text-gray-500 dark:text-gray-400">
                           <th className="pb-2">Megnevezés</th>
                           <th className="pb-2 text-right">Mennyiség</th>
                           <th className="pb-2 text-right">Egységár</th>
@@ -523,7 +546,7 @@ export function WorksheetDetailPage() {
             )}
 
             {/* Összesítő */}
-            <Card className="bg-gray-50">
+            <Card className="bg-gray-50 dark:bg-gray-800">
               <CardContent className="pt-6">
                 <div className="flex justify-end">
                   <div className="w-64 space-y-2">
@@ -555,31 +578,35 @@ export function WorksheetDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="relative">
-                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
+                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
                 <div className="space-y-6">
                   {worksheet.history.map((entry, index) => (
                     <div key={entry.id} className="relative pl-10">
                       <div
-                        className={`absolute left-2 w-5 h-5 rounded-full border-2 bg-white ${
-                          index === 0 ? 'border-blue-500' : 'border-gray-300'
+                        className={`absolute left-2 w-5 h-5 rounded-full border-2 bg-white dark:bg-gray-800 ${
+                          index === 0 ? 'border-blue-500' : 'border-gray-300 dark:border-gray-600'
                         }`}
                       />
-                      <div className="bg-white border rounded-lg p-4">
+                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <div className="flex items-start justify-between">
                           <div>
-                            <span className="inline-block px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                            <span className="inline-block px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
                               {HISTORY_ACTION_LABELS[entry.action]}
                             </span>
-                            <p className="mt-1 font-medium">{entry.description}</p>
+                            <p className="mt-1 font-medium text-gray-900 dark:text-white">
+                              {entry.description}
+                            </p>
                             {entry.oldValue && entry.newValue && (
-                              <p className="text-sm text-gray-500 mt-1">
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                 <span className="line-through">{entry.oldValue}</span>
                                 {' → '}
-                                <span className="text-green-600">{entry.newValue}</span>
+                                <span className="text-green-600 dark:text-green-400">
+                                  {entry.newValue}
+                                </span>
                               </p>
                             )}
                           </div>
-                          <div className="text-right text-sm text-gray-500">
+                          <div className="text-right text-sm text-gray-500 dark:text-gray-400">
                             <p>{formatDateTime(entry.timestamp)}</p>
                             <p>{entry.userName}</p>
                           </div>

@@ -8,12 +8,49 @@ export function ChatPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [messageInput, setMessageInput] = useState('');
   const [messages, setMessages] = useState<Record<string, ChatMessage[]>>(MOCK_MESSAGES);
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [chats, setChats] = useState(MOCK_CHATS);
+  const [newChatSelectedUsers, setNewChatSelectedUsers] = useState<string[]>([]);
+  const [newChatName, setNewChatName] = useState('');
 
-  const selectedChat = MOCK_CHATS.find(c => c.id === selectedChatId);
+  const selectedChat = chats.find(c => c.id === selectedChatId);
 
-  const filteredChats = MOCK_CHATS.filter(chat =>
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
-  ).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  const filteredChats = chats
+    .filter(chat => chat.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+  const handleCreateChat = () => {
+    if (newChatSelectedUsers.length === 0) return;
+
+    const selectedUsers = MOCK_USERS.filter(u => newChatSelectedUsers.includes(u.id));
+    const isGroup = selectedUsers.length > 1;
+    const chatName = isGroup
+      ? newChatName.trim() || selectedUsers.map(u => u.name.split(' ')[1]).join(', ')
+      : (selectedUsers[0]?.name ?? 'Új chat');
+
+    const newChat = {
+      id: `chat-new-${Date.now()}`,
+      name: chatName,
+      type: isGroup ? ('group' as const) : ('direct' as const),
+      participants: [CURRENT_USER, ...selectedUsers],
+      lastMessage: null,
+      unreadCount: 0,
+      updatedAt: new Date().toISOString(),
+    };
+
+    setChats(prev => [newChat, ...prev]);
+    setMessages(prev => ({ ...prev, [newChat.id]: [] }));
+    setSelectedChatId(newChat.id);
+    setShowNewChatModal(false);
+    setNewChatSelectedUsers([]);
+    setNewChatName('');
+  };
+
+  const toggleUserSelection = (userId: string) => {
+    setNewChatSelectedUsers(prev =>
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    );
+  };
 
   const currentMessages = selectedChatId ? (messages[selectedChatId] ?? []) : [];
 
@@ -83,7 +120,11 @@ export function ChatPage() {
         <div className="border-b p-4 dark:border-slate-700">
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Chat</h1>
-            <Button size="sm" className="bg-kgc-primary hover:bg-kgc-primary/90">
+            <Button
+              size="sm"
+              className="bg-kgc-primary hover:bg-kgc-primary/90"
+              onClick={() => setShowNewChatModal(true)}
+            >
               + Új
             </Button>
           </div>
@@ -326,6 +367,128 @@ export function ChatPage() {
           ))}
         </div>
       </div>
+
+      {/* New Chat Modal */}
+      {showNewChatModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="kgc-card-bg w-full max-w-md rounded-xl shadow-xl">
+            <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 p-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Új beszélgetés
+              </h2>
+              <button
+                onClick={() => {
+                  setShowNewChatModal(false);
+                  setNewChatSelectedUsers([]);
+                  setNewChatName('');
+                }}
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {/* Group name (optional) */}
+              {newChatSelectedUsers.length > 1 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Csoport neve (opcionális)
+                  </label>
+                  <Input
+                    placeholder="Csoport neve..."
+                    value={newChatName}
+                    onChange={e => setNewChatName(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {/* User selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Résztvevők kiválasztása
+                </label>
+                <div className="max-h-64 overflow-y-auto space-y-1">
+                  {MOCK_USERS.filter(u => u.id !== CURRENT_USER.id).map(user => (
+                    <button
+                      key={user.id}
+                      onClick={() => toggleUserSelection(user.id)}
+                      className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                        newChatSelectedUsers.includes(user.id)
+                          ? 'bg-kgc-primary/10 border border-kgc-primary'
+                          : 'hover:bg-gray-50 dark:hover:bg-slate-700/50 border border-transparent'
+                      }`}
+                    >
+                      <div className="relative">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-xs font-medium text-white">
+                          {getInitials(user.name)}
+                        </div>
+                        <span
+                          className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-slate-800 ${getStatusColor(user.status)}`}
+                        />
+                      </div>
+                      <div className="text-left flex-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {user.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{user.role}</p>
+                      </div>
+                      {newChatSelectedUsers.includes(user.id) && (
+                        <svg
+                          className="h-5 w-5 text-kgc-primary"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Selected count */}
+              {newChatSelectedUsers.length > 0 && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {newChatSelectedUsers.length} résztvevő kiválasztva
+                  {newChatSelectedUsers.length > 1 && ' (csoportos chat)'}
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700 p-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowNewChatModal(false);
+                  setNewChatSelectedUsers([]);
+                  setNewChatName('');
+                }}
+              >
+                Mégse
+              </Button>
+              <Button
+                onClick={handleCreateChat}
+                disabled={newChatSelectedUsers.length === 0}
+                className="bg-kgc-primary hover:bg-kgc-primary/90"
+              >
+                Beszélgetés indítása
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   AddPartialPaymentDto,
   CloseSessionDto,
   CreateTransactionDto,
+  type ICompletePaymentResult,
   OpenSessionDto,
   PaymentService,
   ProcessCashPaymentDto,
@@ -442,7 +443,10 @@ export class PaymentController {
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Transaction finalized, inventory deducted' })
   @ApiResponse({ status: 400, description: 'Transaction not fully paid' })
-  async finalizePayment(@Param('id') transactionId: string, @CurrentTenant() tenantId: string) {
+  async finalizePayment(
+    @Param('id') transactionId: string,
+    @CurrentTenant() tenantId: string
+  ): Promise<ICompletePaymentResult> {
     return this.paymentService.completePayment(transactionId, tenantId);
   }
 

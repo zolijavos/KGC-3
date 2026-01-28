@@ -76,19 +76,19 @@ export class InMemoryTwentyCrmClient implements ITwentyCrmClient {
 
   async createPartner(partner: Partial<ICrmPartner>): Promise<ICrmPartner> {
     const id = partner.id || `crm-${randomUUID()}`;
-    const created: ICrmPartner = {
+    const created = {
       id,
       type: partner.type!,
       name: partner.name!,
-      email: partner.email,
-      phone: partner.phone,
-      taxNumber: partner.taxNumber,
-      address: partner.address,
       tags: partner.tags || [],
       customFields: partner.customFields || {},
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    } as ICrmPartner;
+    if (partner.email !== undefined) created.email = partner.email;
+    if (partner.phone !== undefined) created.phone = partner.phone;
+    if (partner.taxNumber !== undefined) created.taxNumber = partner.taxNumber;
+    if (partner.address !== undefined) created.address = partner.address;
     this.crmPartners.set(id, created);
     return created;
   }
@@ -117,18 +117,18 @@ export class InMemoryTwentyCrmClient implements ITwentyCrmClient {
 
   async createContact(contact: Partial<ICrmContact>): Promise<ICrmContact> {
     const id = contact.id || `contact-${randomUUID()}`;
-    const created: ICrmContact = {
+    const created = {
       id,
       partnerId: contact.partnerId!,
       firstName: contact.firstName!,
       lastName: contact.lastName!,
-      email: contact.email,
-      phone: contact.phone,
-      position: contact.position,
       isPrimary: contact.isPrimary || false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    } as ICrmContact;
+    if (contact.email !== undefined) created.email = contact.email;
+    if (contact.phone !== undefined) created.phone = contact.phone;
+    if (contact.position !== undefined) created.position = contact.position;
     const existing = this.crmContacts.get(contact.partnerId!) || [];
     existing.push(created);
     this.crmContacts.set(contact.partnerId!, existing);

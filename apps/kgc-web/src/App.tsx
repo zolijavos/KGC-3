@@ -1,8 +1,11 @@
 import { AppLayout } from '@/components/layout';
 import {
   ChatPage,
+  CompanyVehicleDetailPage,
+  CompanyVehicleFormPage,
   CompanyVehicleListPage,
   ContractDetailPage,
+  ContractFormPage,
   ContractListPage,
   DashboardPage,
   ExpiringDocumentsPage,
@@ -13,25 +16,31 @@ import {
   InventoryMovementsPage,
   InventoryReceivePage,
   InvoiceDetailPage,
+  InvoiceFormPage,
   InvoiceListPage,
   LoginPage,
   MyForgeOSPage,
   PartnerCreatePage,
   PartnerDetailPage,
+  PartnerEditPage,
   PartnerListPage,
   ProductCreatePage,
   ProductDetailPage,
   ProductEditPage,
   ProductListPage,
   QuotationDetailPage,
+  QuotationFormPage,
   QuotationListPage,
   RentalDetailPage,
   RentalListPage,
   RentalReturnPage,
+  RentalVehicleDetailPage,
+  RentalVehicleFormPage,
   RentalVehicleListPage,
   RentalWizardPage,
   ReportsPage,
   RoleManagementPage,
+  SalesDetailPage,
   SalesListPage,
   SalesPOSPage,
   SettingsPage,
@@ -39,8 +48,10 @@ import {
   TenantSettingsPage,
   TwentyCRMPage,
   UserDetailPage,
+  UserFormPage,
   UserListPage,
   WorksheetDetailPage,
+  WorksheetEditPage,
   WorksheetListPage,
   WorksheetWizardPage,
 } from '@/pages';
@@ -110,15 +121,18 @@ function App() {
             <Route path="/worksheet" element={<WorksheetListPage />} />
             <Route path="/worksheet/new" element={<WorksheetWizardPage />} />
             <Route path="/worksheet/:id" element={<WorksheetDetailPage />} />
+            <Route path="/worksheet/:id/edit" element={<WorksheetEditPage />} />
 
             {/* Sales routes */}
             <Route path="/sales" element={<SalesListPage />} />
             <Route path="/sales/new" element={<SalesPOSPage />} />
+            <Route path="/sales/:id" element={<SalesDetailPage />} />
 
             {/* Partner routes */}
             <Route path="/partners" element={<PartnerListPage />} />
             <Route path="/partners/new" element={<PartnerCreatePage />} />
             <Route path="/partners/:id" element={<PartnerDetailPage />} />
+            <Route path="/partners/:id/edit" element={<PartnerEditPage />} />
 
             {/* Inventory routes */}
             <Route path="/inventory" element={<InventoryListPage />} />
@@ -135,24 +149,36 @@ function App() {
             {/* Quotation routes */}
             <Route path="/quotations" element={<QuotationListPage />} />
             <Route path="/quotations/:id" element={<QuotationDetailPage />} />
+            <Route path="/quotations/:id/edit" element={<QuotationFormPage />} />
 
             {/* Contract routes */}
             <Route path="/contracts" element={<ContractListPage />} />
             <Route path="/contracts/:id" element={<ContractDetailPage />} />
+            <Route path="/contracts/:id/edit" element={<ContractFormPage />} />
 
             {/* Invoice routes */}
             <Route path="/invoices" element={<InvoiceListPage />} />
+            <Route path="/invoices/new" element={<InvoiceFormPage />} />
             <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
+            <Route path="/invoices/:id/edit" element={<InvoiceFormPage />} />
 
             {/* Vehicle routes (Epic 34: Járműnyilvántartás) */}
             <Route path="/vehicles/rental" element={<RentalVehicleListPage />} />
+            <Route path="/vehicles/rental/new" element={<RentalVehicleFormPage />} />
+            <Route path="/vehicles/rental/:id" element={<RentalVehicleDetailPage />} />
+            <Route path="/vehicles/rental/:id/edit" element={<RentalVehicleFormPage />} />
             <Route path="/vehicles/company" element={<CompanyVehicleListPage />} />
+            <Route path="/vehicles/company/new" element={<CompanyVehicleFormPage />} />
+            <Route path="/vehicles/company/:id" element={<CompanyVehicleDetailPage />} />
+            <Route path="/vehicles/company/:id/edit" element={<CompanyVehicleFormPage />} />
             <Route path="/vehicles/expiring" element={<ExpiringDocumentsPage />} />
 
             {/* User routes */}
             <Route path="/users" element={<UserListPage />} />
+            <Route path="/users/new" element={<UserFormPage />} />
             <Route path="/users/roles" element={<RoleManagementPage />} />
             <Route path="/users/:id" element={<UserDetailPage />} />
+            <Route path="/users/:id/edit" element={<UserFormPage />} />
 
             {/* Settings route */}
             <Route path="/settings" element={<SettingsPage />} />

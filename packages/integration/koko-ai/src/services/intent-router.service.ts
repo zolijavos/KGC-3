@@ -280,14 +280,16 @@ export class IntentRouterService {
       analysis.confidence < ESCALATION_THRESHOLD || analysis.sentiment === 'negative';
     const requiresApproval = !shouldAutoSend && !shouldEscalate;
 
-    return {
+    const responseResult: IAiResponseResult = {
       response: result.text,
       confidence: analysis.confidence,
-      kbArticleId: kbArticles[0]?.id,
       shouldAutoSend,
       requiresApproval,
       shouldEscalate,
     };
+    if (kbArticles[0]?.id !== undefined) responseResult.kbArticleId = kbArticles[0].id;
+
+    return responseResult;
   }
 
   async approveResponse(
@@ -312,12 +314,18 @@ export class IntentRouterService {
 
     const finalResponse = validInput.editedResponse || queueItem.aiResponse;
 
-    const updatedItem = await this.approvalQueueRepository.update(validInput.queueItemId, {
+    const updateData: Parameters<typeof this.approvalQueueRepository.update>[1] = {
       status: validInput.approved ? 'approved' : 'rejected',
       reviewedBy: userId,
       reviewedAt: new Date(),
-      editedResponse: validInput.editedResponse,
-    });
+    };
+    if (validInput.editedResponse !== undefined)
+      updateData.editedResponse = validInput.editedResponse;
+
+    const updatedItem = await this.approvalQueueRepository.update(
+      validInput.queueItemId,
+      updateData
+    );
 
     if (validInput.approved) {
       // Send response to user

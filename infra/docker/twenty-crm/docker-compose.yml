@@ -12,7 +12,7 @@ services:
     image: twentycrm/twenty:latest
     container_name: kgc-twenty-server
     ports:
-      - '${TWENTY_PORT:-3001}:3000'
+      - '127.0.0.1:${TWENTY_PORT:-3001}:3000'
     depends_on:
       twenty-db:
         condition: service_healthy
@@ -185,7 +185,5 @@ volumes:
 # ===========================================
 networks:
   kgc-network:
-    name: kgc-network
-    driver: bridge
-    # External network allows connection to KGC API
-    # external: true  # Uncomment when integrating with full stack
+    name: kgc-demo-network
+    external: true

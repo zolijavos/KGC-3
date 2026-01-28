@@ -1,0 +1,99 @@
+# ==============================================================================
+# KGC ERP v7.0 - Demo Environment Caddyfile
+# Domain: demo-kgc.mflerp.com
+# Auto SSL via Let's Encrypt
+# ==============================================================================
+
+{
+	email {$ADMIN_EMAIL:admin@mflerp.com}
+
+	# Production Let's Encrypt (comment out for testing)
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# ==============================================================================
+# Main Application (demo-kgc.mflerp.com)
+# Single domain setup - API and Web on same domain
+# ==============================================================================
+{$DEMO_DOMAIN:demo-kgc.mflerp.com} {
+	encode gzip zstd
+
+	# Health check endpoint
+	handle /health {
+		respond "OK" 200
+	}
+
+	# API routes - proxy to backend
+	handle /api/* {
+		reverse_proxy kgc-api:3000 {
+			health_uri /api/v1/health
+			health_interval 30s
+
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# WebSocket support for real-time features
+	handle /ws/* {
+		reverse_proxy kgc-api:3000 {
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# All other routes - proxy to frontend
+	handle {
+		reverse_proxy kgc-web:80 {
+			health_uri /health
+			health_interval 30s
+		}
+	}
+
+	# Security headers
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/demo-kgc.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
+
+# ==============================================================================
+# Optional: Separate API subdomain (api.demo-kgc.mflerp.com)
+# Uncomment if you want API on separate subdomain
+# ==============================================================================
+# {$API_DOMAIN:api.demo-kgc.mflerp.com} {
+# 	encode gzip zstd
+#
+# 	reverse_proxy kgc-api:3000 {
+# 		health_uri /api/v1/health
+# 		health_interval 30s
+#
+# 		header_up X-Real-IP {remote_host}
+# 		header_up X-Forwarded-For {remote_host}
+# 		header_up X-Forwarded-Proto {scheme}
+# 	}
+#
+# 	header {
+# 		X-Content-Type-Options nosniff
+# 		-Server
+# 	}
+#
+# 	log {
+# 		output file /var/log/caddy/api-demo-kgc.log {
+# 			roll_size 10mb
+# 			roll_keep 5
+# 		}
+# 	}
+# }

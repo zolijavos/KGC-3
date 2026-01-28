@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { CacheOptions, CacheRecord, StoreConfig } from '../lib/indexeddb';
 import { IndexedDBStore } from '../lib/indexeddb';
-import type { StoreConfig, CacheRecord, CacheOptions } from '../lib/indexeddb';
 
 const DEFAULT_CACHE_STORE = 'cache';
 const DEFAULT_DB_NAME = 'kgc-offline-cache';
@@ -67,9 +67,7 @@ export interface UseOfflineCacheReturn<T> {
  * }
  * ```
  */
-export function useOfflineCache<T>(
-  options: UseOfflineCacheOptions = {}
-): UseOfflineCacheReturn<T> {
+export function useOfflineCache<T>(options: UseOfflineCacheOptions = {}): UseOfflineCacheReturn<T> {
   const {
     dbName = DEFAULT_DB_NAME,
     dbVersion = DEFAULT_DB_VERSION,
@@ -97,9 +95,7 @@ export function useOfflineCache<T>(
         {
           name: storeName,
           keyPath: 'key',
-          indexes: [
-            { name: 'cachedAt', keyPath: 'cachedAt' },
-          ],
+          indexes: [{ name: 'cachedAt', keyPath: 'cachedAt' }],
         },
       ],
     };
@@ -128,10 +124,7 @@ export function useOfflineCache<T>(
       }
 
       try {
-        const record = await storeRef.current.get<CacheRecord<T> & { key: string }>(
-          storeName,
-          key
-        );
+        const record = await storeRef.current.get<CacheRecord<T> & { key: string }>(storeName, key);
 
         if (!record) {
           return undefined;
@@ -160,12 +153,14 @@ export function useOfflineCache<T>(
       }
 
       try {
+        const ttl = cacheOptions?.ttl ?? defaultTTL;
+        const version = cacheOptions?.version;
         const record: CacheRecord<T> & { key: string } = {
           key,
           data,
           cachedAt: Date.now(),
-          ttl: cacheOptions?.ttl ?? defaultTTL,
-          version: cacheOptions?.version,
+          ...(ttl !== undefined ? { ttl } : {}),
+          ...(version !== undefined ? { version } : {}),
         };
 
         await storeRef.current.put(storeName, record);
@@ -213,10 +208,7 @@ export function useOfflineCache<T>(
       }
 
       try {
-        const record = await storeRef.current.get<CacheRecord<T> & { key: string }>(
-          storeName,
-          key
-        );
+        const record = await storeRef.current.get<CacheRecord<T> & { key: string }>(storeName, key);
 
         if (!record) {
           return false;
@@ -257,10 +249,7 @@ export function useOfflineCache<T>(
       }
 
       try {
-        const record = await storeRef.current.get<CacheRecord<T> & { key: string }>(
-          storeName,
-          key
-        );
+        const record = await storeRef.current.get<CacheRecord<T> & { key: string }>(storeName, key);
 
         if (record) {
           // Set TTL to 0 to mark as expired
@@ -284,10 +273,7 @@ export function useOfflineCache<T>(
       }
 
       try {
-        const record = await storeRef.current.get<CacheRecord<T> & { key: string }>(
-          storeName,
-          key
-        );
+        const record = await storeRef.current.get<CacheRecord<T> & { key: string }>(storeName, key);
 
         if (!record) {
           return undefined;
@@ -295,8 +281,8 @@ export function useOfflineCache<T>(
 
         return {
           cachedAt: record.cachedAt,
-          ttl: record.ttl,
-          version: record.version,
+          ...(record.ttl !== undefined ? { ttl: record.ttl } : {}),
+          ...(record.version !== undefined ? { version: record.version } : {}),
         };
       } catch {
         return undefined;

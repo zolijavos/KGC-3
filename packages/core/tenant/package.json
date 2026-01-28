@@ -29,6 +29,8 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@kgc/auth": "workspace:*",
+    "@kgc/users": "workspace:*",
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
     "@prisma/client": "^5.0.0",

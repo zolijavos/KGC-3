@@ -4,7 +4,220 @@
  * Céges gépkocsik: személyautók, furgonok
  */
 
+import {
+  AlertTriangle,
+  Car,
+  CheckCircle,
+  ChevronDown,
+  Clock,
+  Eye,
+  Filter,
+  Pencil,
+  Plus,
+  Search,
+  Shield,
+  Ticket,
+  Trash2,
+  XCircle,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
+type VehicleType = 'car' | 'van' | 'truck';
+type VehicleStatus = 'active' | 'in_use' | 'maintenance' | 'inactive';
+
+interface CompanyVehicle {
+  id: string;
+  licensePlate: string;
+  type: VehicleType;
+  name: string;
+  brand: string;
+  model: string;
+  year: number;
+  status: VehicleStatus;
+  assignedTo?: string;
+  assignedTenantId?: string;
+  assignedTenantName?: string;
+  technicalExpiryDate: string;
+  registrationExpiryDate: string;
+  kgfbExpiryDate: string;
+  cascoExpiryDate?: string;
+  highwayPassExpiryDate?: string;
+  fuelType: 'petrol' | 'diesel' | 'electric' | 'hybrid';
+  mileage: number;
+}
+
+const MOCK_VEHICLES: CompanyVehicle[] = [
+  {
+    id: '1',
+    licensePlate: 'ABC-001',
+    type: 'car',
+    name: 'Szolgálati autó 1',
+    brand: 'Škoda',
+    model: 'Octavia',
+    year: 2022,
+    status: 'active',
+    technicalExpiryDate: '2025-08-15',
+    registrationExpiryDate: '2025-12-01',
+    kgfbExpiryDate: '2025-04-20',
+    cascoExpiryDate: '2025-04-20',
+    highwayPassExpiryDate: '2025-12-31',
+    fuelType: 'diesel',
+    mileage: 45230,
+  },
+  {
+    id: '2',
+    licensePlate: 'DEF-002',
+    type: 'van',
+    name: 'Szállító furgon',
+    brand: 'Mercedes',
+    model: 'Sprinter',
+    year: 2021,
+    status: 'in_use',
+    assignedTo: 'Kovács István',
+    assignedTenantId: 't1',
+    assignedTenantName: 'KGC Budapest',
+    technicalExpiryDate: '2025-06-20',
+    registrationExpiryDate: '2025-10-15',
+    kgfbExpiryDate: '2025-03-10',
+    highwayPassExpiryDate: '2025-06-30',
+    fuelType: 'diesel',
+    mileage: 78540,
+  },
+  {
+    id: '3',
+    licensePlate: 'GHI-003',
+    type: 'car',
+    name: 'Ügyfélszolgálat',
+    brand: 'Toyota',
+    model: 'Corolla',
+    year: 2023,
+    status: 'maintenance',
+    technicalExpiryDate: '2026-02-01',
+    registrationExpiryDate: '2026-01-15',
+    kgfbExpiryDate: '2025-11-30',
+    cascoExpiryDate: '2025-11-30',
+    fuelType: 'hybrid',
+    mileage: 12340,
+  },
+  {
+    id: '4',
+    licensePlate: 'JKL-004',
+    type: 'truck',
+    name: 'Tehergépkocsi',
+    brand: 'Iveco',
+    model: 'Daily',
+    year: 2020,
+    status: 'inactive',
+    technicalExpiryDate: '2024-06-01',
+    registrationExpiryDate: '2024-12-01',
+    kgfbExpiryDate: '2024-08-15',
+    fuelType: 'diesel',
+    mileage: 125000,
+  },
+];
+
+const TYPE_LABELS: Record<VehicleType, string> = {
+  car: 'Személyautó',
+  van: 'Furgon',
+  truck: 'Tehergépkocsi',
+};
+
+const STATUS_CONFIG: Record<
+  VehicleStatus,
+  { label: string; color: string; icon: typeof CheckCircle }
+> = {
+  active: {
+    label: 'Elérhető',
+    color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    icon: CheckCircle,
+  },
+  in_use: {
+    label: 'Használatban',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    icon: Clock,
+  },
+  maintenance: {
+    label: 'Szervizben',
+    color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+    icon: AlertTriangle,
+  },
+  inactive: {
+    label: 'Inaktív',
+    color: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+    icon: XCircle,
+  },
+};
+
+const FUEL_LABELS: Record<string, string> = {
+  petrol: 'Benzin',
+  diesel: 'Dízel',
+  electric: 'Elektromos',
+  hybrid: 'Hibrid',
+};
+
+function isExpiringSoon(dateStr: string): boolean {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  return date <= thirtyDaysFromNow && date > now;
+}
+
+function isExpired(dateStr: string): boolean {
+  return new Date(dateStr) <= new Date();
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('hu-HU', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+}
+
 export function CompanyVehicleListPage() {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<VehicleType | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<VehicleStatus | 'all'>('all');
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+
+  const filteredVehicles = useMemo(() => {
+    return MOCK_VEHICLES.filter(vehicle => {
+      const matchesSearch =
+        searchQuery === '' ||
+        vehicle.licensePlate.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        vehicle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        vehicle.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        vehicle.model.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesType = typeFilter === 'all' || vehicle.type === typeFilter;
+      const matchesStatus = statusFilter === 'all' || vehicle.status === statusFilter;
+
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [searchQuery, typeFilter, statusFilter]);
+
+  const stats = useMemo(() => {
+    const total = MOCK_VEHICLES.length;
+    const active = MOCK_VEHICLES.filter(v => v.status === 'active').length;
+    const inUse = MOCK_VEHICLES.filter(v => v.status === 'in_use').length;
+    const expiringSoon = MOCK_VEHICLES.filter(
+      v =>
+        isExpiringSoon(v.kgfbExpiryDate) ||
+        isExpiringSoon(v.technicalExpiryDate) ||
+        (v.highwayPassExpiryDate && isExpiringSoon(v.highwayPassExpiryDate))
+    ).length;
+    return { total, active, inUse, expiringSoon };
+  }, []);
+
+  const handleDelete = (id: string, name: string) => {
+    if (confirm(`Biztosan törölni szeretné a járművet: ${name}?`)) {
+      console.log('Delete vehicle:', id);
+    }
+  };
+
   return (
     <div className="kgc-bg min-h-screen p-6">
       {/* Header */}
@@ -15,163 +228,306 @@ export function CompanyVehicleListPage() {
             Személyautók, furgonok központi kezelése
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 rounded-lg bg-kgc-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-kgc-primary/90">
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+        <Link
+          to="/vehicles/company/new"
+          className="inline-flex items-center gap-2 rounded-lg bg-kgc-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-kgc-primary/90"
+        >
+          <Plus className="h-5 w-5" />
           Új jármű
-        </button>
+        </Link>
       </div>
 
-      {/* Coming Soon Card */}
-      <div className="kgc-card-bg rounded-lg border border-gray-200 p-12 dark:border-gray-700">
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="rounded-full bg-kgc-primary/10 p-4">
-            <svg
-              className="h-12 w-12 text-kgc-primary"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"
-              />
-            </svg>
-          </div>
-          <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
-            Céges járművek modul
-          </h3>
-          <p className="mt-2 max-w-md text-sm text-gray-500 dark:text-gray-400">
-            A céges gépkocsik (személyautók, furgonok) központi nyilvántartása hamarosan elérhető
-            lesz. KGFB, CASCO, autópálya matrica kezelés.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              API kész
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
-              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Frontend fejlesztés alatt
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Features Preview */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="kgc-card-bg rounded-lg border border-gray-200 p-5 dark:border-gray-700">
+      {/* Stats Cards */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="kgc-card-bg rounded-lg border border-gray-200 p-4 dark:border-gray-700">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
-              <svg
-                className="h-5 w-5 text-blue-600 dark:text-blue-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
+              <Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h4 className="font-medium text-gray-900 dark:text-white">KGFB biztosítás</h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Kötelező biztosítás</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Összes jármű</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
             </div>
           </div>
         </div>
-        <div className="kgc-card-bg rounded-lg border border-gray-200 p-5 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/30">
-              <svg
-                className="h-5 w-5 text-purple-600 dark:text-purple-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900 dark:text-white">CASCO biztosítás</h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Önkéntes biztosítás</p>
-            </div>
-          </div>
-        </div>
-        <div className="kgc-card-bg rounded-lg border border-gray-200 p-5 dark:border-gray-700">
+        <div className="kgc-card-bg rounded-lg border border-gray-200 p-4 dark:border-gray-700">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
-              <svg
-                className="h-5 w-5 text-green-600 dark:text-green-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
-                />
-              </svg>
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <h4 className="font-medium text-gray-900 dark:text-white">Autópálya matrica</h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400">e-matrica kezelés</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Elérhető</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.active}</p>
             </div>
           </div>
         </div>
-        <div className="kgc-card-bg rounded-lg border border-gray-200 p-5 dark:border-gray-700">
+        <div className="kgc-card-bg rounded-lg border border-gray-200 p-4 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
-              <svg
-                className="h-5 w-5 text-orange-600 dark:text-orange-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
+            <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
+              <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h4 className="font-medium text-gray-900 dark:text-white">Hozzárendelés</h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Tenant, felhasználó</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Használatban</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.inUse}</p>
             </div>
           </div>
+        </div>
+        <div className="kgc-card-bg rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+              <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Lejár 30 napon belül</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {stats.expiringSoon}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Keresés rendszám, név, márka..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+          />
+        </div>
+        <div className="flex gap-2">
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowTypeDropdown(!showTypeDropdown);
+                setShowStatusDropdown(false);
+              }}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              <Filter className="h-4 w-4" />
+              {typeFilter === 'all' ? 'Típus' : TYPE_LABELS[typeFilter]}
+              <ChevronDown className="h-4 w-4" />
+            </button>
+            {showTypeDropdown && (
+              <div className="absolute right-0 z-10 mt-1 w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-600 dark:bg-gray-800">
+                <button
+                  onClick={() => {
+                    setTypeFilter('all');
+                    setShowTypeDropdown(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                >
+                  Összes típus
+                </button>
+                {Object.entries(TYPE_LABELS).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setTypeFilter(key as VehicleType);
+                      setShowTypeDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowStatusDropdown(!showStatusDropdown);
+                setShowTypeDropdown(false);
+              }}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              {statusFilter === 'all' ? 'Státusz' : STATUS_CONFIG[statusFilter].label}
+              <ChevronDown className="h-4 w-4" />
+            </button>
+            {showStatusDropdown && (
+              <div className="absolute right-0 z-10 mt-1 w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-600 dark:bg-gray-800">
+                <button
+                  onClick={() => {
+                    setStatusFilter('all');
+                    setShowStatusDropdown(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                >
+                  Összes státusz
+                </button>
+                {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setStatusFilter(key as VehicleStatus);
+                      setShowStatusDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                  >
+                    {config.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Data Table */}
+      <div className="kgc-card-bg overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-800">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Jármű
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Típus
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Státusz
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  KGFB
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Műszaki
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Km óra
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Műveletek
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
+              {filteredVehicles.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
+                  >
+                    Nincs találat.
+                  </td>
+                </tr>
+              ) : (
+                filteredVehicles.map(vehicle => {
+                  const StatusIcon = STATUS_CONFIG[vehicle.status].icon;
+                  return (
+                    <tr key={vehicle.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-white">
+                            {vehicle.licensePlate}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {vehicle.name} • {vehicle.brand} {vehicle.model} ({vehicle.year})
+                          </div>
+                          {vehicle.assignedTo && (
+                            <div className="text-xs text-blue-600 dark:text-blue-400">
+                              → {vehicle.assignedTo} ({vehicle.assignedTenantName})
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <div className="text-sm text-gray-700 dark:text-gray-300">
+                          {TYPE_LABELS[vehicle.type]}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {FUEL_LABELS[vehicle.fuelType]}
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_CONFIG[vehicle.status].color}`}
+                        >
+                          <StatusIcon className="h-3 w-3" />
+                          {STATUS_CONFIG[vehicle.status].label}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Shield className="h-3 w-3 text-gray-400" />
+                          <span
+                            className={
+                              isExpired(vehicle.kgfbExpiryDate)
+                                ? 'font-medium text-red-600 dark:text-red-400'
+                                : isExpiringSoon(vehicle.kgfbExpiryDate)
+                                  ? 'font-medium text-orange-600 dark:text-orange-400'
+                                  : 'text-gray-700 dark:text-gray-300'
+                            }
+                          >
+                            {formatDate(vehicle.kgfbExpiryDate)}
+                          </span>
+                        </div>
+                        {vehicle.cascoExpiryDate && (
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            CASCO: {formatDate(vehicle.cascoExpiryDate)}
+                          </div>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm">
+                        <span
+                          className={
+                            isExpired(vehicle.technicalExpiryDate)
+                              ? 'font-medium text-red-600 dark:text-red-400'
+                              : isExpiringSoon(vehicle.technicalExpiryDate)
+                                ? 'font-medium text-orange-600 dark:text-orange-400'
+                                : 'text-gray-700 dark:text-gray-300'
+                          }
+                        >
+                          {formatDate(vehicle.technicalExpiryDate)}
+                        </span>
+                        {vehicle.highwayPassExpiryDate && (
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Ticket className="h-3 w-3" />
+                            {formatDate(vehicle.highwayPassExpiryDate)}
+                          </div>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                        {vehicle.mileage.toLocaleString('hu-HU')} km
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => navigate(`/vehicles/company/${vehicle.id}`)}
+                            className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                            title="Részletek"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => navigate(`/vehicles/company/${vehicle.id}/edit`)}
+                            className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                            title="Szerkesztés"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(vehicle.id, vehicle.name)}
+                            className="rounded p-1 text-gray-500 hover:bg-red-100 hover:text-red-700 dark:text-gray-400 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                            title="Törlés"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

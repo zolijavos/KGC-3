@@ -29,17 +29,19 @@ export function InventoryMovementsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => navigate('/inventory')}>
               ← Vissza
             </Button>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Készletmozgások</h1>
-              <p className="text-sm text-gray-500">Bevételezések, kiadások, korrekciók</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Készletmozgások</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Bevételezések, kiadások, korrekciók
+              </p>
             </div>
           </div>
         </div>
@@ -58,7 +60,7 @@ export function InventoryMovementsPage() {
           <select
             value={typeFilter}
             onChange={e => setTypeFilter(e.target.value as MovementType | '')}
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2"
           >
             <option value="">Minden típus</option>
             {Object.entries(MOVEMENT_LABELS).map(([value, { label }]) => (
@@ -71,39 +73,45 @@ export function InventoryMovementsPage() {
 
         {/* Movements list */}
         <Card>
-          <div className="divide-y">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {filteredMovements.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">Nincs találat</div>
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">Nincs találat</div>
             ) : (
               filteredMovements.map(mov => (
                 <div
                   key={mov.id}
-                  className="flex items-center justify-between p-4 hover:bg-gray-50"
+                  className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
                   <div className="flex items-center gap-4">
                     <div
                       className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                        mov.quantity > 0 ? 'bg-green-100' : 'bg-red-100'
+                        mov.quantity > 0
+                          ? 'bg-green-100 dark:bg-green-900/50'
+                          : 'bg-red-100 dark:bg-red-900/50'
                       }`}
                     >
                       <span
-                        className={`text-xl ${mov.quantity > 0 ? 'text-green-600' : 'text-red-600'}`}
+                        className={`text-xl ${mov.quantity > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
                       >
                         {mov.quantity > 0 ? '↓' : '↑'}
                       </span>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{mov.itemName}</p>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <p className="font-medium text-gray-900 dark:text-white">{mov.itemName}</p>
+                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                         <span>{mov.itemSku}</span>
                         {mov.reference && (
                           <>
                             <span>•</span>
-                            <span className="text-blue-600">{mov.reference}</span>
+                            <span className="text-blue-600 dark:text-blue-400">
+                              {mov.reference}
+                            </span>
                           </>
                         )}
                       </div>
-                      {mov.note && <p className="text-sm text-gray-500">{mov.note}</p>}
+                      {mov.note && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{mov.note}</p>
+                      )}
                     </div>
                   </div>
 
@@ -113,7 +121,7 @@ export function InventoryMovementsPage() {
                         {mov.quantity > 0 ? '+' : ''}
                         {mov.quantity}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {mov.previousStock} → {mov.newStock}
                       </p>
                     </div>
@@ -124,7 +132,7 @@ export function InventoryMovementsPage() {
                       </span>
                     </div>
 
-                    <div className="w-32 text-right text-sm text-gray-500">
+                    <div className="w-32 text-right text-sm text-gray-500 dark:text-gray-400">
                       <p>{formatDate(mov.createdAt)}</p>
                       <p>{mov.createdByName}</p>
                     </div>

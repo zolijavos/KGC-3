@@ -8,10 +8,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@kgc/ui': path.resolve(__dirname, '../../packages/shared/ui/src'),
     },
+    // Dedupe React and related packages to prevent multiple instances
+    dedupe: ['react', 'react-dom', 'zustand'],
   },
   server: {
     port: 5173,
+    allowedHosts: ['dev-kgc.mflerp.com', 'tst-kgc.mflerp.com', 'uat-kgc.mflerp.com'],
     proxy: {
       '/api': {
         target: 'http://localhost:3010',

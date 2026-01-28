@@ -2,10 +2,9 @@
 
 import * as React from 'react';
 
-import { cn } from '../../lib/utils';
-import { SidebarProvider, type SidebarProviderProps } from '../../hooks/use-sidebar';
-import { useSidebar } from '../../hooks/use-sidebar';
 import { useMobile } from '../../hooks/use-mobile';
+import { SidebarProvider, useSidebar, type SidebarProviderProps } from '../../hooks/use-sidebar';
+import { cn } from '../../lib/utils';
 
 // =============================================================================
 // AppShell
@@ -55,7 +54,7 @@ export function AppShell({
   return (
     <SidebarProvider defaultOpen={defaultOpen} defaultCollapsed={defaultCollapsed}>
       <AppShellContent
-        className={className}
+        {...(className ? { className } : {})}
         sidebar={sidebar}
         header={header}
         sidebarCollapsedWidth={sidebarCollapsedWidth}
@@ -107,9 +106,11 @@ function AppShellContent({
           'flex flex-1 flex-col overflow-hidden transition-[margin] duration-200',
           // On mobile, sidebar is a Sheet overlay, so no margin needed
           // On desktop, add margin based on sidebar state
-          !isMobile && sidebar && (isCollapsed
-            ? 'ml-[var(--sidebar-collapsed-width)]'
-            : 'ml-[var(--sidebar-expanded-width)]')
+          !isMobile &&
+            sidebar &&
+            (isCollapsed
+              ? 'ml-[var(--sidebar-collapsed-width)]'
+              : 'ml-[var(--sidebar-expanded-width)]')
         )}
         style={mainStyles}
       >

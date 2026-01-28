@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui';
 import { useState } from 'react';
 
-const HORILLA_URL = 'http://hr-dev.mflerp.com';
+const HORILLA_URL = 'https://hr-demo.mflerp.com';
 
 export function HorillaHRPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -29,22 +29,13 @@ export function HorillaHRPage() {
             HR
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              Horilla HR
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Humánerőforrás menedzsment
-            </p>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Horilla HR</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Humánerőforrás menedzsment</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setIsLoading(true)}>
-            <svg
-              className="mr-1 h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
+            <svg className="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -55,12 +46,7 @@ export function HorillaHRPage() {
             Frissítés
           </Button>
           <Button size="sm" onClick={openInNewTab}>
-            <svg
-              className="mr-1 h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
+            <svg className="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -94,8 +80,8 @@ export function HorillaHRPage() {
                 Nem sikerült betölteni
               </h2>
               <p className="text-gray-500 dark:text-gray-400 mb-4">
-                A Horilla HR szolgáltatás nem elérhető, vagy a böngésző blokkolja az
-                iframe betöltését.
+                A Horilla HR szolgáltatás nem elérhető, vagy a böngésző blokkolja az iframe
+                betöltését.
               </p>
               <div className="space-y-2">
                 <Button onClick={openInNewTab} className="w-full">

@@ -1,0 +1,298 @@
+# KGC ERP v3.0 - Test Pipeline
+# PR-nál fut: lint, unit tesztek, E2E (sharded)
+#
+# YOLO mód: TEST_YOLO=true - gyors, nincs retry, párhuzamos
+# Sharding: 4 parallel runner a gyors E2E futtatáshoz
+
+name: Test
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'planning-artifacts/**'
+      - '_bmad/**'
+
+  # Manual trigger with YOLO option
+  workflow_dispatch:
+    inputs:
+      yolo:
+        description: 'YOLO mode (fast, no retries)'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: test-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  CI: true
+
+jobs:
+  # ============================================
+  # Lint & Type Check (gyors, blokkoló)
+  # ============================================
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linter
+        run: pnpm lint
+
+      - name: Run type check
+        run: pnpm typecheck
+
+      - name: Check formatting
+        run: pnpm format:check
+
+  # ============================================
+  # Unit Tests
+  # ============================================
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kgc_test
+          POSTGRES_PASSWORD: kgc_test_password
+          POSTGRES_DB: kgc_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://kgc_test:kgc_test_password@localhost:5432/kgc_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Run unit tests
+        run: pnpm test
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+
+  # ============================================
+  # E2E Tests - Parallel Sharded
+  # ============================================
+  e2e:
+    name: E2E Tests (Shard ${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: unit
+
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kgc_e2e
+          POSTGRES_PASSWORD: kgc_e2e_password
+          POSTGRES_DB: kgc_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    env:
+      DATABASE_URL: postgresql://kgc_e2e:kgc_e2e_password@localhost:5432/kgc_e2e
+      REDIS_URL: redis://localhost:6379
+      E2E_BASE_URL: http://localhost:3000
+      TEST_YOLO: ${{ github.event.inputs.yolo || 'false' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(pnpm show @playwright/test version)" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Playwright deps only
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Run migrations
+        run: pnpm db:migrate
+
+      - name: Seed E2E test data
+        run: pnpm db:seed:e2e || echo "Seed script not found, skipping"
+
+      - name: Build applications
+        run: pnpm build
+
+      - name: Run E2E tests (shard ${{ matrix.shard }}/4)
+        run: pnpm test:e2e --shard=${{ matrix.shard }}/4
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-shard-${{ matrix.shard }}
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-shard-${{ matrix.shard }}
+          path: test-results/
+          retention-days: 7
+
+  # ============================================
+  # E2E Results Merge
+  # ============================================
+  e2e-report:
+    name: E2E Report Merge
+    runs-on: ubuntu-latest
+    needs: e2e
+    if: always()
+
+    steps:
+      - name: Download all shard reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: playwright-report-shard-*
+          path: all-reports
+          merge-multiple: true
+
+      - name: Merge reports
+        run: |
+          echo "Merging Playwright reports from all shards..."
+          # Reports are in JSON format, merge is optional for HTML viewing
+          ls -la all-reports/ || true
+
+      - name: Upload merged report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-merged
+          path: all-reports/
+          retention-days: 30
+
+  # ============================================
+  # Quality Gate
+  # ============================================
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [lint, unit, e2e]
+    if: always()
+
+    steps:
+      - name: Check all jobs
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" ]]; then
+            echo "❌ Lint failed"
+            exit 1
+          fi
+          if [[ "${{ needs.unit.result }}" != "success" ]]; then
+            echo "❌ Unit tests failed"
+            exit 1
+          fi
+          if [[ "${{ needs.e2e.result }}" != "success" ]]; then
+            echo "❌ E2E tests failed"
+            exit 1
+          fi
+          echo "✅ All quality gates passed"
+
+# ============================================
+# Burn-In Tests (scheduled, comprehensive)
+# ============================================
+# Note: Burn-in runs on schedule in a separate workflow
+# See: .github/workflows/burn-in.yml

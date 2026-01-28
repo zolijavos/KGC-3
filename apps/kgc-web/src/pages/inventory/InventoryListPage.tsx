@@ -43,17 +43,17 @@ export function InventoryListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => navigate('/dashboard')}>
               ← Vissza
             </Button>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Készlet kezelés</h1>
-              <p className="text-sm text-gray-500">Raktárkészlet és mozgások</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Készlet kezelés</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Raktárkészlet és mozgások</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -75,33 +75,49 @@ export function InventoryListPage() {
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm font-medium text-gray-500">Összes termék</p>
-              <p className="mt-1 text-2xl font-bold text-gray-900">{stats.totalItems} féle</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Összes termék</p>
+              <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                {stats.totalItems} féle
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm font-medium text-gray-500">Készletérték</p>
-              <p className="mt-1 text-2xl font-bold text-blue-600">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Készletérték</p>
+              <p className="mt-1 text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {formatPrice(stats.totalValue)}
               </p>
             </CardContent>
           </Card>
-          <Card className={stats.lowStock > 0 ? 'border-yellow-300 bg-yellow-50' : ''}>
+          <Card
+            className={
+              stats.lowStock > 0
+                ? 'border-yellow-300 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-900/30'
+                : ''
+            }
+          >
             <CardContent className="pt-6">
-              <p className="text-sm font-medium text-gray-500">Alacsony készlet</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Alacsony készlet
+              </p>
               <p
-                className={`mt-1 text-2xl font-bold ${stats.lowStock > 0 ? 'text-yellow-600' : 'text-gray-900'}`}
+                className={`mt-1 text-2xl font-bold ${stats.lowStock > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-900 dark:text-white'}`}
               >
                 {stats.lowStock} termék
               </p>
             </CardContent>
           </Card>
-          <Card className={stats.outOfStock > 0 ? 'border-red-300 bg-red-50' : ''}>
+          <Card
+            className={
+              stats.outOfStock > 0
+                ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/30'
+                : ''
+            }
+          >
             <CardContent className="pt-6">
-              <p className="text-sm font-medium text-gray-500">Hiányzó termék</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Hiányzó termék</p>
               <p
-                className={`mt-1 text-2xl font-bold ${stats.outOfStock > 0 ? 'text-red-600' : 'text-gray-900'}`}
+                className={`mt-1 text-2xl font-bold ${stats.outOfStock > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}
               >
                 {stats.outOfStock} termék
               </p>
@@ -121,7 +137,7 @@ export function InventoryListPage() {
           <select
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value as ItemCategory | '')}
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2"
           >
             <option value="">Minden kategória</option>
             {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
@@ -133,7 +149,7 @@ export function InventoryListPage() {
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value as StockStatus | '')}
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2"
           >
             <option value="">Minden státusz</option>
             {Object.entries(STATUS_LABELS).map(([value, { label }]) => (
@@ -145,7 +161,7 @@ export function InventoryListPage() {
           <select
             value={warehouseFilter}
             onChange={e => setWarehouseFilter(e.target.value)}
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2"
           >
             <option value="">Minden raktár</option>
             {MOCK_WAREHOUSES.map(wh => (
@@ -160,7 +176,7 @@ export function InventoryListPage() {
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 text-left text-sm text-gray-500">
+              <thead className="bg-gray-50 dark:bg-gray-800 text-left text-sm text-gray-500 dark:text-gray-400">
                 <tr>
                   <th className="px-4 py-3 font-medium">Termék</th>
                   <th className="px-4 py-3 font-medium">Kategória</th>
@@ -173,46 +189,56 @@ export function InventoryListPage() {
                   <th className="px-4 py-3 font-medium"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredItems.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                    <td
+                      colSpan={9}
+                      className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
+                    >
                       Nincs találat
                     </td>
                   </tr>
                 ) : (
                   filteredItems.map(item => (
-                    <tr key={item.id} className="hover:bg-gray-50">
+                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                       <td className="px-4 py-3">
                         <div>
-                          <p className="font-medium text-gray-900">{item.name}</p>
-                          <p className="text-sm text-gray-500">{item.sku}</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{item.sku}</p>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                         {CATEGORY_LABELS[item.category]}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <span
-                          className={`font-medium ${item.currentStock <= item.minStock ? 'text-red-600' : 'text-gray-900'}`}
+                          className={`font-medium ${item.currentStock <= item.minStock ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}
                         >
                           {item.currentStock}
                         </span>
-                        <span className="text-sm text-gray-500"> {item.unit}</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          {' '}
+                          {item.unit}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-right text-sm text-gray-600">
+                      <td className="px-4 py-3 text-right text-sm text-gray-600 dark:text-gray-400">
                         {item.reservedStock > 0 ? item.reservedStock : '-'}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className="font-medium text-green-600">{item.availableStock}</span>
+                        <span className="font-medium text-green-600 dark:text-green-400">
+                          {item.availableStock}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-right font-medium">
+                      <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">
                         {formatPrice(item.sellingPrice)}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <div>
-                          <p className="text-gray-900">{item.warehouseName}</p>
-                          {item.location && <p className="text-gray-500">{item.location}</p>}
+                          <p className="text-gray-900 dark:text-white">{item.warehouseName}</p>
+                          {item.location && (
+                            <p className="text-gray-500 dark:text-gray-400">{item.location}</p>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -240,7 +266,7 @@ export function InventoryListPage() {
         </Card>
 
         {/* Quick actions legend */}
-        <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+        <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
           <span className="flex items-center gap-2">
             <span className="h-3 w-3 rounded-full bg-green-500"></span>
             Készleten ({MOCK_INVENTORY.filter(i => i.status === StockStatus.IN_STOCK).length})

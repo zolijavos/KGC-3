@@ -1,0 +1,227 @@
+# ==============================================================================
+# KGC ERP v7.0 - Demo Server Docker Compose
+# Server: demo-kgc.mflerp.com (Hostinger VPS + CloudPanel)
+# ==============================================================================
+#
+# Usage:
+#   cd /root/LABS/KGCERP/KGC-3/infra/docker/full-stack
+#   docker compose -f docker-compose.demo-server.yml --env-file .env.demo up -d --build
+#
+# Nginx reverse proxy already configured on port 80/443
+# Web: http://127.0.0.1:3020
+# API: http://127.0.0.1:3021
+#
+# ==============================================================================
+
+name: kgc-demo
+
+# ==============================================================================
+# SHARED ANCHORS
+# ==============================================================================
+x-logging: &default-logging
+  driver: 'json-file'
+  options:
+    max-size: '10m'
+    max-file: '3'
+
+x-healthcheck-db: &healthcheck-db
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 30s
+
+x-healthcheck-app: &healthcheck-app
+  interval: 30s
+  timeout: 10s
+  retries: 5
+  start_period: 60s
+
+services:
+  # ============================================================================
+  # KGC API (NestJS Backend)
+  # ============================================================================
+  kgc-demo-api:
+    build:
+      context: ../../../
+      dockerfile: apps/kgc-api/Dockerfile
+    container_name: kgc-demo-api
+    ports:
+      - '127.0.0.1:3021:3000'
+    depends_on:
+      kgc-demo-db:
+        condition: service_healthy
+      kgc-demo-redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+    logging: *default-logging
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${KGC_DB_USER:-kgc}:${KGC_DB_PASSWORD}@kgc-demo-db:5432/${KGC_DB_NAME:-kgc_demo}
+      REDIS_URL: redis://kgc-demo-redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-${JWT_SECRET}}
+      APP_BASE_URL: https://demo-kgc.mflerp.com
+      CORS_ORIGIN: https://demo-kgc.mflerp.com
+      # MinIO
+      MINIO_ENDPOINT: kgc-demo-minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_USE_SSL: 'false'
+      # Rate limiting
+      RATE_LIMIT_ENABLED: 'true'
+      RATE_LIMIT_MAX: 100
+    healthcheck:
+      test:
+        ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/api/health']
+      <<: *healthcheck-app
+    restart: unless-stopped
+    networks:
+      - kgc-demo-network
+
+  # ============================================================================
+  # KGC Web (Vite + React PWA Frontend)
+  # Nginx container serving static files, proxying /api to kgc-demo-api
+  # ============================================================================
+  kgc-demo-web:
+    build:
+      context: ../../../
+      dockerfile: apps/kgc-web/Dockerfile
+      args:
+        VITE_API_URL: https://demo-kgc.mflerp.com/api
+        VITE_APP_NAME: ${VITE_APP_NAME:-KGC ERP Demo}
+        VITE_APP_VERSION: ${VITE_APP_VERSION:-7.0.0}
+    container_name: kgc-demo-web
+    ports:
+      - '127.0.0.1:3020:80'
+    depends_on:
+      kgc-demo-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 64M
+    logging: *default-logging
+    healthcheck:
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:80/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - kgc-demo-network
+
+  # ============================================================================
+  # PostgreSQL Database
+  # ============================================================================
+  kgc-demo-db:
+    image: postgres:16-alpine
+    container_name: kgc-demo-db
+    ports:
+      - '127.0.0.1:5440:5432'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+    logging: *default-logging
+    environment:
+      POSTGRES_USER: ${KGC_DB_USER:-kgc}
+      POSTGRES_PASSWORD: ${KGC_DB_PASSWORD}
+      POSTGRES_DB: ${KGC_DB_NAME:-kgc_demo}
+    volumes:
+      - kgc-demo-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${KGC_DB_USER:-kgc} -d ${KGC_DB_NAME:-kgc_demo}']
+      <<: *healthcheck-db
+    restart: unless-stopped
+    networks:
+      - kgc-demo-network
+
+  # ============================================================================
+  # Redis Cache
+  # ============================================================================
+  kgc-demo-redis:
+    image: redis:7-alpine
+    container_name: kgc-demo-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 64M
+    logging: *default-logging
+    volumes:
+      - kgc-demo-redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - kgc-demo-network
+
+  # ============================================================================
+  # MinIO (S3-compatible Object Storage)
+  # ============================================================================
+  kgc-demo-minio:
+    image: minio/minio:latest
+    container_name: kgc-demo-minio
+    ports:
+      - '127.0.0.1:9010:9001'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+    logging: *default-logging
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - kgc-demo-minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - kgc-demo-network
+
+# ==============================================================================
+# VOLUMES
+# ==============================================================================
+volumes:
+  kgc-demo-db-data:
+    name: kgc-demo-db-data
+  kgc-demo-redis-data:
+    name: kgc-demo-redis-data
+  kgc-demo-minio-data:
+    name: kgc-demo-minio-data
+
+# ==============================================================================
+# NETWORKS
+# ==============================================================================
+networks:
+  kgc-demo-network:
+    name: kgc-demo-network
+    driver: bridge
