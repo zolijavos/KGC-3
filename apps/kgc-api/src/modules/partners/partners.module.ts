@@ -15,6 +15,7 @@ import {
 } from '@kgc/partners';
 import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { PartnerDirectController } from './controllers';
 import {
   PrismaLoyaltyTierRepository,
   PrismaPartnerRepository,
@@ -52,7 +53,7 @@ export class PartnersModule {
 
     return {
       module: PartnersModule,
-      controllers: [],
+      controllers: [PartnerDirectController],
       providers,
       exports: [PARTNER_REPOSITORY, REPRESENTATIVE_REPOSITORY, LOYALTY_TIER_REPOSITORY],
     };

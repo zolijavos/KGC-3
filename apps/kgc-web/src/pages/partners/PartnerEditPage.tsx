@@ -3,11 +3,25 @@
  * Partner adatok szerkesztése
  */
 
+import type { Partner, PartnerCategory, PartnerType } from '@/api/partners';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
+import { usePartner, usePartnerMutations } from '@/hooks/use-partners';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MOCK_PARTNERS, PARTNER_CATEGORIES, PARTNER_TYPES } from './mock-data';
-import type { Partner, PartnerCategory, PartnerType } from './types';
+
+const PARTNER_CATEGORIES: { value: PartnerCategory; label: string; color: string }[] = [
+  { value: 'retail', label: 'Kisker. vevő', color: 'bg-blue-100 text-blue-800' },
+  { value: 'wholesale', label: 'Nagyker. vevő', color: 'bg-purple-100 text-purple-800' },
+  { value: 'rental', label: 'Bérlő', color: 'bg-green-100 text-green-800' },
+  { value: 'service', label: 'Szerviz', color: 'bg-orange-100 text-orange-800' },
+  { value: 'supplier', label: 'Beszállító', color: 'bg-red-100 text-red-800' },
+  { value: 'contractor', label: 'Alvállalkozó', color: 'bg-gray-100 text-gray-800' },
+];
+
+const PARTNER_TYPES: { value: PartnerType; label: string }[] = [
+  { value: 'individual', label: 'Magánszemély' },
+  { value: 'company', label: 'Cég' },
+];
 
 interface FormData {
   type: PartnerType;
@@ -57,8 +71,9 @@ function partnerToFormData(partner: Partner): FormData {
 export function PartnerEditPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [partner, setPartner] = useState<Partner | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { partner, isLoading, error, refetch } = usePartner(id);
+  const { updatePartner, isLoading: isSaving } = usePartnerMutations();
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     type: 'company',
     categories: [],
@@ -80,14 +95,12 @@ export function PartnerEditPage() {
     notes: '',
   });
 
+  // Initialize form when partner loads
   useEffect(() => {
-    const found = MOCK_PARTNERS.find(p => p.id === id);
-    if (found) {
-      setPartner(found);
-      setFormData(partnerToFormData(found));
+    if (partner) {
+      setFormData(partnerToFormData(partner));
     }
-    setIsLoading(false);
-  }, [id]);
+  }, [partner]);
 
   const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -102,8 +115,9 @@ export function PartnerEditPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!partner) return;
 
     if (!formData.name.trim()) {
       alert('A név megadása kötelező!');
@@ -115,22 +129,72 @@ export function PartnerEditPage() {
       return;
     }
 
-    alert(`Partner frissítve!\nKód: ${partner?.code}\nNév: ${formData.name}`);
-    navigate(`/partners/${id}`);
+    setSaveError(null);
+    try {
+      await updatePartner(partner.id, {
+        type: formData.type,
+        name: formData.name,
+        shortName: formData.shortName || undefined,
+        taxNumber: formData.taxNumber || undefined,
+        registrationNumber: formData.registrationNumber || undefined,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        website: formData.website || undefined,
+        postalCode: formData.postalCode || undefined,
+        city: formData.city || undefined,
+        address: formData.street || undefined,
+        paymentTermDays: formData.paymentTermDays,
+        creditLimit: formData.creditLimit ? Number(formData.creditLimit) : undefined,
+        discountPercent: formData.discountPercent ? Number(formData.discountPercent) : undefined,
+        rentalDepositPercent: formData.rentalDepositPercent
+          ? Number(formData.rentalDepositPercent)
+          : undefined,
+        notes: formData.notes || undefined,
+        categories: formData.categories,
+      });
+      navigate(`/partners/${id}`);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Hiba történt a mentés során');
+    }
   };
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <p className="text-gray-500">Betöltés...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="text-gray-500 ml-3">Betöltés...</p>
       </div>
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Card className="p-6 text-center">
+          <p className="text-red-500 mb-4">Hiba: {error}</p>
+          <div className="flex gap-2 justify-center">
+            <Button onClick={() => refetch()}>Újrapróbálás</Button>
+            <Button variant="outline" onClick={() => navigate('/partners')}>
+              Vissza a listához
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Not found state
   if (!partner) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <p className="text-gray-500">Partner nem található.</p>
+        <Card className="p-6 text-center">
+          <p className="text-gray-500 mb-4">Partner nem található.</p>
+          <Button variant="outline" onClick={() => navigate('/partners')}>
+            Vissza a listához
+          </Button>
+        </Card>
       </div>
     );
   }
@@ -153,8 +217,12 @@ export function PartnerEditPage() {
               </p>
             </div>
           </div>
-          <Button onClick={handleSubmit} className="bg-kgc-primary hover:bg-kgc-primary/90">
-            Mentés
+          <Button
+            onClick={handleSubmit}
+            disabled={isSaving}
+            className="bg-kgc-primary hover:bg-kgc-primary/90"
+          >
+            {isSaving ? 'Mentés...' : 'Mentés'}
           </Button>
         </div>
       </header>
@@ -443,13 +511,24 @@ export function PartnerEditPage() {
             </CardContent>
           </Card>
 
+          {/* Error display */}
+          {saveError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30">
+              <p className="text-red-800 dark:text-red-200">{saveError}</p>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => navigate(`/partners/${id}`)}>
               Mégse
             </Button>
-            <Button type="submit" className="bg-kgc-primary hover:bg-kgc-primary/90">
-              Változtatások mentése
+            <Button
+              type="submit"
+              disabled={isSaving}
+              className="bg-kgc-primary hover:bg-kgc-primary/90"
+            >
+              {isSaving ? 'Mentés...' : 'Változtatások mentése'}
             </Button>
           </div>
         </form>

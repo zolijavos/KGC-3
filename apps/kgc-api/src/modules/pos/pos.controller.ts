@@ -15,9 +15,11 @@ import {
   CloseSessionDto,
   CreateTransactionDto,
   type ICompletePaymentResult,
+  type ITransactionFilter,
   OpenSessionDto,
   PaymentService,
   ProcessCashPaymentDto,
+  SaleStatus,
   SessionService,
   SetCustomerDto,
   SuspendSessionDto,
@@ -45,6 +47,7 @@ import {
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -189,6 +192,44 @@ export class SessionController {
 @Controller('pos/transactions')
 export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List all sale transactions' })
+  @ApiQuery({ name: 'status', required: false, enum: SaleStatus, description: 'Filter by status' })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: 'string',
+    description: 'Search by transaction number, customer name, or receipt',
+  })
+  @ApiQuery({
+    name: 'dateFrom',
+    required: false,
+    type: 'string',
+    description: 'Filter from date (ISO 8601)',
+  })
+  @ApiQuery({
+    name: 'dateTo',
+    required: false,
+    type: 'string',
+    description: 'Filter to date (ISO 8601)',
+  })
+  @ApiResponse({ status: 200, description: 'List of transactions' })
+  async listTransactions(
+    @Query('status') status?: SaleStatus,
+    @Query('search') search?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @CurrentTenant() tenantId?: string
+  ) {
+    const filter: ITransactionFilter = {};
+    if (status) filter.status = status;
+    if (search) filter.search = search;
+    if (dateFrom) filter.dateFrom = new Date(dateFrom);
+    if (dateTo) filter.dateTo = new Date(dateTo);
+
+    return this.transactionService.getTransactions(tenantId ?? '', filter);
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create new sale transaction' })

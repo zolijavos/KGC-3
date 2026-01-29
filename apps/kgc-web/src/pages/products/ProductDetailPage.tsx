@@ -1,7 +1,8 @@
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
+import { useProduct } from '@/hooks/use-products';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MOCK_PRODUCTS, PRODUCT_CATEGORIES, PRODUCT_STATUSES } from './mock-data';
+import { PRODUCT_CATEGORIES, PRODUCT_STATUSES } from './mock-data';
 import type { ProductCategory, ProductStatus } from './types';
 
 type TabType = 'overview' | 'stock' | 'pricing' | 'rental' | 'history';
@@ -11,8 +12,42 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
-  const product = MOCK_PRODUCTS.find(p => p.id === id);
+  const { product, isLoading, error, refetch } = useProduct(id);
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center kgc-bg">
+        <Card className="w-96 text-center">
+          <CardContent className="pt-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-500 dark:text-gray-400">Betöltés...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center kgc-bg">
+        <Card className="w-96 text-center">
+          <CardContent className="pt-6">
+            <p className="text-red-500 mb-4">Hiba: {error}</p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => refetch()}>Újrapróbálás</Button>
+              <Button variant="outline" onClick={() => navigate('/products')}>
+                Vissza a listához
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Not found state
   if (!product) {
     return (
       <div className="flex min-h-screen items-center justify-center kgc-bg">
@@ -68,13 +103,15 @@ export function ProductDetailPage() {
 
   const isRentalEquipment = product.category === 'rental_equipment';
 
-  const tabs = ([
-    { id: 'overview' as const, label: 'Áttekintés', show: true },
-    { id: 'stock' as const, label: 'Készlet', show: true },
-    { id: 'pricing' as const, label: 'Árazás', show: true },
-    { id: 'rental' as const, label: 'Bérlés', show: isRentalEquipment },
-    { id: 'history' as const, label: 'Előzmények', show: true },
-  ] as const).filter(t => t.show);
+  const tabs = (
+    [
+      { id: 'overview' as const, label: 'Áttekintés', show: true },
+      { id: 'stock' as const, label: 'Készlet', show: true },
+      { id: 'pricing' as const, label: 'Árazás', show: true },
+      { id: 'rental' as const, label: 'Bérlés', show: isRentalEquipment },
+      { id: 'history' as const, label: 'Előzmények', show: true },
+    ] as const
+  ).filter(t => t.show);
 
   return (
     <div className="min-h-screen kgc-bg">

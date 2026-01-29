@@ -1,63 +1,131 @@
-version: '3.8'
+# ==============================================================================
+# KGC ERP v7.0 - Development Docker Compose
+# Synced with docker-compose.demo.yml for consistency
+# ==============================================================================
+#
+# Usage:
+#   docker compose up -d
+#   docker compose down
+#
+# ==============================================================================
+
+name: kgc-erp-dev
+
+# ==============================================================================
+# SHARED ANCHORS (YAML DRY) - Same as demo
+# ==============================================================================
+x-logging: &default-logging
+  driver: 'json-file'
+  options:
+    max-size: '10m'
+    max-file: '3'
+
+x-healthcheck-db: &healthcheck-db
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 30s
 
 services:
-  # PostgreSQL adatbázis
+  # ============================================================================
+  # PostgreSQL Database (synced with demo: postgres:16-alpine)
+  # ============================================================================
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: kgc-postgres
     ports:
-      - '5432:5432'
+      - '${KGC_DB_PORT:-5432}:5432'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+    logging: *default-logging
     environment:
-      POSTGRES_USER: kgc
-      POSTGRES_PASSWORD: kgc_dev_password
-      POSTGRES_DB: kgc_erp
+      POSTGRES_USER: ${KGC_DB_USER:-kgc}
+      POSTGRES_PASSWORD: ${KGC_DB_PASSWORD:-kgc_dev_password}
+      POSTGRES_DB: ${KGC_DB_NAME:-kgc_erp}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infra/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U kgc -d kgc_erp']
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ['CMD-SHELL', 'pg_isready -U ${KGC_DB_USER:-kgc} -d ${KGC_DB_NAME:-kgc_erp}']
+      <<: *healthcheck-db
+    restart: unless-stopped
 
-  # Redis cache
+  # ============================================================================
+  # Redis Cache (synced with demo: redis:7-alpine)
+  # ============================================================================
   redis:
     image: redis:7-alpine
     container_name: kgc-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
-      - '6379:6379'
+      - '${KGC_REDIS_PORT:-6379}:6379'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 64M
+    logging: *default-logging
     volumes:
       - redis_data:/data
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 3
+    restart: unless-stopped
 
-  # MinIO (S3-compatible storage for files)
+  # ============================================================================
+  # MinIO (S3-compatible Object Storage) - synced with demo
+  # ============================================================================
   minio:
     image: minio/minio:latest
     container_name: kgc-minio
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - '${MINIO_API_PORT:-9000}:9000'
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+    logging: *default-logging
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
       interval: 30s
-      timeout: 20s
+      timeout: 10s
       retries: 3
+    restart: unless-stopped
 
+# ==============================================================================
+# VOLUMES
+# ==============================================================================
 volumes:
   postgres_data:
+    name: kgc-dev-postgres-data
   redis_data:
+    name: kgc-dev-redis-data
   minio_data:
+    name: kgc-dev-minio-data
 
+# ==============================================================================
+# NETWORKS
+# ==============================================================================
 networks:
   default:
-    name: kgc-network
+    name: kgc-dev-network
+    driver: bridge

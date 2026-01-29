@@ -20,9 +20,11 @@ import { HorillaHrModule } from './modules/horilla-hr/horilla-hr.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { InvoiceModule } from './modules/invoice/invoice.module';
 import { PartnersModule } from './modules/partners/partners.module';
+import { PosModule } from './modules/pos/pos.module';
 import { ProductsModule } from './modules/products/products.module';
 import { RentalModule } from './modules/rental/rental.module';
 import { ReportingModule } from './modules/reporting/reporting.module';
+import { ServiceModule } from './modules/service/service.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { TestSeedingModule } from './modules/test-seeding/test-seeding.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
@@ -194,12 +196,18 @@ class WebhookController {
     // ReportingModule - Reporting Engine (Epic 27)
     ReportingModule.forRoot({ prisma }),
 
+    // ServiceModule - Munkalap kezelés (Epic 17)
+    ServiceModule.forRoot({ prisma }),
+
     // HorillaHrModule - HR Integration (Epic 30)
     HorillaHrModule.forRoot({ prisma }),
 
     // TestSeedingModule - Test data seeding for E2E tests (Sprint 0)
     // Only active in development/staging/test environments
     TestSeedingModule.forRoot({ prisma }),
+
+    // PosModule - Point of Sale (Epic 22)
+    PosModule.forRoot({ prisma }),
   ],
   controllers: [AppController, WebhookController],
   providers: [

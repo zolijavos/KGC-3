@@ -17,6 +17,7 @@ import {
 } from '@kgc/products';
 import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { ProductDirectController } from './controllers';
 import {
   PrismaCategoryRepository,
   PrismaPriceRuleRepository,
@@ -59,7 +60,7 @@ export class ProductsModule {
 
     return {
       module: ProductsModule,
-      controllers: [],
+      controllers: [ProductDirectController],
       providers,
       exports: [
         PRODUCT_REPOSITORY,

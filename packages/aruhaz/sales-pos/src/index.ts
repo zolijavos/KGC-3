@@ -32,6 +32,7 @@ export type {
   ISaleItemRepository,
   ISaleTransaction,
   ITransactionCreateResult,
+  ITransactionFilter,
   ITransactionRepository,
 } from './interfaces/transaction.interface.js';
 

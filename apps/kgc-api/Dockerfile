@@ -85,8 +85,8 @@ COPY . .
 # Generate Prisma client
 RUN pnpm --filter @kgc/api exec prisma generate
 
-# Build packages and API
-RUN pnpm build --filter @kgc/api
+# Build packages and API (with dependencies using turbo filter syntax)
+RUN pnpm build --filter=@kgc/api...
 
 # ===========================================
 # Stage 3: Production Image
@@ -96,7 +96,7 @@ FROM node:20-alpine AS runner
 # Install build dependencies for native modules (bcrypt)
 RUN apk add --no-cache python3 make g++ openssl
 
-# Add non-root user for security
+# Add non-root user for security BEFORE copying files
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nestjs
 
@@ -106,15 +106,15 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Copy EVERYTHING from builder (including built packages and node_modules)
-# This preserves the working ESM/CJS resolution from the build stage
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/pnpm-lock.yaml ./
-COPY --from=builder /app/pnpm-workspace.yaml ./
-COPY --from=builder /app/tsconfig.base.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/apps/kgc-api ./apps/kgc-api
+# Copy files with correct ownership (MUCH faster than chown -R)
+# Using --chown sets ownership during copy, avoiding slow recursive chown
+COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
+COPY --from=builder --chown=nestjs:nodejs /app/pnpm-lock.yaml ./
+COPY --from=builder --chown=nestjs:nodejs /app/pnpm-workspace.yaml ./
+COPY --from=builder --chown=nestjs:nodejs /app/tsconfig.base.json ./
+COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nestjs:nodejs /app/packages ./packages
+COPY --from=builder --chown=nestjs:nodejs /app/apps/kgc-api ./apps/kgc-api
 
 # Rebuild bcrypt native module for Alpine (musl vs glibc)
 # Delete the pre-built binary and reinstall with correct musl binary
@@ -124,9 +124,6 @@ RUN cd /app/node_modules/.pnpm/bcrypt@5.1.1/node_modules/bcrypt && \
 
 # Remove build dependencies to reduce image size
 RUN apk del python3 make g++
-
-# Fix ownership
-RUN chown -R nestjs:nodejs /app
 
 # Switch to non-root user
 USER nestjs

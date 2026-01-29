@@ -67,6 +67,16 @@ export interface ITransactionCreateResult {
 }
 
 /**
+ * Filter options for listing transactions
+ */
+export interface ITransactionFilter {
+  status?: SaleStatus;
+  dateFrom?: Date;
+  dateTo?: Date;
+  search?: string;
+}
+
+/**
  * Repository interface for SaleTransaction
  * Implemented in apps/kgc-api with Prisma
  */
@@ -74,6 +84,7 @@ export interface ITransactionRepository {
   findById(id: string): Promise<ISaleTransaction | null>;
   findByTransactionNumber(transactionNumber: string): Promise<ISaleTransaction | null>;
   findBySession(sessionId: string): Promise<ISaleTransaction[]>;
+  findAll(tenantId: string, filter?: ITransactionFilter): Promise<ISaleTransaction[]>;
   create(data: Omit<ISaleTransaction, 'id' | 'createdAt'>): Promise<ISaleTransaction>;
   update(id: string, data: Partial<ISaleTransaction>): Promise<ISaleTransaction>;
   getNextSequenceNumber(tenantId: string, year: number): Promise<number>;

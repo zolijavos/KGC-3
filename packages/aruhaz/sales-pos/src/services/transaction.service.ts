@@ -22,6 +22,7 @@ import {
   ISaleItemRepository,
   ISaleTransaction,
   ITransactionCreateResult,
+  ITransactionFilter,
   ITransactionRepository,
   PaymentStatus,
   SaleStatus,
@@ -130,6 +131,16 @@ export class TransactionService {
       throw new Error('Access denied');
     }
     return transaction;
+  }
+
+  /**
+   * Get all transactions for tenant with optional filters
+   */
+  async getTransactions(
+    tenantId: string,
+    filter?: ITransactionFilter
+  ): Promise<ISaleTransaction[]> {
+    return this.transactionRepository.findAll(tenantId, filter);
   }
 
   /**

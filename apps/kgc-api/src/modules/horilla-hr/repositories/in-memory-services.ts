@@ -133,13 +133,13 @@ export class InMemoryUserRepository implements IUserRepository {
       email: data.email || '',
       firstName: data.firstName || '',
       lastName: data.lastName || '',
-      phone: data.phone,
       role: data.role || 'EMPLOYEE',
-      locationId: data.locationId,
       isActive: data.isActive ?? true,
-      horillaEmployeeId: data.horillaEmployeeId,
       createdAt: new Date(),
       updatedAt: new Date(),
+      ...(data.phone !== undefined && { phone: data.phone }),
+      ...(data.locationId !== undefined && { locationId: data.locationId }),
+      ...(data.horillaEmployeeId !== undefined && { horillaEmployeeId: data.horillaEmployeeId }),
     };
     this.users.set(user.id, user);
     return user;
@@ -184,11 +184,11 @@ export class InMemoryEmployeeMappingRepository implements IEmployeeMappingReposi
       horillaEmployeeId: data.horillaEmployeeId || '',
       kgcUserId: data.kgcUserId || '',
       syncDirection: data.syncDirection!,
-      lastSyncAt: data.lastSyncAt,
       lastSyncStatus: data.lastSyncStatus || SyncStatus.PENDING,
-      syncErrors: data.syncErrors,
       createdAt: new Date(),
       updatedAt: new Date(),
+      ...(data.lastSyncAt !== undefined && { lastSyncAt: data.lastSyncAt }),
+      ...(data.syncErrors !== undefined && { syncErrors: data.syncErrors }),
     };
     this.mappings.set(mapping.id, mapping);
     return mapping;

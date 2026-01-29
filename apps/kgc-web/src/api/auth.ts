@@ -6,6 +6,22 @@ export interface LoginRequest {
   password: string;
 }
 
+// Backend response format (wrapped in data)
+interface LoginApiResponse {
+  data: {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      role: string;
+    };
+  };
+}
+
+// Frontend-facing response format
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
@@ -17,6 +33,19 @@ export interface LogoutResponse {
 }
 
 export const authApi = {
-  login: (data: LoginRequest) => api.post<LoginResponse>('/auth/login', data, { auth: false }),
+  login: async (data: LoginRequest): Promise<LoginResponse> => {
+    const response = await api.post<LoginApiResponse>('/auth/login', data, { auth: false });
+    // Unwrap the data property from backend response
+    return {
+      accessToken: response.data.accessToken,
+      refreshToken: response.data.refreshToken,
+      user: {
+        id: response.data.user.id,
+        email: response.data.user.email,
+        name: response.data.user.name,
+        role: response.data.user.role,
+      },
+    };
+  },
   logout: () => api.post<LogoutResponse>('/auth/logout'),
 };

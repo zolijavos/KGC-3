@@ -231,14 +231,15 @@ export class RentalController {
   }> {
     const context = this.buildContext(tenantId);
 
-    const filter: Record<string, unknown> = {};
-    if (status) filter.status = status;
-    if (customerId) filter.customerId = customerId;
-    if (equipmentId) filter.equipmentId = equipmentId;
-    if (overdueOnly === 'true') filter.overdueOnly = true;
-    if (search) filter.search = search;
-    if (page) filter.page = parseInt(page, 10);
-    if (pageSize) filter.pageSize = parseInt(pageSize, 10);
+    const filter = {
+      page: page ? parseInt(page, 10) : 1,
+      pageSize: pageSize ? parseInt(pageSize, 10) : 20,
+      ...(status && { status }),
+      ...(customerId && { customerId }),
+      ...(equipmentId && { equipmentId }),
+      ...(overdueOnly === 'true' && { overdueOnly: true }),
+      ...(search && { search }),
+    };
 
     const result: RentalListResult = await this.rentalService.findMany(filter, context);
 

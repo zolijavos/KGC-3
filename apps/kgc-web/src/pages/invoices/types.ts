@@ -1,76 +1,112 @@
-// Számla típusok
+// Számla típusok (matching API)
 
-export type InvoiceStatus = 'draft' | 'issued' | 'paid' | 'cancelled' | 'overdue';
+export type InvoiceStatus =
+  | 'DRAFT'
+  | 'PENDING'
+  | 'APPROVED'
+  | 'SENT'
+  | 'PAID'
+  | 'PARTIALLY_PAID'
+  | 'OVERDUE'
+  | 'CANCELLED'
+  | 'VOIDED';
 
-export type InvoiceType = 'normal' | 'proforma' | 'correction' | 'cancellation';
+export type InvoiceType = 'STANDARD' | 'ADVANCE' | 'FINAL' | 'PROFORMA' | 'CREDIT_NOTE';
 
-export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'mypos';
+export type PaymentMethod = 'CASH' | 'CARD' | 'TRANSFER' | 'COD';
 
 export interface InvoiceItem {
   id: string;
+  itemType: string;
   productId?: string;
   description: string;
   quantity: number;
   unit: string;
   unitPrice: number;
-  vatRate: number; // 27, 18, 5, 0
-  netAmount: number;
+  vatPercent: number;
   vatAmount: number;
-  grossAmount: number;
+  totalPrice: number;
+  referenceType?: string;
+  referenceId?: string;
+  sortOrder: number;
 }
 
 export interface Invoice {
   id: string;
+  tenantId: string;
   invoiceNumber: string;
+  partnerId: string;
   type: InvoiceType;
   status: InvoiceStatus;
 
-  // Kapcsolatok
-  partnerId: string;
-  partnerName: string;
-  partnerAddress: string;
-  partnerTaxNumber?: string;
-  contractId?: string;
-  contractNumber?: string;
-  rentalId?: string;
-  rentalNumber?: string;
-  worksheetId?: string;
-  worksheetNumber?: string;
-
-  // Dátumok
-  createdAt: string;
+  // Dates
   issueDate: string;
   dueDate: string;
+  deliveryDate?: string;
   paidAt?: string;
-  cancelledAt?: string;
+  createdAt: string;
+  updatedAt: string;
 
-  // Tételek
-  items: InvoiceItem[];
-
-  // Összegek
-  netTotal: number;
-  vatTotal: number;
-  grossTotal: number;
-
-  // Fizetés
-  paymentMethod: PaymentMethod;
+  // Amounts
+  subtotal: number;
+  discountAmount: number;
+  vatAmount: number;
+  totalAmount: number;
   paidAmount: number;
-  remainingAmount: number;
+  balanceDue: number;
+
+  // Currency
+  currency: string;
+  exchangeRate: number;
+
+  // Payment
+  paymentMethod?: PaymentMethod;
+  paymentRef?: string;
 
   // NAV
-  navStatus?: 'pending' | 'sent' | 'accepted' | 'rejected';
+  navStatus?: string;
   navTransactionId?: string;
+  navSentAt?: string;
+  navConfirmedAt?: string;
+  navErrorMessage?: string;
 
-  // Egyéb
+  // PDF
+  pdfUrl?: string;
+  sentAt?: string;
+  sentTo?: string;
+
+  // Void/Storno
+  voidedInvoiceId?: string;
+  voidReason?: string;
+  voidedAt?: string;
+
+  // Notes
   notes?: string;
+  internalNotes?: string;
+
+  // Audit
   createdBy: string;
-  correctionOf?: string; // Eredeti számla ID helyesbítésnél
+  updatedBy: string;
+
+  // Items (populated)
+  items?: InvoiceItem[];
+
+  // Partner info (populated)
+  partner?: {
+    id: string;
+    name: string;
+    companyName?: string;
+    taxNumber?: string;
+    address?: string;
+  };
 }
 
 export interface InvoiceListFilters {
   search: string;
-  status: InvoiceStatus | 'all';
-  type: InvoiceType | 'all';
+  status: InvoiceStatus | 'ALL';
+  type: InvoiceType | 'ALL';
   dateFrom?: string;
   dateTo?: string;
+  page?: number;
+  pageSize?: number;
 }

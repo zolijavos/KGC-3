@@ -1,13 +1,9 @@
+import { updateProduct } from '@/api/products';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
+import { useProduct } from '@/hooks/use-products';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  MOCK_PRODUCTS,
-  MOCK_SUPPLIERS,
-  PRODUCT_CATEGORIES,
-  PRODUCT_STATUSES,
-  VAT_RATES,
-} from './mock-data';
+import { MOCK_SUPPLIERS, PRODUCT_CATEGORIES, PRODUCT_STATUSES, VAT_RATES } from './mock-data';
 import type { Product, ProductCategory, ProductStatus, VatRate } from './types';
 
 interface FormData {
@@ -64,28 +60,59 @@ function getInitialFormData(product: Product): FormData {
 export function ProductEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const product = MOCK_PRODUCTS.find(p => p.id === id);
+  const { product, isLoading, error, refetch } = useProduct(id);
 
-  // Early return for not found - this component won't render the hooks below
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center kgc-bg">
+        <Card className="w-96 text-center">
+          <CardContent className="pt-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-500 dark:text-gray-400">Betöltés...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center kgc-bg">
+        <Card className="w-96 text-center">
+          <CardContent className="pt-6">
+            <p className="text-red-500 mb-4">Hiba: {error}</p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => refetch()}>Újrapróbálás</Button>
+              <Button variant="outline" onClick={() => navigate('/products')}>
+                Vissza a listához
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Not found state
   if (!product) {
-    return <ProductNotFound navigate={navigate} />;
+    return (
+      <div className="flex min-h-screen items-center justify-center kgc-bg">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Cikk nem található
+          </h1>
+          <Button onClick={() => navigate('/products')} className="mt-4">
+            Vissza a listához
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   // Now we can safely use product in initial state
   return <ProductEditForm product={product} navigate={navigate} />;
-}
-
-function ProductNotFound({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
-  return (
-    <div className="flex min-h-screen items-center justify-center kgc-bg">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Cikk nem található</h1>
-        <Button onClick={() => navigate('/products')} className="mt-4">
-          Vissza a listához
-        </Button>
-      </div>
-    </div>
-  );
 }
 
 function ProductEditForm({
@@ -96,6 +123,8 @@ function ProductEditForm({
   navigate: ReturnType<typeof useNavigate>;
 }) {
   const [formData, setFormData] = useState<FormData>(() => getInitialFormData(product));
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -121,7 +150,7 @@ function ProductEditForm({
     }).format(price);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
@@ -134,9 +163,38 @@ function ProductEditForm({
       return;
     }
 
-    // In real app, this would call API
-    alert(`Cikk módosítva!\nCikkszám: ${formData.sku}\nNév: ${formData.name}`);
-    navigate(`/products/${product.id}`);
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const statusMap: Record<ProductStatus, 'ACTIVE' | 'INACTIVE' | 'DISCONTINUED'> = {
+        active: 'ACTIVE',
+        inactive: 'INACTIVE',
+        discontinued: 'DISCONTINUED',
+      };
+
+      await updateProduct(product.id, {
+        status: statusMap[formData.status],
+        name: formData.name,
+        shortName: formData.shortName || undefined,
+        description: formData.description || undefined,
+        brand: formData.brand || undefined,
+        model: formData.model || undefined,
+        barcode: formData.barcode || undefined,
+        purchasePrice: parseFloat(formData.purchasePrice) || undefined,
+        sellingPrice: parseFloat(formData.sellingPriceNet) || undefined,
+        vatPercent: formData.vatRate,
+        minStockLevel: parseInt(formData.minStockLevel) || undefined,
+        reorderQuantity: parseInt(formData.reorderQuantity) || undefined,
+      });
+
+      navigate(`/products/${product.id}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Mentés sikertelen';
+      setSaveError(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const isRentalEquipment = formData.category === 'rental_equipment';
@@ -159,13 +217,22 @@ function ProductEditForm({
               </p>
             </div>
           </div>
-          <Button onClick={handleSubmit} className="bg-kgc-primary hover:bg-kgc-primary/90">
-            Mentés
+          <Button
+            onClick={handleSubmit}
+            className="bg-kgc-primary hover:bg-kgc-primary/90"
+            disabled={isSaving}
+          >
+            {isSaving ? 'Mentés...' : 'Mentés'}
           </Button>
         </div>
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        {saveError && (
+          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-300">
+            {saveError}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Status & Category */}
           <Card>
@@ -508,11 +575,16 @@ function ProductEditForm({
               type="button"
               variant="outline"
               onClick={() => navigate(`/products/${product.id}`)}
+              disabled={isSaving}
             >
               Mégse
             </Button>
-            <Button type="submit" className="bg-kgc-primary hover:bg-kgc-primary/90">
-              Módosítások mentése
+            <Button
+              type="submit"
+              className="bg-kgc-primary hover:bg-kgc-primary/90"
+              disabled={isSaving}
+            >
+              {isSaving ? 'Mentés...' : 'Módosítások mentése'}
             </Button>
           </div>
         </form>

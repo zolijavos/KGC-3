@@ -29,6 +29,7 @@
     "@kgc/bevetelezes": "workspace:^",
     "@kgc/common": "workspace:*",
     "@kgc/feladatlista": "workspace:*",
+    "@kgc/horilla-hr": "workspace:*",
     "@kgc/inventory": "workspace:*",
     "@kgc/leltar": "workspace:*",
     "@kgc/online-booking": "workspace:*",

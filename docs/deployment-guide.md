@@ -86,6 +86,122 @@ Az alkalmazás elérhető:
 
 ---
 
+## Demo környezet (demo-kgc.mflerp.com)
+
+### Demo szerver telepítése
+
+A demo környezet éles szerveren fut nginx reverse proxy mögött.
+
+#### 1. Környezeti változók
+
+```bash
+cd infra/docker/full-stack
+cp .env.demo.example .env.demo
+# Szerkeszd a .env.demo fájlt
+```
+
+Szükséges változók:
+
+```env
+JWT_SECRET=<erős-secret>
+JWT_REFRESH_SECRET=<erős-refresh-secret>
+KGC_DB_USER=kgc
+KGC_DB_PASSWORD=<adatbázis-jelszó>
+KGC_DB_NAME=kgc_demo
+DEMO_DOMAIN=demo-kgc.mflerp.com
+```
+
+#### 2. Build és indítás
+
+```bash
+# Build
+docker compose -f docker-compose.demo.yml --env-file .env.demo build --no-cache
+
+# Indítás
+docker compose -f docker-compose.demo.yml --env-file .env.demo up -d
+```
+
+#### 3. Adatbázis inicializálás
+
+```bash
+# Schema push
+docker exec -w /app/apps/kgc-api kgc-demo-api npx --package prisma@5 prisma db push --schema=prisma/schema.prisma --accept-data-loss
+
+# Seed adatok
+docker exec -w /app/apps/kgc-api kgc-demo-api npx ts-node --transpileOnly prisma/seed.ts
+```
+
+#### 4. Nginx konfiguráció
+
+A demo szerveren nginx működik reverse proxy-ként. Példa konfig:
+
+```nginx
+server {
+    listen 80;
+    server_name demo-kgc.mflerp.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name demo-kgc.mflerp.com;
+
+    ssl_certificate /etc/letsencrypt/live/demo-kgc.mflerp.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/demo-kgc.mflerp.com/privkey.pem;
+
+    # Frontend
+    location / {
+        proxy_pass http://127.0.0.1:3020;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # API
+    location /api/ {
+        proxy_pass http://127.0.0.1:3021;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+#### 5. Újraépítés és deploy
+
+```bash
+# Leállítás
+docker compose -f docker-compose.demo.yml --env-file .env.demo down
+
+# Rebuild és indítás
+docker compose -f docker-compose.demo.yml --env-file .env.demo build --no-cache
+docker compose -f docker-compose.demo.yml --env-file .env.demo up -d
+
+# Seed újrafuttatás (opcionális)
+docker exec -w /app/apps/kgc-api kgc-demo-api npx ts-node --transpileOnly prisma/seed.ts
+```
+
+#### 6. Demo elérhetőségek
+
+| Szolgáltatás | URL                                  | Megjegyzés       |
+| ------------ | ------------------------------------ | ---------------- |
+| Frontend     | https://demo-kgc.mflerp.com/         | PWA frontend     |
+| API          | https://demo-kgc.mflerp.com/api/     | REST API         |
+| Swagger      | https://demo-kgc.mflerp.com/api/docs | API dokumentáció |
+
+#### 7. Teszt belépési adatok
+
+| Felhasználó | Email           | Jelszó      | PIN  |
+| ----------- | --------------- | ----------- | ---- |
+| Admin       | admin@kgc.hu    | admin123    | -    |
+| Operator    | operator@kgc.hu | operator123 | 1234 |
+
+---
+
 ## Staging környezet
 
 ### staging.kgc.local beállítása
@@ -274,9 +390,10 @@ docker compose down -v
 ## Kapcsolódó dokumentumok
 
 - [CLAUDE.md](../CLAUDE.md) - Fejlesztői útmutató
+- [CHANGELOG.md](../CHANGELOG.md) - Verzió történet
 - [Architecture](../planning-artifacts/architecture.md) - Architektúra dokumentáció
 - [ADR-045: Infrastructure Simplification](../planning-artifacts/adr/ADR-045-infrastructure-simplification.md)
 
 ---
 
-**Utolsó frissítés:** 2026-01-26
+**Utolsó frissítés:** 2026-01-29

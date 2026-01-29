@@ -11,6 +11,7 @@ import {
   ISaleItem,
   ISaleItemRepository,
   ISaleTransaction,
+  ITransactionFilter,
   ITransactionRepository,
 } from '@kgc/sales-pos';
 import { Injectable } from '@nestjs/common';
@@ -106,6 +107,40 @@ export class PrismaTransactionRepository implements ITransactionRepository {
     const results = await this.prisma.saleTransaction.findMany({
       where: { sessionId },
       orderBy: { createdAt: 'desc' },
+    });
+
+    return results.map(r => this.mapToDomain(r));
+  }
+
+  async findAll(tenantId: string, filter?: ITransactionFilter): Promise<ISaleTransaction[]> {
+    const where: Prisma.SaleTransactionWhereInput = { tenantId };
+
+    if (filter?.status) {
+      where.status = mapSaleStatusToPrisma(filter.status);
+    }
+
+    if (filter?.dateFrom || filter?.dateTo) {
+      where.createdAt = {};
+      if (filter.dateFrom) {
+        where.createdAt.gte = filter.dateFrom;
+      }
+      if (filter.dateTo) {
+        where.createdAt.lte = filter.dateTo;
+      }
+    }
+
+    if (filter?.search) {
+      where.OR = [
+        { transactionNumber: { contains: filter.search, mode: 'insensitive' } },
+        { customerName: { contains: filter.search, mode: 'insensitive' } },
+        { receiptNumber: { contains: filter.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const results = await this.prisma.saleTransaction.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: 100, // Limit results
     });
 
     return results.map(r => this.mapToDomain(r));

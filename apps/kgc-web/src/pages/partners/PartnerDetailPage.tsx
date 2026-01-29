@@ -1,7 +1,8 @@
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
+import { usePartner } from '@/hooks/use-partners';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MOCK_PARTNERS, PARTNER_CATEGORIES, PARTNER_STATUSES, PARTNER_TYPES } from './mock-data';
+import { PARTNER_CATEGORIES, PARTNER_STATUSES, PARTNER_TYPES } from './mock-data';
 import type { PartnerCategory, PartnerStatus } from './types';
 
 type TabType = 'overview' | 'addresses' | 'contacts' | 'financial' | 'history';
@@ -12,13 +13,27 @@ export function PartnerDetailPage() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [isEditing, setIsEditing] = useState(false);
 
-  const partner = MOCK_PARTNERS.find(p => p.id === id);
+  const { partner, isLoading, error } = usePartner(id);
 
-  if (!partner) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Partner nem található</h1>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-kgc-primary border-r-transparent"></div>
+          <p className="mt-2 text-gray-500">Betöltés...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !partner) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Partner nem található
+          </h1>
+          {error && <p className="mt-2 text-red-600">{error}</p>}
           <Button onClick={() => navigate('/partners')} className="mt-4">
             Vissza a listához
           </Button>

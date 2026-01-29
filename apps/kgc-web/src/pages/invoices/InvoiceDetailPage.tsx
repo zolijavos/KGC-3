@@ -1,22 +1,35 @@
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
+import { useInvoice, useInvoiceMutations } from '@/hooks/use-invoices';
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { INVOICE_STATUSES, INVOICE_TYPES, MOCK_INVOICES, PAYMENT_METHODS } from './mock-data';
+import { INVOICE_STATUSES, INVOICE_TYPES, NAV_STATUSES, PAYMENT_METHODS } from './mock-data';
 import type { Invoice, InvoiceStatus, InvoiceType, PaymentMethod } from './types';
 
 export function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const invoice = MOCK_INVOICES.find(i => i.id === id);
+  const { invoice, isLoading, error, refetch } = useInvoice(id);
+  const mutations = useInvoiceMutations();
 
-  if (!invoice) {
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center kgc-bg">
+        <div className="text-center">
+          <p className="text-gray-500 dark:text-gray-400">Számla betöltése...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !invoice) {
     return (
       <div className="flex min-h-screen items-center justify-center kgc-bg">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             Számla nem található
           </h1>
+          {error && <p className="mt-2 text-red-600 dark:text-red-400">{error}</p>}
           <Button onClick={() => navigate('/invoices')} className="mt-4">
             Vissza a listához
           </Button>
@@ -25,15 +38,21 @@ export function InvoiceDetailPage() {
     );
   }
 
-  return <InvoiceDetail invoice={invoice} navigate={navigate} />;
+  return (
+    <InvoiceDetail invoice={invoice} navigate={navigate} mutations={mutations} refetch={refetch} />
+  );
 }
 
 function InvoiceDetail({
   invoice,
   navigate,
+  mutations,
+  refetch,
 }: {
   invoice: Invoice;
   navigate: ReturnType<typeof useNavigate>;
+  mutations: ReturnType<typeof useInvoiceMutations>;
+  refetch: () => Promise<void>;
 }) {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('hu-HU', {
@@ -69,28 +88,18 @@ function InvoiceDetail({
     );
   };
 
-  const getPaymentMethodLabel = (method: PaymentMethod) => {
+  const getPaymentMethodLabel = (method?: PaymentMethod) => {
+    if (!method) return '-';
     const config = PAYMENT_METHODS.find(m => m.value === method);
     return config?.label ?? method;
   };
 
   const getNavStatusBadge = (navStatus?: string) => {
     if (!navStatus) return <span className="text-gray-400">-</span>;
-    const colors: Record<string, string> = {
-      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-      sent: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-      accepted: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-      rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-    };
-    const labels: Record<string, string> = {
-      pending: 'Függőben',
-      sent: 'Elküldve',
-      accepted: 'Elfogadva',
-      rejected: 'Elutasítva',
-    };
+    const config = NAV_STATUSES.find(s => s.value === navStatus.toUpperCase());
     return (
-      <span className={`rounded-full px-3 py-1 text-sm font-medium ${colors[navStatus] ?? ''}`}>
-        {labels[navStatus] ?? navStatus}
+      <span className={`rounded-full px-3 py-1 text-sm font-medium ${config?.color ?? ''}`}>
+        {config?.label ?? navStatus}
       </span>
     );
   };
@@ -111,15 +120,23 @@ function InvoiceDetail({
     );
   };
 
-  const handleMarkPaid = () => {
-    alert(`Fizetve jelölés: ${invoice.invoiceNumber}\n\nA számla kifizettnek jelölve.`);
+  const handleMarkPaid = async () => {
+    try {
+      await mutations.recordPayment(invoice.id, {
+        amount: Number(invoice.balanceDue),
+      });
+      await refetch();
+      alert(`Fizetve jelölés: ${invoice.invoiceNumber}\n\nA számla kifizettnek jelölve.`);
+    } catch (err) {
+      alert(`Hiba történt: ${err instanceof Error ? err.message : 'Ismeretlen hiba'}`);
+    }
   };
 
   const handleCreateCorrection = () => {
     navigate(`/invoices/new?correction=${invoice.id}`);
   };
 
-  const isOverdue = invoice.status === 'overdue';
+  const isOverdue = invoice.status === 'OVERDUE';
   const daysOverdue = useMemo(() => {
     if (!isOverdue) return 0;
     const now = new Date();
@@ -127,9 +144,24 @@ function InvoiceDetail({
     return Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
   }, [isOverdue, invoice.dueDate]);
 
-  const canMarkPaid = invoice.status === 'issued' || invoice.status === 'overdue';
+  const canMarkPaid =
+    invoice.status === 'SENT' ||
+    invoice.status === 'OVERDUE' ||
+    invoice.status === 'PARTIALLY_PAID';
   const canCorrect =
-    invoice.status !== 'draft' && invoice.status !== 'cancelled' && invoice.type !== 'cancellation';
+    invoice.status !== 'DRAFT' && invoice.status !== 'CANCELLED' && invoice.type !== 'CREDIT_NOTE';
+
+  // Calculate totals from items if available
+  const netTotal = Number(invoice.subtotal);
+  const vatTotal = Number(invoice.vatAmount);
+  const grossTotal = Number(invoice.totalAmount);
+  const balanceDue = Number(invoice.balanceDue);
+  const paidAmount = Number(invoice.paidAmount);
+
+  // Partner info
+  const partnerName = invoice.partner?.name ?? '-';
+  const partnerAddress = invoice.partner?.address ?? '-';
+  const partnerTaxNumber = invoice.partner?.taxNumber;
 
   return (
     <div className="min-h-screen kgc-bg">
@@ -139,7 +171,7 @@ function InvoiceDetail({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button variant="ghost" onClick={() => navigate('/invoices')}>
-                ← Vissza
+                &larr; Vissza
               </Button>
               <div>
                 <div className="flex items-center gap-3">
@@ -149,23 +181,23 @@ function InvoiceDetail({
                   {getTypeBadge(invoice.type)}
                   {getStatusBadge(invoice.status)}
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {invoice.partnerName}
-                  {invoice.rentalNumber && ` • Bérlés: ${invoice.rentalNumber}`}
-                  {invoice.worksheetNumber && ` • Munkalap: ${invoice.worksheetNumber}`}
-                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{partnerName}</p>
               </div>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={handlePrintPDF}>
-                📄 PDF
+                PDF
               </Button>
               <Button variant="outline" onClick={handleSendEmail}>
-                📧 Email
+                Email
               </Button>
               {canMarkPaid && (
-                <Button className="bg-green-600 hover:bg-green-700" onClick={handleMarkPaid}>
-                  ✓ Fizetve
+                <Button
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={handleMarkPaid}
+                  disabled={mutations.isLoading}
+                >
+                  Fizetve
                 </Button>
               )}
             </div>
@@ -178,17 +210,17 @@ function InvoiceDetail({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
           <div className="rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">⚠️</span>
+              <span className="text-2xl">!</span>
               <div>
                 <p className="font-medium text-red-800 dark:text-red-200">
                   Lejárt számla! {daysOverdue} napja esedékes.
                 </p>
                 <p className="text-sm text-red-600 dark:text-red-300">
-                  Hátralék: {formatPrice(invoice.remainingAmount)}
+                  Hátralék: {formatPrice(balanceDue)}
                 </p>
               </div>
               <Button size="sm" className="ml-auto bg-red-600 hover:bg-red-700">
-                📞 Fizetési felszólítás
+                Fizetési felszólítás
               </Button>
             </div>
           </div>
@@ -210,21 +242,21 @@ function InvoiceDetail({
                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       Név
                     </label>
-                    <p className="text-gray-900 dark:text-gray-100">{invoice.partnerName}</p>
+                    <p className="text-gray-900 dark:text-gray-100">{partnerName}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       Cím
                     </label>
-                    <p className="text-gray-900 dark:text-gray-100">{invoice.partnerAddress}</p>
+                    <p className="text-gray-900 dark:text-gray-100">{partnerAddress}</p>
                   </div>
-                  {invoice.partnerTaxNumber && (
+                  {partnerTaxNumber && (
                     <div>
                       <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                         Adószám
                       </label>
                       <p className="font-mono text-gray-900 dark:text-gray-100">
-                        {invoice.partnerTaxNumber}
+                        {partnerTaxNumber}
                       </p>
                     </div>
                   )}
@@ -255,15 +287,12 @@ function InvoiceDetail({
                           ÁFA
                         </th>
                         <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 dark:text-gray-400">
-                          Nettó
-                        </th>
-                        <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 dark:text-gray-400">
-                          Bruttó
+                          Összesen
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y dark:divide-slate-700">
-                      {invoice.items.map(item => (
+                      {invoice.items?.map(item => (
                         <tr key={item.id}>
                           <td className="px-4 py-3">
                             <p className="font-medium text-gray-900 dark:text-gray-100">
@@ -279,19 +308,26 @@ function InvoiceDetail({
                             {item.quantity} {item.unit}
                           </td>
                           <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                            {formatPrice(item.unitPrice)}
+                            {formatPrice(Number(item.unitPrice))}
                           </td>
                           <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">
-                            {item.vatRate}%
-                          </td>
-                          <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                            {formatPrice(item.netAmount)}
+                            {item.vatPercent}%
                           </td>
                           <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-gray-100">
-                            {formatPrice(item.grossAmount)}
+                            {formatPrice(Number(item.totalPrice))}
                           </td>
                         </tr>
                       ))}
+                      {(!invoice.items || invoice.items.length === 0) && (
+                        <tr>
+                          <td
+                            colSpan={5}
+                            className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
+                          >
+                            Nincsenek tételek
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                     <tfoot className="border-t-2 bg-gray-50 dark:bg-slate-700/50 dark:border-slate-600">
                       <tr>
@@ -302,9 +338,8 @@ function InvoiceDetail({
                           Nettó összesen:
                         </td>
                         <td className="px-4 py-2 text-right font-medium text-gray-900 dark:text-gray-100">
-                          {formatPrice(invoice.netTotal)}
+                          {formatPrice(netTotal)}
                         </td>
-                        <td></td>
                       </tr>
                       <tr>
                         <td
@@ -314,9 +349,8 @@ function InvoiceDetail({
                           ÁFA összesen:
                         </td>
                         <td className="px-4 py-2 text-right font-medium text-gray-900 dark:text-gray-100">
-                          {formatPrice(invoice.vatTotal)}
+                          {formatPrice(vatTotal)}
                         </td>
-                        <td></td>
                       </tr>
                       <tr className="text-lg">
                         <td
@@ -325,11 +359,8 @@ function InvoiceDetail({
                         >
                           Fizetendő:
                         </td>
-                        <td
-                          colSpan={2}
-                          className="px-4 py-3 text-right font-bold text-gray-900 dark:text-gray-100"
-                        >
-                          {formatPrice(invoice.grossTotal)}
+                        <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-gray-100">
+                          {formatPrice(grossTotal)}
                         </td>
                       </tr>
                     </tfoot>
@@ -404,10 +435,6 @@ function InvoiceDetail({
                       </span>
                     </div>
                   </div>
-                  <div className="flex justify-between border-t pt-4 dark:border-slate-700">
-                    <span className="text-gray-500 dark:text-gray-400">Készítette:</span>
-                    <span className="text-gray-900 dark:text-gray-100">{invoice.createdBy}</span>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -431,9 +458,9 @@ function InvoiceDetail({
                       </span>
                     </div>
                   )}
-                  {invoice.navStatus === 'rejected' && (
+                  {invoice.navStatus === 'REJECTED' && (
                     <Button variant="outline" className="w-full" onClick={handleResendToNAV}>
-                      🔄 Újraküldés NAV-nak
+                      Újraküldés NAV-nak
                     </Button>
                   )}
                 </div>
@@ -443,7 +470,7 @@ function InvoiceDetail({
             {/* Payment status */}
             <Card
               className={
-                invoice.remainingAmount === 0
+                balanceDue === 0
                   ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
                   : 'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20'
               }
@@ -451,18 +478,18 @@ function InvoiceDetail({
               <CardContent className="pt-4">
                 <div className="text-center">
                   <p
-                    className={`text-sm ${invoice.remainingAmount === 0 ? 'text-green-600 dark:text-green-300' : 'text-orange-600 dark:text-orange-300'}`}
+                    className={`text-sm ${balanceDue === 0 ? 'text-green-600 dark:text-green-300' : 'text-orange-600 dark:text-orange-300'}`}
                   >
-                    {invoice.remainingAmount === 0 ? 'Teljes összeg kifizetve' : 'Hátralék'}
+                    {balanceDue === 0 ? 'Teljes összeg kifizetve' : 'Hátralék'}
                   </p>
                   <p
-                    className={`text-3xl font-bold ${invoice.remainingAmount === 0 ? 'text-green-700 dark:text-green-200' : 'text-orange-700 dark:text-orange-200'}`}
+                    className={`text-3xl font-bold ${balanceDue === 0 ? 'text-green-700 dark:text-green-200' : 'text-orange-700 dark:text-orange-200'}`}
                   >
-                    {invoice.remainingAmount === 0 ? '✓' : formatPrice(invoice.remainingAmount)}
+                    {balanceDue === 0 ? 'OK' : formatPrice(balanceDue)}
                   </p>
-                  {invoice.paidAmount > 0 && invoice.remainingAmount > 0 && (
+                  {paidAmount > 0 && balanceDue > 0 && (
                     <p className="text-xs text-orange-500 dark:text-orange-400 mt-1">
-                      Eddig fizetve: {formatPrice(invoice.paidAmount)}
+                      Eddig fizetve: {formatPrice(paidAmount)}
                     </p>
                   )}
                 </div>
@@ -475,9 +502,9 @@ function InvoiceDetail({
                 <div className="text-center">
                   <p className="text-sm text-blue-600 dark:text-blue-300">Számla végösszeg</p>
                   <p
-                    className={`text-3xl font-bold ${invoice.grossTotal < 0 ? 'text-red-700 dark:text-red-200' : 'text-blue-700 dark:text-blue-200'}`}
+                    className={`text-3xl font-bold ${grossTotal < 0 ? 'text-red-700 dark:text-red-200' : 'text-blue-700 dark:text-blue-200'}`}
                   >
-                    {formatPrice(invoice.grossTotal)}
+                    {formatPrice(grossTotal)}
                   </p>
                 </div>
               </CardContent>
@@ -495,49 +522,22 @@ function InvoiceDetail({
                     className="w-full justify-start"
                     onClick={handlePrintPDF}
                   >
-                    📄 PDF letöltés
+                    PDF letöltés
                   </Button>
                   <Button
                     variant="outline"
                     className="w-full justify-start"
                     onClick={handleSendEmail}
                   >
-                    📧 Küldés emailben
+                    Küldés emailben
                   </Button>
                   <Button
                     variant="outline"
                     className="w-full justify-start"
                     onClick={() => window.print()}
                   >
-                    🖨️ Nyomtatás
+                    Nyomtatás
                   </Button>
-                  {invoice.rentalId && (
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start"
-                      onClick={() => navigate(`/rental/${invoice.rentalId}`)}
-                    >
-                      🔧 Bérlés megnyitása
-                    </Button>
-                  )}
-                  {invoice.worksheetId && (
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start"
-                      onClick={() => navigate(`/worksheet/${invoice.worksheetId}`)}
-                    >
-                      📋 Munkalap megnyitása
-                    </Button>
-                  )}
-                  {invoice.contractId && (
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start"
-                      onClick={() => navigate(`/contracts/${invoice.contractId}`)}
-                    >
-                      📝 Szerződés megnyitása
-                    </Button>
-                  )}
                   {canCorrect && (
                     <>
                       <hr className="my-2 dark:border-slate-700" />
@@ -546,7 +546,7 @@ function InvoiceDetail({
                         className="w-full justify-start text-orange-600 hover:text-orange-700 dark:text-orange-400"
                         onClick={handleCreateCorrection}
                       >
-                        ⚠️ Helyesbítő/Sztornó
+                        Helyesbítő/Sztornó
                       </Button>
                     </>
                   )}
@@ -556,8 +556,9 @@ function InvoiceDetail({
                       <Button
                         className="w-full bg-green-600 hover:bg-green-700"
                         onClick={handleMarkPaid}
+                        disabled={mutations.isLoading}
                       >
-                        ✓ Fizetve jelölés
+                        Fizetve jelölés
                       </Button>
                     </>
                   )}

@@ -64,6 +64,9 @@ importers:
       '@kgc/feladatlista':
         specifier: workspace:*
         version: link:../../packages/shared/feladatlista
+      '@kgc/horilla-hr':
+        specifier: workspace:*
+        version: link:../../packages/integration/horilla-hr
       '@kgc/inventory':
         specifier: workspace:*
         version: link:../../packages/shared/inventory

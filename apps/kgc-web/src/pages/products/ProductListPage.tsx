@@ -1,7 +1,8 @@
 import { Button, Card, CardContent, Input } from '@/components/ui';
+import { useProducts, useProductStats } from '@/hooks/use-products';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_PRODUCTS, MOCK_SUPPLIERS, PRODUCT_CATEGORIES, PRODUCT_STATUSES } from './mock-data';
+import { MOCK_SUPPLIERS, PRODUCT_CATEGORIES, PRODUCT_STATUSES } from './mock-data';
 import type { ProductCategory, ProductStatus } from './types';
 
 export function ProductListPage() {
@@ -12,35 +13,44 @@ export function ProductListPage() {
   const [supplierFilter, setSupplierFilter] = useState<string | 'all'>('all');
   const [lowStockOnly, setLowStockOnly] = useState(false);
 
+  // Build API filters
+  const apiFilters = useMemo(() => {
+    const filters: {
+      status?: 'ACTIVE' | 'INACTIVE' | 'DISCONTINUED';
+      search?: string;
+      lowStock?: boolean;
+    } = {};
+    if (statusFilter !== 'all') {
+      const statusMap: Record<string, 'ACTIVE' | 'INACTIVE' | 'DISCONTINUED'> = {
+        active: 'ACTIVE',
+        inactive: 'INACTIVE',
+        discontinued: 'DISCONTINUED',
+      };
+      filters.status = statusMap[statusFilter];
+    }
+    if (searchTerm) {
+      filters.search = searchTerm;
+    }
+    if (lowStockOnly) {
+      filters.lowStock = true;
+    }
+    return filters;
+  }, [statusFilter, searchTerm, lowStockOnly]);
+
+  const { products, isLoading, error } = useProducts(apiFilters);
+  const { stats } = useProductStats();
+
+  // Client-side category and supplier filters (since API doesn't support all of them)
   const filteredProducts = useMemo(() => {
-    return MOCK_PRODUCTS.filter(product => {
-      // Search filter
-      if (searchTerm) {
-        const search = searchTerm.toLowerCase();
-        const matchesSearch =
-          product.name.toLowerCase().includes(search) ||
-          product.sku.toLowerCase().includes(search) ||
-          (product.barcode?.toLowerCase().includes(search) ?? false) ||
-          (product.brand?.toLowerCase().includes(search) ?? false) ||
-          (product.manufacturerCode?.toLowerCase().includes(search) ?? false);
-        if (!matchesSearch) return false;
-      }
-
-      // Status filter
-      if (statusFilter !== 'all' && product.status !== statusFilter) return false;
-
-      // Category filter
-      if (categoryFilter !== 'all' && product.category !== categoryFilter) return false;
-
-      // Supplier filter
-      if (supplierFilter !== 'all' && product.supplier?.id !== supplierFilter) return false;
-
-      // Low stock filter
-      if (lowStockOnly && product.stockQuantity >= product.minStockLevel) return false;
-
-      return true;
-    });
-  }, [searchTerm, statusFilter, categoryFilter, supplierFilter, lowStockOnly]);
+    let result = products;
+    if (categoryFilter !== 'all') {
+      result = result.filter(p => p.category === categoryFilter);
+    }
+    if (supplierFilter !== 'all') {
+      result = result.filter(p => p.supplier?.id === supplierFilter);
+    }
+    return result;
+  }, [products, categoryFilter, supplierFilter]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('hu-HU', {
@@ -68,7 +78,7 @@ export function ProductListPage() {
     );
   };
 
-  const getStockBadge = (product: (typeof MOCK_PRODUCTS)[0]) => {
+  const getStockBadge = (product: { stockQuantity: number; minStockLevel: number }) => {
     if (product.stockQuantity === 0) {
       return (
         <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
@@ -88,16 +98,6 @@ export function ProductListPage() {
         OK
       </span>
     );
-  };
-
-  // Stats
-  const stats = {
-    total: MOCK_PRODUCTS.length,
-    active: MOCK_PRODUCTS.filter(p => p.status === 'active').length,
-    lowStock: MOCK_PRODUCTS.filter(p => p.stockQuantity < p.minStockLevel && p.stockQuantity > 0)
-      .length,
-    outOfStock: MOCK_PRODUCTS.filter(p => p.stockQuantity === 0).length,
-    totalValue: MOCK_PRODUCTS.reduce((sum, p) => sum + p.stockQuantity * p.purchasePrice, 0),
   };
 
   return (
@@ -130,14 +130,16 @@ export function ProductListPage() {
         <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
           <Card>
             <CardContent className="pt-4">
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {stats?.total ?? 0}
+              </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Összes cikk</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
               <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {stats.active}
+                {stats?.active ?? 0}
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Aktív</p>
             </CardContent>
@@ -145,7 +147,7 @@ export function ProductListPage() {
           <Card>
             <CardContent className="pt-4">
               <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                {stats.lowStock}
+                {stats?.lowStock ?? 0}
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Alacsony készlet</p>
             </CardContent>
@@ -153,7 +155,7 @@ export function ProductListPage() {
           <Card>
             <CardContent className="pt-4">
               <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                {stats.outOfStock}
+                {stats?.outOfStock ?? 0}
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Nincs készleten</p>
             </CardContent>
@@ -161,7 +163,7 @@ export function ProductListPage() {
           <Card>
             <CardContent className="pt-4">
               <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {formatPrice(stats.totalValue)}
+                {formatPrice(stats?.totalValue ?? 0)}
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Készletérték</p>
             </CardContent>

@@ -1,0 +1,70 @@
+# ==============================================================================
+# KGC ERP v7.0 - Development Environment Caddyfile
+# Domain: dev-kgc.mflerp.com
+# Auto SSL via Let's Encrypt
+# ==============================================================================
+
+{
+	email {$ADMIN_EMAIL:admin@mflerp.com}
+}
+
+# ==============================================================================
+# Main Application (dev-kgc.mflerp.com)
+# Single domain setup - API and Web on same domain
+# ==============================================================================
+{$DEV_DOMAIN:dev-kgc.mflerp.com} {
+	encode gzip zstd
+
+	# Health check endpoint
+	handle /health {
+		respond "OK" 200
+	}
+
+	# API routes - proxy to backend
+	handle /api/* {
+		reverse_proxy kgc-api:3000 {
+			health_uri /api/v1/health
+			health_interval 30s
+
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# WebSocket support for real-time features
+	handle /ws/* {
+		reverse_proxy kgc-api:3000 {
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# All other routes - proxy to frontend
+	handle {
+		reverse_proxy kgc-web:80 {
+			health_uri /health
+			health_interval 30s
+		}
+	}
+
+	# Security headers - Allow iframe embedding from ForgeOS
+	header {
+		X-Content-Type-Options nosniff
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy strict-origin-when-cross-origin
+		# Allow embedding from ForgeOS and self
+		Content-Security-Policy "frame-ancestors 'self' https://myforgeos.mflerp.com https://*.mflerp.com"
+		# Remove X-Frame-Options to use CSP frame-ancestors instead
+		-X-Frame-Options
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/dev-kgc.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}

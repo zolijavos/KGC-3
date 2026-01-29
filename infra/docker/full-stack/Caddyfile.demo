@@ -52,12 +52,15 @@
 		}
 	}
 
-	# Security headers
+	# Security headers - Allow iframe embedding from ForgeOS
 	header {
 		X-Content-Type-Options nosniff
-		X-Frame-Options SAMEORIGIN
 		X-XSS-Protection "1; mode=block"
 		Referrer-Policy strict-origin-when-cross-origin
+		# Allow embedding from ForgeOS and self
+		Content-Security-Policy "frame-ancestors 'self' https://myforgeos.mflerp.com https://*.mflerp.com"
+		# Remove X-Frame-Options to use CSP frame-ancestors instead
+		-X-Frame-Options
 		-Server
 	}
 

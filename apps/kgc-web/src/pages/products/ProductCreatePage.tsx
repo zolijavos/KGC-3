@@ -1,3 +1,4 @@
+import { createProduct } from '@/api/products';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -52,6 +53,8 @@ export function ProductCreatePage() {
     rentalMonthlyRate: '',
     rentalDepositAmount: '',
   });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -77,7 +80,7 @@ export function ProductCreatePage() {
     }).format(price);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
@@ -90,9 +93,33 @@ export function ProductCreatePage() {
       return;
     }
 
-    // In real app, this would call API
-    alert(`Cikk létrehozva!\nCikkszám: ${formData.sku}\nNév: ${formData.name}`);
-    navigate('/products');
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const response = await createProduct({
+        sku: formData.sku,
+        name: formData.name,
+        shortName: formData.shortName || undefined,
+        description: formData.description || undefined,
+        categoryId: undefined, // API would handle this
+        brand: formData.brand || undefined,
+        model: formData.model || undefined,
+        barcode: formData.barcode || undefined,
+        purchasePrice: parseFloat(formData.purchasePrice) || undefined,
+        sellingPrice: parseFloat(formData.sellingPriceNet) || undefined,
+        vatPercent: formData.vatRate,
+        minStockLevel: parseInt(formData.minStockLevel) || undefined,
+        reorderQuantity: parseInt(formData.reorderQuantity) || undefined,
+      });
+
+      navigate(`/products/${response.data.id}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Mentés sikertelen';
+      setSaveError(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const isRentalEquipment = formData.category === 'rental_equipment';
@@ -111,13 +138,22 @@ export function ProductCreatePage() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Termék adatok rögzítése</p>
             </div>
           </div>
-          <Button onClick={handleSubmit} className="bg-kgc-primary hover:bg-kgc-primary/90">
-            Mentés
+          <Button
+            onClick={handleSubmit}
+            className="bg-kgc-primary hover:bg-kgc-primary/90"
+            disabled={isSaving}
+          >
+            {isSaving ? 'Mentés...' : 'Mentés'}
           </Button>
         </div>
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        {saveError && (
+          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-300">
+            {saveError}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Category */}
           <Card>
@@ -437,11 +473,20 @@ export function ProductCreatePage() {
 
           {/* Actions */}
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => navigate('/products')}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate('/products')}
+              disabled={isSaving}
+            >
               Mégse
             </Button>
-            <Button type="submit" className="bg-kgc-primary hover:bg-kgc-primary/90">
-              Cikk létrehozása
+            <Button
+              type="submit"
+              className="bg-kgc-primary hover:bg-kgc-primary/90"
+              disabled={isSaving}
+            >
+              {isSaving ? 'Létrehozás...' : 'Cikk létrehozása'}
             </Button>
           </div>
         </form>

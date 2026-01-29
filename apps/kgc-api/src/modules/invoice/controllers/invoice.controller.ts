@@ -539,13 +539,17 @@ export class InvoiceController {
       navStatus = 'REJECTED';
     }
 
+    const transactionId = invoice.status !== 'DRAFT' ? `NAV-${id.substring(0, 8)}` : undefined;
+    const submittedAt = invoice.invoiceDate?.toISOString();
+    const acceptedAt = navStatus === 'ACCEPTED' ? new Date().toISOString() : undefined;
+
     return {
       data: {
         invoiceId: id,
         status: navStatus,
-        transactionId: invoice.status !== 'DRAFT' ? `NAV-${id.substring(0, 8)}` : undefined,
-        submittedAt: invoice.issuedAt?.toISOString(),
-        acceptedAt: navStatus === 'ACCEPTED' ? new Date().toISOString() : undefined,
+        ...(transactionId !== undefined && { transactionId }),
+        ...(submittedAt !== undefined && { submittedAt }),
+        ...(acceptedAt !== undefined && { acceptedAt }),
       },
     };
   }

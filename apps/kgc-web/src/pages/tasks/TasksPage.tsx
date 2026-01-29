@@ -1,176 +1,68 @@
-import { useState } from 'react';
+/**
+ * Tasks Page - Kanban board for task management
+ * Epic 12: Feladatlista Widget
+ */
 
-type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
-type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+import {
+  PRIORITY_LABELS,
+  TaskStatus,
+  TaskType,
+  TYPE_LABELS,
+  type Task,
+  type TaskPriority,
+} from '@/api/tasks';
+import { Card } from '@/components/ui';
+import { useTaskMutations, useTasks, useTaskStats } from '@/hooks/use-tasks';
+import { useMemo, useState } from 'react';
 
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  assignee: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  dueDate: Date;
-  tags: string[];
-  comments: number;
-  attachments: number;
-  createdAt: Date;
-}
-
-const MOCK_TASKS: Task[] = [
-  {
-    id: '1',
-    title: 'Makita fúrókalapács javítása',
-    description: 'Szénkefe csere és kenés szükséges',
-    status: 'todo',
-    priority: 'high',
-    assignee: { id: '1', name: 'Kovács Péter' },
-    dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-    tags: ['szerviz', 'makita'],
-    comments: 3,
-    attachments: 1,
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-  },
-  {
-    id: '2',
-    title: 'Készlet ellenőrzés - sarokcsiszolók',
-    description: 'Havi készletleltár elvégzése',
-    status: 'todo',
-    priority: 'medium',
-    assignee: { id: '2', name: 'Nagy Anna' },
-    dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-    tags: ['készlet', 'leltár'],
-    comments: 0,
-    attachments: 0,
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: '3',
-    title: 'Új partner regisztráció - Építő Kft.',
-    description: 'Szerződés és adatok rögzítése',
-    status: 'in_progress',
-    priority: 'medium',
-    assignee: { id: '3', name: 'Szabó Gábor' },
-    dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-    tags: ['partner', 'admin'],
-    comments: 5,
-    attachments: 2,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: '4',
-    title: 'Bosch GBH visszavétel',
-    description: 'Ügyfél: Molnár János - bérlés #B-2024-0089',
-    status: 'in_progress',
-    priority: 'high',
-    assignee: { id: '1', name: 'Kovács Péter' },
-    dueDate: new Date(Date.now()),
-    tags: ['bérlés', 'visszavétel'],
-    comments: 2,
-    attachments: 0,
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: '5',
-    title: 'NAV számla egyeztetés',
-    description: 'Havi ÁFA bevallás előkészítése',
-    status: 'review',
-    priority: 'urgent',
-    assignee: { id: '4', name: 'Kiss Éva' },
-    dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-    tags: ['pénzügy', 'nav'],
-    comments: 8,
-    attachments: 4,
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: '6',
-    title: 'Webshop termék feltöltés',
-    description: '15 új termék fotózása és leírása',
-    status: 'review',
-    priority: 'low',
-    assignee: { id: '2', name: 'Nagy Anna' },
-    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    tags: ['marketing', 'webshop'],
-    comments: 1,
-    attachments: 15,
-    createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: '7',
-    title: 'Heti riport készítés',
-    description: 'Értékesítési és bérlési összesítő',
-    status: 'done',
-    priority: 'medium',
-    assignee: { id: '4', name: 'Kiss Éva' },
-    dueDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    tags: ['riport', 'pénzügy'],
-    comments: 2,
-    attachments: 1,
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: '8',
-    title: 'Kärcher K5 bérlés előkészítés',
-    description: 'Tisztítás és működés ellenőrzés',
-    status: 'done',
-    priority: 'high',
-    assignee: { id: '1', name: 'Kovács Péter' },
-    dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    tags: ['bérlés', 'előkészítés'],
-    comments: 0,
-    attachments: 0,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-  },
-];
-
-const TEAM_MEMBERS = [
-  { id: '1', name: 'Kovács Péter' },
-  { id: '2', name: 'Nagy Anna' },
-  { id: '3', name: 'Szabó Gábor' },
-  { id: '4', name: 'Kiss Éva' },
-];
+// ============================================
+// CONFIGURATION
+// ============================================
 
 const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; bgColor: string }> = {
-  todo: {
-    label: 'Teendő',
+  [TaskStatus.OPEN]: {
+    label: 'Nyitott',
     color: 'text-gray-600 dark:text-gray-400',
     bgColor: 'bg-gray-100 dark:bg-gray-800',
   },
-  in_progress: {
+  [TaskStatus.IN_PROGRESS]: {
     label: 'Folyamatban',
     color: 'text-blue-600 dark:text-blue-400',
     bgColor: 'bg-blue-100 dark:bg-blue-900/30',
   },
-  review: {
-    label: 'Ellenőrzés',
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-  },
-  done: {
+  [TaskStatus.COMPLETED]: {
     label: 'Kész',
     color: 'text-green-600 dark:text-green-400',
     bgColor: 'bg-green-100 dark:bg-green-900/30',
   },
+  [TaskStatus.CANCELLED]: {
+    label: 'Megszakítva',
+    color: 'text-red-600 dark:text-red-400',
+    bgColor: 'bg-red-100 dark:bg-red-900/30',
+  },
 };
 
 const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; bgColor: string }> = {
-  low: { label: 'Alacsony', color: 'text-gray-600', bgColor: 'bg-gray-100 dark:bg-gray-700' },
-  medium: { label: 'Közepes', color: 'text-blue-600', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
-  high: {
-    label: 'Magas',
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-100 dark:bg-orange-900/30',
-  },
-  urgent: { label: 'Sürgős', color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/30' },
+  0: { label: 'Alacsony', color: 'text-gray-600', bgColor: 'bg-gray-100 dark:bg-gray-700' },
+  1: { label: 'Közepes', color: 'text-blue-600', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
+  2: { label: 'Magas', color: 'text-orange-600', bgColor: 'bg-orange-100 dark:bg-orange-900/30' },
 };
 
-// Helper function for date formatting
-const formatDate = (date: Date) => {
+// Kanban columns - only showing active statuses
+const KANBAN_STATUSES: TaskStatus[] = [
+  TaskStatus.OPEN,
+  TaskStatus.IN_PROGRESS,
+  TaskStatus.COMPLETED,
+];
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+const formatDate = (dateStr: string | undefined) => {
+  if (!dateStr) return { text: '-', isOverdue: false };
+
+  const date = new Date(dateStr);
   const now = new Date();
   const diff = date.getTime() - now.getTime();
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
@@ -181,7 +73,10 @@ const formatDate = (date: Date) => {
   return { text: date.toLocaleDateString('hu-HU'), isOverdue: false };
 };
 
-// TaskCard component - extracted outside to avoid recreation on render
+// ============================================
+// COMPONENTS
+// ============================================
+
 interface TaskCardProps {
   task: Task;
   onDragStart: (task: Task) => void;
@@ -190,6 +85,7 @@ interface TaskCardProps {
 
 function TaskCard({ task, onDragStart, onSelect }: TaskCardProps) {
   const dueInfo = formatDate(task.dueDate);
+  const priorityConfig = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG[1];
 
   return (
     <div
@@ -198,39 +94,40 @@ function TaskCard({ task, onDragStart, onSelect }: TaskCardProps) {
       onClick={() => onSelect(task)}
       className="kgc-card-bg cursor-pointer rounded-lg border border-gray-200 p-4 shadow-sm transition-all hover:shadow-md dark:border-gray-700"
     >
-      {/* Priority & Tags */}
+      {/* Priority & Type */}
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <span
-          className={`rounded px-1.5 py-0.5 text-xs font-medium ${PRIORITY_CONFIG[task.priority].bgColor} ${PRIORITY_CONFIG[task.priority].color}`}
+          className={`rounded px-1.5 py-0.5 text-xs font-medium ${priorityConfig.bgColor} ${priorityConfig.color}`}
         >
-          {PRIORITY_CONFIG[task.priority].label}
+          {priorityConfig.label}
         </span>
-        {task.tags.slice(0, 2).map(tag => (
-          <span
-            key={tag}
-            className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-          >
-            #{tag}
-          </span>
-        ))}
+        <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+          {TYPE_LABELS[task.type]}
+        </span>
       </div>
 
       {/* Title */}
       <h4 className="mb-1 font-medium text-gray-900 dark:text-white">{task.title}</h4>
-      <p className="mb-3 line-clamp-2 text-sm text-gray-500 dark:text-gray-400">
-        {task.description}
-      </p>
+      {task.description && (
+        <p className="mb-3 line-clamp-2 text-sm text-gray-500 dark:text-gray-400">
+          {task.description}
+        </p>
+      )}
 
       {/* Footer */}
       <div className="flex items-center justify-between">
-        {/* Assignee */}
+        {/* Assigned users count */}
         <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-kgc-primary text-xs font-medium text-white">
-            {task.assignee.name.charAt(0)}
-          </div>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {task.assignee.name.split(' ')[1]}
-          </span>
+          {task.assignedToIds.length > 0 ? (
+            <>
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-kgc-primary text-xs font-medium text-white">
+                {task.assignedToIds.length}
+              </div>
+              <span className="text-xs text-gray-500 dark:text-gray-400">felelős</span>
+            </>
+          ) : (
+            <span className="text-xs text-gray-400 dark:text-gray-500">Nincs felelős</span>
+          )}
         </div>
 
         {/* Due date */}
@@ -241,42 +138,16 @@ function TaskCard({ task, onDragStart, onSelect }: TaskCardProps) {
         </span>
       </div>
 
-      {/* Meta info */}
-      {(task.comments > 0 || task.attachments > 0) && (
-        <div className="mt-3 flex items-center gap-3 border-t border-gray-100 pt-2 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
-          {task.comments > 0 && (
-            <span className="flex items-center gap-1">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-              {task.comments}
-            </span>
-          )}
-          {task.attachments > 0 && (
-            <span className="flex items-center gap-1">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                />
-              </svg>
-              {task.attachments}
-            </span>
-          )}
+      {/* Quantity info for shopping tasks */}
+      {task.type === TaskType.SHOPPING && task.quantity && (
+        <div className="mt-3 border-t border-gray-100 pt-2 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
+          Mennyiség: {task.quantity} {task.unit ?? 'db'}
         </div>
       )}
     </div>
   );
 }
 
-// KanbanColumn component - extracted outside to avoid recreation on render
 interface KanbanColumnProps {
   status: TaskStatus;
   tasks: Task[];
@@ -311,16 +182,6 @@ function KanbanColumn({
             {tasks.length}
           </span>
         </div>
-        <button className="rounded p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300">
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-            />
-          </svg>
-        </button>
       </div>
 
       {/* Tasks */}
@@ -343,110 +204,68 @@ function KanbanColumn({
   );
 }
 
-export function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
-  const [filterAssignee, setFilterAssignee] = useState<string>('all');
-  const [filterPriority, setFilterPriority] = useState<TaskPriority | 'all'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showNewTaskModal, setShowNewTaskModal] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+// ============================================
+// MAIN PAGE
+// ============================================
 
-  // Form state for new/edit task
+export function TasksPage() {
+  // API hooks
+  const [filters, setFilters] = useState<{
+    type?: TaskType;
+    search?: string;
+    assignedToId?: string;
+  }>({});
+
+  const { tasks, isLoading, error, refetch } = useTasks(filters);
+  const { stats } = useTaskStats();
+  const mutations = useTaskMutations();
+
+  // Local state
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const [showNewTaskModal, setShowNewTaskModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState<TaskType | 'ALL'>('ALL');
+  const [filterPriority, setFilterPriority] = useState<TaskPriority | 'ALL'>('ALL');
+
+  // Form state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    assigneeId: '1',
-    priority: 'medium' as TaskPriority,
+    type: TaskType.TODO as TaskType,
+    priority: 1 as TaskPriority,
     dueDate: '',
-    tags: '',
+    quantity: '',
+    unit: '',
   });
 
   const resetForm = () => {
     setFormData({
       title: '',
       description: '',
-      assigneeId: '1',
-      priority: 'medium',
+      type: TaskType.TODO,
+      priority: 1,
       dueDate: '',
-      tags: '',
+      quantity: '',
+      unit: '',
     });
   };
 
-  const openEditModal = (task: Task) => {
-    setFormData({
-      title: task.title,
-      description: task.description,
-      assigneeId: task.assignee.id,
-      priority: task.priority,
-      dueDate: task.dueDate.toISOString().split('T')[0] ?? '',
-      tags: task.tags.join(', '),
+  // Filter tasks locally for instant feedback
+  const filteredTasks = useMemo(() => {
+    const safeTasks = tasks ?? [];
+    return safeTasks.filter(task => {
+      if (filterType !== 'ALL' && task.type !== filterType) return false;
+      if (filterPriority !== 'ALL' && task.priority !== filterPriority) return false;
+      if (searchQuery && !task.title.toLowerCase().includes(searchQuery.toLowerCase()))
+        return false;
+      return true;
     });
-    setEditingTask(task);
-    setSelectedTask(null);
-  };
-
-  const handleSaveTask = () => {
-    if (!formData.title.trim()) return;
-
-    const assignee = TEAM_MEMBERS.find(m => m.id === formData.assigneeId) ?? TEAM_MEMBERS[0];
-    if (!assignee) return;
-
-    if (editingTask) {
-      // Update existing task
-      setTasks(
-        tasks.map(t =>
-          t.id === editingTask.id
-            ? {
-                ...t,
-                title: formData.title,
-                description: formData.description,
-                assignee,
-                priority: formData.priority,
-                dueDate: new Date(formData.dueDate),
-                tags: formData.tags
-                  .split(',')
-                  .map(tag => tag.trim())
-                  .filter(Boolean),
-              }
-            : t
-        )
-      );
-      setEditingTask(null);
-    } else {
-      // Create new task
-      const newTask: Task = {
-        id: String(Date.now()),
-        title: formData.title,
-        description: formData.description,
-        status: 'todo',
-        priority: formData.priority,
-        assignee,
-        dueDate: new Date(formData.dueDate),
-        tags: formData.tags
-          .split(',')
-          .map(tag => tag.trim())
-          .filter(Boolean),
-        comments: 0,
-        attachments: 0,
-        createdAt: new Date(),
-      };
-      setTasks([...tasks, newTask]);
-      setShowNewTaskModal(false);
-    }
-    resetForm();
-  };
-
-  const filteredTasks = tasks.filter(task => {
-    if (filterAssignee !== 'all' && task.assignee.id !== filterAssignee) return false;
-    if (filterPriority !== 'all' && task.priority !== filterPriority) return false;
-    if (searchQuery && !task.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
-  });
+  }, [tasks, filterType, filterPriority, searchQuery]);
 
   const getTasksByStatus = (status: TaskStatus) => filteredTasks.filter(t => t.status === status);
 
+  // Drag and drop handlers
   const handleDragStart = (task: Task) => {
     setDraggedTask(task);
   };
@@ -455,12 +274,74 @@ export function TasksPage() {
     e.preventDefault();
   };
 
-  const handleDrop = (status: TaskStatus) => {
-    if (draggedTask) {
-      setTasks(tasks.map(t => (t.id === draggedTask.id ? { ...t, status } : t)));
-      setDraggedTask(null);
+  const handleDrop = async (status: TaskStatus) => {
+    if (draggedTask && draggedTask.status !== status) {
+      try {
+        // Use current user ID - in real app this would come from auth context
+        const userId = 'current-user-id';
+        await mutations.changeStatus(draggedTask.id, status, userId);
+        void refetch();
+      } catch (err) {
+        console.error('Failed to change task status:', err);
+      }
+    }
+    setDraggedTask(null);
+  };
+
+  // Create task handler
+  const handleCreateTask = async () => {
+    if (!formData.title.trim()) return;
+
+    try {
+      await mutations.create({
+        locationId: 'default-location', // In real app, get from context
+        type: formData.type,
+        title: formData.title,
+        description: formData.description || undefined,
+        priority: formData.priority,
+        dueDate: formData.dueDate || undefined,
+        quantity: formData.quantity ? parseInt(formData.quantity, 10) : undefined,
+        unit: formData.unit || undefined,
+      });
+      setShowNewTaskModal(false);
+      resetForm();
+      void refetch();
+    } catch (err) {
+      console.error('Failed to create task:', err);
     }
   };
+
+  // Status change in modal
+  const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
+    try {
+      const userId = 'current-user-id';
+      await mutations.changeStatus(taskId, newStatus, userId);
+      if (selectedTask?.id === taskId) {
+        setSelectedTask({ ...selectedTask, status: newStatus });
+      }
+      void refetch();
+    } catch (err) {
+      console.error('Failed to change status:', err);
+    }
+  };
+
+  // Calculate stats
+  const displayStats = useMemo(() => {
+    if (stats) {
+      return {
+        open: stats.byStatus[TaskStatus.OPEN] ?? 0,
+        inProgress: stats.byStatus[TaskStatus.IN_PROGRESS] ?? 0,
+        completed: stats.byStatus[TaskStatus.COMPLETED] ?? 0,
+        total: Object.values(stats.byStatus).reduce((a, b) => a + b, 0),
+      };
+    }
+    return {
+      open: filteredTasks.filter(t => t.status === TaskStatus.OPEN).length,
+      inProgress: filteredTasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
+      completed: filteredTasks.filter(t => t.status === TaskStatus.COMPLETED).length,
+      total: filteredTasks.length,
+    };
+  }, [stats, filteredTasks]);
 
   return (
     <div className="kgc-bg min-h-screen">
@@ -517,30 +398,33 @@ export function TasksPage() {
             />
           </div>
 
-          {/* Assignee filter */}
+          {/* Type filter */}
           <select
-            value={filterAssignee}
-            onChange={e => setFilterAssignee(e.target.value)}
+            value={filterType}
+            onChange={e => setFilterType(e.target.value as TaskType | 'ALL')}
             className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           >
-            <option value="all">Minden felelős</option>
-            {TEAM_MEMBERS.map(member => (
-              <option key={member.id} value={member.id}>
-                {member.name}
+            <option value="ALL">Minden típus</option>
+            {Object.values(TaskType).map(type => (
+              <option key={type} value={type}>
+                {TYPE_LABELS[type]}
               </option>
             ))}
           </select>
 
           {/* Priority filter */}
           <select
-            value={filterPriority}
-            onChange={e => setFilterPriority(e.target.value as TaskPriority | 'all')}
+            value={filterPriority === 'ALL' ? 'ALL' : String(filterPriority)}
+            onChange={e => {
+              const val = e.target.value;
+              setFilterPriority(val === 'ALL' ? 'ALL' : (parseInt(val, 10) as TaskPriority));
+            }}
             className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           >
-            <option value="all">Minden prioritás</option>
-            {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
-              <option key={key} value={key}>
-                {config.label}
+            <option value="ALL">Minden prioritás</option>
+            {([0, 1, 2] as TaskPriority[]).map(priority => (
+              <option key={priority} value={priority}>
+                {PRIORITY_LABELS[priority]}
               </option>
             ))}
           </select>
@@ -549,57 +433,54 @@ export function TasksPage() {
           <div className="ml-auto flex items-center gap-4 text-sm">
             <span className="text-gray-500 dark:text-gray-400">
               <span className="font-medium text-gray-900 dark:text-white">
-                {filteredTasks.length}
+                {displayStats.total}
               </span>{' '}
               feladat
             </span>
-            <span className="text-red-600">
+            <span className="text-orange-600">
               <span className="font-medium">
-                {filteredTasks.filter(t => t.priority === 'urgent').length}
+                {filteredTasks.filter(t => t.priority === 2).length}
               </span>{' '}
-              sürgős
+              magas prioritás
             </span>
           </div>
         </div>
       </div>
 
-      {/* Kanban Board */}
-      <div className="overflow-x-auto p-6">
-        <div className="flex gap-6">
-          <KanbanColumn
-            status="todo"
-            tasks={getTasksByStatus('todo')}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onTaskDragStart={handleDragStart}
-            onTaskSelect={setSelectedTask}
-          />
-          <KanbanColumn
-            status="in_progress"
-            tasks={getTasksByStatus('in_progress')}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onTaskDragStart={handleDragStart}
-            onTaskSelect={setSelectedTask}
-          />
-          <KanbanColumn
-            status="review"
-            tasks={getTasksByStatus('review')}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onTaskDragStart={handleDragStart}
-            onTaskSelect={setSelectedTask}
-          />
-          <KanbanColumn
-            status="done"
-            tasks={getTasksByStatus('done')}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onTaskDragStart={handleDragStart}
-            onTaskSelect={setSelectedTask}
-          />
+      {/* Loading state */}
+      {isLoading && (
+        <div className="flex items-center justify-center p-12">
+          <div className="text-center text-gray-500 dark:text-gray-400">Feladatok betöltése...</div>
         </div>
-      </div>
+      )}
+
+      {/* Error state */}
+      {error && (
+        <div className="p-6">
+          <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 p-4">
+            <div className="text-center text-red-600 dark:text-red-400">Hiba: {error}</div>
+          </Card>
+        </div>
+      )}
+
+      {/* Kanban Board */}
+      {!isLoading && !error && (
+        <div className="overflow-x-auto p-6">
+          <div className="flex gap-6">
+            {KANBAN_STATUSES.map(status => (
+              <KanbanColumn
+                key={status}
+                status={status}
+                tasks={getTasksByStatus(status)}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onTaskDragStart={handleDragStart}
+                onTaskSelect={setSelectedTask}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Task Detail Modal */}
       {selectedTask && (
@@ -615,9 +496,9 @@ export function TasksPage() {
                     {STATUS_CONFIG[selectedTask.status].label}
                   </span>
                   <span
-                    className={`rounded px-2 py-0.5 text-xs font-medium ${PRIORITY_CONFIG[selectedTask.priority].bgColor} ${PRIORITY_CONFIG[selectedTask.priority].color}`}
+                    className={`rounded px-2 py-0.5 text-xs font-medium ${PRIORITY_CONFIG[selectedTask.priority]?.bgColor ?? ''} ${PRIORITY_CONFIG[selectedTask.priority]?.color ?? ''}`}
                   >
-                    {PRIORITY_CONFIG[selectedTask.priority].label}
+                    {PRIORITY_CONFIG[selectedTask.priority]?.label ?? 'Közepes'}
                   </span>
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -641,26 +522,23 @@ export function TasksPage() {
 
             {/* Modal body */}
             <div className="p-6">
-              <div className="mb-6">
-                <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Leírás
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">{selectedTask.description}</p>
-              </div>
+              {selectedTask.description && (
+                <div className="mb-6">
+                  <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Leírás
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">{selectedTask.description}</p>
+                </div>
+              )}
 
               <div className="mb-6 grid grid-cols-2 gap-4">
                 <div>
                   <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Felelős
+                    Típus
                   </h3>
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-kgc-primary text-sm font-medium text-white">
-                      {selectedTask.assignee.name.charAt(0)}
-                    </div>
-                    <span className="text-gray-900 dark:text-white">
-                      {selectedTask.assignee.name}
-                    </span>
-                  </div>
+                  <span className="text-gray-900 dark:text-white">
+                    {TYPE_LABELS[selectedTask.type]}
+                  </span>
                 </div>
                 <div>
                   <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -669,30 +547,27 @@ export function TasksPage() {
                   <p
                     className={`${formatDate(selectedTask.dueDate).isOverdue ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}
                   >
-                    {selectedTask.dueDate.toLocaleDateString('hu-HU', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
+                    {selectedTask.dueDate
+                      ? new Date(selectedTask.dueDate).toLocaleDateString('hu-HU', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })
+                      : '-'}
                   </p>
                 </div>
               </div>
 
-              <div className="mb-6">
-                <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Címkék
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedTask.tags.map(tag => (
-                    <span
-                      key={tag}
-                      className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
+              {selectedTask.type === TaskType.SHOPPING && selectedTask.quantity && (
+                <div className="mb-6">
+                  <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Mennyiség
+                  </h3>
+                  <p className="text-gray-900 dark:text-white">
+                    {selectedTask.quantity} {selectedTask.unit ?? 'db'}
+                  </p>
                 </div>
-              </div>
+              )}
 
               {/* Quick status change */}
               <div>
@@ -700,13 +575,11 @@ export function TasksPage() {
                   Státusz módosítása
                 </h3>
                 <div className="flex gap-2">
-                  {(Object.keys(STATUS_CONFIG) as TaskStatus[]).map(status => (
+                  {KANBAN_STATUSES.map(status => (
                     <button
                       key={status}
-                      onClick={() => {
-                        setTasks(tasks.map(t => (t.id === selectedTask.id ? { ...t, status } : t)));
-                        setSelectedTask({ ...selectedTask, status });
-                      }}
+                      onClick={() => handleStatusChange(selectedTask.id, status)}
+                      disabled={mutations.isLoading}
                       className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                         selectedTask.status === status
                           ? `${STATUS_CONFIG[status].bgColor} ${STATUS_CONFIG[status].color}`
@@ -728,29 +601,20 @@ export function TasksPage() {
               >
                 Bezárás
               </button>
-              <button
-                onClick={() => openEditModal(selectedTask)}
-                className="rounded-lg bg-kgc-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-kgc-primary/90"
-              >
-                Szerkesztés
-              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* New Task / Edit Task Modal */}
-      {(showNewTaskModal || editingTask) && (
+      {/* New Task Modal */}
+      {showNewTaskModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="kgc-card-bg w-full max-w-lg rounded-xl shadow-xl">
             <div className="flex items-center justify-between border-b border-gray-200 p-6 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {editingTask ? 'Feladat szerkesztése' : 'Új feladat'}
-              </h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Új feladat</h2>
               <button
                 onClick={() => {
                   setShowNewTaskModal(false);
-                  setEditingTask(null);
                   resetForm();
                 }}
                 className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
@@ -796,16 +660,16 @@ export function TasksPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Felelős
+                    Típus
                   </label>
                   <select
-                    value={formData.assigneeId}
-                    onChange={e => setFormData({ ...formData, assigneeId: e.target.value })}
+                    value={formData.type}
+                    onChange={e => setFormData({ ...formData, type: e.target.value as TaskType })}
                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                   >
-                    {TEAM_MEMBERS.map(member => (
-                      <option key={member.id} value={member.id}>
-                        {member.name}
+                    {Object.values(TaskType).map(type => (
+                      <option key={type} value={type}>
+                        {TYPE_LABELS[type]}
                       </option>
                     ))}
                   </select>
@@ -817,13 +681,16 @@ export function TasksPage() {
                   <select
                     value={formData.priority}
                     onChange={e =>
-                      setFormData({ ...formData, priority: e.target.value as TaskPriority })
+                      setFormData({
+                        ...formData,
+                        priority: parseInt(e.target.value, 10) as TaskPriority,
+                      })
                     }
                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                   >
-                    {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
-                      <option key={key} value={key}>
-                        {config.label}
+                    {([0, 1, 2] as TaskPriority[]).map(priority => (
+                      <option key={priority} value={priority}>
+                        {PRIORITY_LABELS[priority]}
                       </option>
                     ))}
                   </select>
@@ -842,25 +709,41 @@ export function TasksPage() {
                 />
               </div>
 
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Címkék
-                </label>
-                <input
-                  type="text"
-                  value={formData.tags}
-                  onChange={e => setFormData({ ...formData, tags: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 placeholder-gray-400 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
-                  placeholder="Címkék vesszővel elválasztva..."
-                />
-              </div>
+              {/* Quantity fields for shopping tasks */}
+              {formData.type === TaskType.SHOPPING && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Mennyiség
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.quantity}
+                      onChange={e => setFormData({ ...formData, quantity: e.target.value })}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 placeholder-gray-400 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+                      placeholder="1"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Egység
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.unit}
+                      onChange={e => setFormData({ ...formData, unit: e.target.value })}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 placeholder-gray-400 focus:border-kgc-primary focus:outline-none focus:ring-1 focus:ring-kgc-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+                      placeholder="db"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-3 border-t border-gray-200 p-6 dark:border-gray-700">
               <button
                 onClick={() => {
                   setShowNewTaskModal(false);
-                  setEditingTask(null);
                   resetForm();
                 }}
                 className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
@@ -868,10 +751,11 @@ export function TasksPage() {
                 Mégse
               </button>
               <button
-                onClick={handleSaveTask}
-                className="rounded-lg bg-kgc-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-kgc-primary/90"
+                onClick={handleCreateTask}
+                disabled={mutations.isLoading || !formData.title.trim()}
+                className="rounded-lg bg-kgc-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-kgc-primary/90 disabled:opacity-50"
               >
-                {editingTask ? 'Mentés' : 'Létrehozás'}
+                Létrehozás
               </button>
             </div>
           </div>

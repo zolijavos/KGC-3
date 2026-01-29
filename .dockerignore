@@ -1,0 +1,74 @@
+# ================================================
+# KGC ERP - Docker Ignore
+# Csökkenti a build context méretét ~1.75GB-ról ~50MB-ra
+# ================================================
+
+# Node modules (minden package-ben)
+node_modules
+**/node_modules
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Build artifacts (lokális)
+**/dist
+**/build
+**/.turbo
+.turbo
+
+# Test és coverage
+**/coverage
+**/*.spec.ts
+**/*.test.ts
+**/*.e2e.ts
+e2e/
+playwright-report/
+test-results/
+
+# BMAD keretrendszer (nem kell a runtime-hoz)
+_bmad/
+_bmad-output/
+
+# Planning és dokumentáció
+planning-artifacts/
+implementation-artifacts/
+docs/
+
+# Logs és temp fájlok
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.pnpm-store/
+tmp/
+temp/
+
+# Environment files (érzékeny adatok)
+.env
+.env.*
+!.env.example
+
+# Prisma generált fájlok (futásidőben generálódik)
+**/prisma/migrations
+
+# Docker fájlok (önmagát ne másolja)
+Dockerfile*
+docker-compose*.yml
+infra/
+
+# Egyéb nagy fájlok
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+*.pdf
+*.mp4
+*.mov
+*.avi

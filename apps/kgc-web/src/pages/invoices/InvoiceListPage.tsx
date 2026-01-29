@@ -1,57 +1,26 @@
 import { Button, Card, CardContent, Input } from '@/components/ui';
+import { useInvoices, useInvoiceStats } from '@/hooks/use-invoices';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { INVOICE_STATUSES, INVOICE_TYPES, MOCK_INVOICES } from './mock-data';
-import type { InvoiceListFilters, InvoiceStatus, InvoiceType } from './types';
+import { INVOICE_STATUSES, INVOICE_TYPES, NAV_STATUSES } from './mock-data';
+import type { InvoiceStatus, InvoiceType } from './types';
 
 export function InvoiceListPage() {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<InvoiceListFilters>({
+  const [filters, setFilters] = useState({
     search: '',
-    status: 'all',
-    type: 'all',
+    status: 'ALL' as InvoiceStatus | 'ALL',
+    type: 'ALL' as InvoiceType | 'ALL',
   });
 
-  const filteredInvoices = useMemo(() => {
-    return MOCK_INVOICES.filter(invoice => {
-      // Search filter
-      if (filters.search) {
-        const search = filters.search.toLowerCase();
-        const matchesSearch =
-          invoice.invoiceNumber.toLowerCase().includes(search) ||
-          invoice.partnerName.toLowerCase().includes(search) ||
-          (invoice.partnerTaxNumber?.toLowerCase().includes(search) ?? false);
-        if (!matchesSearch) return false;
-      }
+  // API hooks
+  const { invoices, isLoading, error } = useInvoices({
+    search: filters.search || undefined,
+    status: filters.status !== 'ALL' ? filters.status : undefined,
+    type: filters.type !== 'ALL' ? filters.type : undefined,
+  });
 
-      // Status filter
-      if (filters.status !== 'all' && invoice.status !== filters.status) {
-        return false;
-      }
-
-      // Type filter
-      if (filters.type !== 'all' && invoice.type !== filters.type) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [filters]);
-
-  const stats = useMemo(() => {
-    const all = MOCK_INVOICES;
-    return {
-      total: all.length,
-      draft: all.filter(i => i.status === 'draft').length,
-      issued: all.filter(i => i.status === 'issued').length,
-      paid: all.filter(i => i.status === 'paid').length,
-      overdue: all.filter(i => i.status === 'overdue').length,
-      totalRevenue: all.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.grossTotal, 0),
-      unpaidTotal: all
-        .filter(i => i.status === 'issued' || i.status === 'overdue')
-        .reduce((sum, i) => sum + i.remainingAmount, 0),
-    };
-  }, []);
+  const { stats } = useInvoiceStats();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('hu-HU', {
@@ -85,24 +54,35 @@ export function InvoiceListPage() {
 
   const getNavStatusBadge = (navStatus?: string) => {
     if (!navStatus) return null;
-    const colors: Record<string, string> = {
-      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-      sent: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-      accepted: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-      rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-    };
-    const labels: Record<string, string> = {
-      pending: 'NAV: Függő',
-      sent: 'NAV: Küldve',
-      accepted: 'NAV: OK',
-      rejected: 'NAV: Hiba',
-    };
+    const config = NAV_STATUSES.find(s => s.value === navStatus.toUpperCase());
     return (
-      <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${colors[navStatus] ?? ''}`}>
-        {labels[navStatus] ?? navStatus}
+      <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${config?.color ?? ''}`}>
+        {config?.label ?? navStatus}
       </span>
     );
   };
+
+  // Calculate display stats from stats hook or fallback to invoices
+  const displayStats = useMemo(() => {
+    if (stats) {
+      return stats;
+    }
+    // Fallback: calculate from current invoices
+    const safeInvoices = invoices ?? [];
+    return {
+      total: safeInvoices.length,
+      draft: safeInvoices.filter(i => i.status === 'DRAFT').length,
+      sent: safeInvoices.filter(i => i.status === 'SENT').length,
+      paid: safeInvoices.filter(i => i.status === 'PAID').length,
+      overdue: safeInvoices.filter(i => i.status === 'OVERDUE').length,
+      totalRevenue: safeInvoices
+        .filter(i => i.status === 'PAID')
+        .reduce((sum, i) => sum + Number(i.totalAmount), 0),
+      unpaidTotal: safeInvoices
+        .filter(i => i.status === 'SENT' || i.status === 'OVERDUE' || i.status === 'PARTIALLY_PAID')
+        .reduce((sum, i) => sum + Number(i.balanceDue), 0),
+    };
+  }, [stats, invoices]);
 
   return (
     <div className="min-h-screen kgc-bg">
@@ -131,7 +111,9 @@ export function InvoiceListPage() {
             <CardContent className="pt-4">
               <div className="text-center">
                 <p className="text-sm text-gray-500 dark:text-gray-400">Összes számla</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                  {displayStats.total}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -140,7 +122,7 @@ export function InvoiceListPage() {
               <div className="text-center">
                 <p className="text-sm text-green-600 dark:text-green-300">Befizetett bevétel</p>
                 <p className="text-2xl font-bold text-green-700 dark:text-green-200">
-                  {formatPrice(stats.totalRevenue)}
+                  {formatPrice(displayStats.totalRevenue)}
                 </p>
               </div>
             </CardContent>
@@ -150,7 +132,7 @@ export function InvoiceListPage() {
               <div className="text-center">
                 <p className="text-sm text-blue-600 dark:text-blue-300">Kiállítva / Függőben</p>
                 <p className="text-3xl font-bold text-blue-700 dark:text-blue-200">
-                  {stats.issued}
+                  {displayStats.sent}
                 </p>
               </div>
             </CardContent>
@@ -160,9 +142,11 @@ export function InvoiceListPage() {
               <div className="text-center">
                 <p className="text-sm text-red-600 dark:text-red-300">Lejárt tartozás</p>
                 <p className="text-2xl font-bold text-red-700 dark:text-red-200">
-                  {formatPrice(stats.unpaidTotal)}
+                  {formatPrice(displayStats.unpaidTotal)}
                 </p>
-                <p className="text-xs text-red-500 dark:text-red-400">{stats.overdue} számla</p>
+                <p className="text-xs text-red-500 dark:text-red-400">
+                  {displayStats.overdue} számla
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -184,10 +168,10 @@ export function InvoiceListPage() {
                 className="rounded-md border border-gray-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100"
                 value={filters.status}
                 onChange={e =>
-                  setFilters(f => ({ ...f, status: e.target.value as InvoiceStatus | 'all' }))
+                  setFilters(f => ({ ...f, status: e.target.value as InvoiceStatus | 'ALL' }))
                 }
               >
-                <option value="all">Minden státusz</option>
+                <option value="ALL">Minden státusz</option>
                 {INVOICE_STATUSES.map(s => (
                   <option key={s.value} value={s.value}>
                     {s.label}
@@ -198,10 +182,10 @@ export function InvoiceListPage() {
                 className="rounded-md border border-gray-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100"
                 value={filters.type}
                 onChange={e =>
-                  setFilters(f => ({ ...f, type: e.target.value as InvoiceType | 'all' }))
+                  setFilters(f => ({ ...f, type: e.target.value as InvoiceType | 'ALL' }))
                 }
               >
-                <option value="all">Minden típus</option>
+                <option value="ALL">Minden típus</option>
                 {INVOICE_TYPES.map(t => (
                   <option key={t.value} value={t.value}>
                     {t.label}
@@ -212,120 +196,144 @@ export function InvoiceListPage() {
           </CardContent>
         </Card>
 
-        {/* Invoice List */}
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b bg-gray-50 dark:bg-slate-700/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Számlaszám
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Partner
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Típus
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Kiállítás
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Fizetési határidő
-                    </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Összeg
-                    </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Státusz
-                    </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
-                      NAV
-                    </th>
-                    <th className="px-4 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y dark:divide-slate-700">
-                  {filteredInvoices.map(invoice => (
-                    <tr
-                      key={invoice.id}
-                      className="hover:bg-gray-50 dark:hover:bg-slate-700/30 cursor-pointer"
-                      onClick={() => navigate(`/invoices/${invoice.id}`)}
-                    >
-                      <td className="px-4 py-3">
-                        <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
-                          {invoice.invoiceNumber}
-                        </span>
-                        {invoice.correctionOf && (
-                          <span className="ml-2 text-xs text-gray-500">(sztornó)</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-gray-900 dark:text-gray-100">
-                          {invoice.partnerName}
-                        </p>
-                        {invoice.partnerTaxNumber && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {invoice.partnerTaxNumber}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">{getTypeBadge(invoice.type)}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                        {formatDate(invoice.issueDate)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={
-                            invoice.status === 'overdue'
-                              ? 'text-red-600 font-medium dark:text-red-400'
-                              : 'text-gray-600 dark:text-gray-300'
-                          }
-                        >
-                          {formatDate(invoice.dueDate)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span
-                          className={`font-medium ${invoice.grossTotal < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'}`}
-                        >
-                          {formatPrice(invoice.grossTotal)}
-                        </span>
-                        {invoice.remainingAmount > 0 && invoice.status !== 'draft' && (
-                          <p className="text-xs text-orange-600 dark:text-orange-400">
-                            Hátralék: {formatPrice(invoice.remainingAmount)}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">{getStatusBadge(invoice.status)}</td>
-                      <td className="px-4 py-3 text-center">
-                        {getNavStatusBadge(invoice.navStatus)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            navigate(`/invoices/${invoice.id}`);
-                          }}
-                        >
-                          →
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {filteredInvoices.length === 0 && (
-              <div className="py-12 text-center text-gray-500 dark:text-gray-400">
-                Nincs találat a megadott szűrőkkel
+        {/* Loading state */}
+        {isLoading && (
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center text-gray-500 dark:text-gray-400">
+                Számlák betöltése...
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error state */}
+        {error && (
+          <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
+            <CardContent className="py-4">
+              <div className="text-center text-red-600 dark:text-red-400">
+                Hiba történt: {error}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Invoice List */}
+        {!isLoading && !error && (
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="border-b bg-gray-50 dark:bg-slate-700/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Számlaszám
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Partner
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Típus
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Kiállítás
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Fizetési határidő
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Összeg
+                      </th>
+                      <th className="px-4 py-3 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Státusz
+                      </th>
+                      <th className="px-4 py-3 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+                        NAV
+                      </th>
+                      <th className="px-4 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y dark:divide-slate-700">
+                    {(invoices ?? []).map(invoice => (
+                      <tr
+                        key={invoice.id}
+                        className="hover:bg-gray-50 dark:hover:bg-slate-700/30 cursor-pointer"
+                        onClick={() => navigate(`/invoices/${invoice.id}`)}
+                      >
+                        <td className="px-4 py-3">
+                          <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
+                            {invoice.invoiceNumber}
+                          </span>
+                          {invoice.voidedInvoiceId && (
+                            <span className="ml-2 text-xs text-gray-500">(sztornó)</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-gray-900 dark:text-gray-100">
+                            {invoice.partner?.name ?? '-'}
+                          </p>
+                          {invoice.partner?.taxNumber && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {invoice.partner.taxNumber}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">{getTypeBadge(invoice.type)}</td>
+                        <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
+                          {formatDate(invoice.issueDate)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={
+                              invoice.status === 'OVERDUE'
+                                ? 'text-red-600 font-medium dark:text-red-400'
+                                : 'text-gray-600 dark:text-gray-300'
+                            }
+                          >
+                            {formatDate(invoice.dueDate)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span
+                            className={`font-medium ${Number(invoice.totalAmount) < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'}`}
+                          >
+                            {formatPrice(Number(invoice.totalAmount))}
+                          </span>
+                          {Number(invoice.balanceDue) > 0 && invoice.status !== 'DRAFT' && (
+                            <p className="text-xs text-orange-600 dark:text-orange-400">
+                              Hátralék: {formatPrice(Number(invoice.balanceDue))}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">{getStatusBadge(invoice.status)}</td>
+                        <td className="px-4 py-3 text-center">
+                          {getNavStatusBadge(invoice.navStatus)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={e => {
+                              e.stopPropagation();
+                              navigate(`/invoices/${invoice.id}`);
+                            }}
+                          >
+                            &rarr;
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {(invoices ?? []).length === 0 && (
+                <div className="py-12 text-center text-gray-500 dark:text-gray-400">
+                  Nincs találat a megadott szűrőkkel
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );

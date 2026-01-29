@@ -38,7 +38,7 @@ import {
 } from './repositories';
 
 // Controllers
-import { RentalController } from './controllers';
+import { RentalController, RentalDirectController } from './controllers';
 
 export interface RentalModuleOptions {
   prisma: PrismaClient;
@@ -84,7 +84,7 @@ export class RentalModule {
 
     return {
       module: RentalModule,
-      controllers: [RentalController],
+      controllers: [RentalController, RentalDirectController],
       providers,
       exports: [
         RentalService,
