@@ -4,16 +4,16 @@
  */
 
 import { BadRequestException } from '@nestjs/common';
-import type { PrismaClient } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import {
+  type LinkItemToSupplierInput,
   type SupplierItem,
   type SupplierItemWithRelations,
-  type LinkItemToSupplierInput,
   type UpdateSupplierItemInput,
-  PriceChangeSource,
   DEFAULT_CURRENCY,
+  PriceChangeSource,
 } from '../interfaces/supplier.interface';
+import type { PrismaClient } from '../prisma';
 
 /**
  * Audit logger interface

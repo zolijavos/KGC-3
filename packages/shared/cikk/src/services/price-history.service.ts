@@ -3,9 +3,9 @@
  * Story 8-3: Beszállító Kapcsolat és Import
  */
 
-import type { PrismaClient } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { type PriceHistory, PriceChangeSource } from '../interfaces/supplier.interface';
+import type { PrismaClient } from '../prisma';
 
 /**
  * Date range filter

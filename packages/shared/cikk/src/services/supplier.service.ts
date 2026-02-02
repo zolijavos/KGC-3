@@ -4,15 +4,15 @@
  */
 
 import { BadRequestException } from '@nestjs/common';
-import type { PrismaClient } from '@prisma/client';
 import {
-  type Supplier,
   SupplierStatus,
   type CreateSupplierInput,
-  type UpdateSupplierInput,
+  type Supplier,
   type SupplierFilterOptions,
   type SupplierListResponse,
+  type UpdateSupplierInput,
 } from '../interfaces/supplier.interface';
+import type { PrismaClient } from '../prisma';
 
 /**
  * Audit logger interface
@@ -217,7 +217,9 @@ export class SupplierService {
         throw new BadRequestException('A beszállító neve nem lehet üres');
       }
       if (input.name.trim().length > MAX_NAME_LENGTH) {
-        throw new BadRequestException(`A beszállító neve maximum ${MAX_NAME_LENGTH} karakter lehet`);
+        throw new BadRequestException(
+          `A beszállító neve maximum ${MAX_NAME_LENGTH} karakter lehet`
+        );
       }
     }
 

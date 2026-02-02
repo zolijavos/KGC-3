@@ -3,17 +3,17 @@
  * Story 8-3: Beszállító Kapcsolat és Import
  */
 
-import type { PrismaClient } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { ITEM_CODE_PREFIX, ItemStatus, ItemType } from '../interfaces/item.interface';
 import {
   type CsvImportOptions,
+  type CsvImportResult,
   type CsvImportRow,
   type CsvRowValidationResult,
-  type CsvImportResult,
-  PriceChangeSource,
   DEFAULT_CURRENCY,
+  PriceChangeSource,
 } from '../interfaces/supplier.interface';
-import { ItemType, ItemStatus, ITEM_CODE_PREFIX } from '../interfaces/item.interface';
+import type { PrismaClient } from '../prisma';
 
 /**
  * Audit logger interface
@@ -257,7 +257,9 @@ export class CsvImportService {
     }
 
     if (!item) {
-      throw new Error(`Cikk nem található és nem hozható létre (barcode: ${row.barcode ?? 'nincs'})`);
+      throw new Error(
+        `Cikk nem található és nem hozható létre (barcode: ${row.barcode ?? 'nincs'})`
+      );
     }
 
     // Check if supplier-item link exists
@@ -370,7 +372,7 @@ export class CsvImportService {
     // Atomic sequence increment
     const sequence = await this.prisma.itemCodeSequence.upsert({
       where: {
-        tenantId_prefix_date: {
+        item_code_sequence_unique: {
           tenantId,
           prefix,
           date: dateStr,
