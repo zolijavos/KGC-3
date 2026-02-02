@@ -1,0 +1,42 @@
+# ==============================================================================
+# MyForgeOS Dashboard - Caddyfile
+# Domain: myforgeos.mflerp.com
+# Static React Dashboard for Project Management
+# ==============================================================================
+
+{
+	email {$ADMIN_EMAIL:admin@mflerp.com}
+}
+
+{$MYFORGEOS_DOMAIN:myforgeos.mflerp.com} {
+	encode gzip zstd
+
+	# Health check
+	handle /health {
+		respond "OK" 200
+	}
+
+	# Proxy to dashboard container
+	reverse_proxy myforgeos-dashboard:80 {
+		health_uri /health
+		health_interval 30s
+	}
+
+	# Security headers
+	header {
+		X-Content-Type-Options nosniff
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy strict-origin-when-cross-origin
+		# Allow embedding in KGC ERP
+		Content-Security-Policy "frame-ancestors 'self' https://demo-kgc.mflerp.com https://*.mflerp.com"
+		-X-Frame-Options
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/myforgeos.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}

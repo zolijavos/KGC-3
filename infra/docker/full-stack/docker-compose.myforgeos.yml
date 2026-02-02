@@ -1,0 +1,51 @@
+# ==============================================================================
+# MyForgeOS Dashboard - Docker Compose
+# Deploy: docker compose -f docker-compose.myforgeos.yml up -d
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  myforgeos-dashboard:
+    build:
+      context: ../../..
+      dockerfile: apps/kgc-dashboard/Dockerfile
+    container_name: myforgeos-dashboard
+    restart: unless-stopped
+    networks:
+      - mflerp-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: myforgeos-caddy
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile.myforgeos:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
+    environment:
+      MYFORGEOS_DOMAIN: ${MYFORGEOS_DOMAIN:-myforgeos.mflerp.com}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@mflerp.com}
+    networks:
+      - mflerp-network
+    depends_on:
+      - myforgeos-dashboard
+
+networks:
+  mflerp-network:
+    external: true
+    name: mflerp-network
+
+volumes:
+  caddy_data:
+  caddy_config:
+  caddy_logs:

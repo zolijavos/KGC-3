@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- rπ Logo - Premium Dark Style -->
+  <defs>
+    <linearGradient id="goldAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#d4af37"/>
+      <stop offset="50%" style="stop-color:#f5d67a"/>
+      <stop offset="100%" style="stop-color:#d4af37"/>
+    </linearGradient>
+    <style>
+      .logo-text { font-family: 'Georgia', 'Times New Roman', serif; }
+    </style>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="200" height="200" fill="#1e293b"/>
+
+  <!-- Main logo text -->
+  <text x="100" y="125" text-anchor="middle" class="logo-text" font-size="80" font-weight="400">
+    <tspan fill="#f8fafc">r</tspan><tspan fill="url(#goldAccent)">π</tspan>
+  </text>
+</svg>

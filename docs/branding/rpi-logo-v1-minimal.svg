@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- rπ Logo - Minimalist Tech Style -->
+  <defs>
+    <style>
+      .logo-text { font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif; }
+    </style>
+  </defs>
+
+  <!-- Background (optional - remove for transparent) -->
+  <rect width="200" height="200" fill="#ffffff"/>
+
+  <!-- Main logo text -->
+  <text x="100" y="125" text-anchor="middle" class="logo-text" font-size="80" font-weight="300" fill="#1e3a5f">
+    <tspan fill="#2563eb">r</tspan><tspan fill="#1e3a5f">π</tspan>
+  </text>
+</svg>

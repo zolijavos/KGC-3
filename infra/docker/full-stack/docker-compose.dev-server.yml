@@ -1,0 +1,232 @@
+# ==============================================================================
+# KGC ERP v7.0 - Dev Server Docker Compose
+# Server: dev-kgc.mflerp.com (Hostinger VPS + CloudPanel)
+# ==============================================================================
+#
+# Usage:
+#   cd /root/LABS/KGCERP/KGC-3/infra/docker/full-stack
+#   docker compose -f docker-compose.dev-server.yml --env-file .env.dev up -d --build
+#
+# Nginx reverse proxy already configured on port 80/443
+# Web: http://127.0.0.1:3030
+# API: http://127.0.0.1:3031
+#
+# ==============================================================================
+
+name: kgc-dev
+
+# ==============================================================================
+# SHARED ANCHORS
+# ==============================================================================
+x-logging: &default-logging
+  driver: 'json-file'
+  options:
+    max-size: '10m'
+    max-file: '3'
+
+x-healthcheck-db: &healthcheck-db
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 30s
+
+x-healthcheck-app: &healthcheck-app
+  interval: 30s
+  timeout: 10s
+  retries: 5
+  start_period: 60s
+
+services:
+  # ============================================================================
+  # KGC API (NestJS Backend)
+  # ============================================================================
+  kgc-dev-api:
+    build:
+      context: ../../../
+      dockerfile: apps/kgc-api/Dockerfile
+    container_name: kgc-dev-api
+    ports:
+      - '127.0.0.1:3031:3000'
+    depends_on:
+      kgc-dev-db:
+        condition: service_healthy
+      kgc-dev-redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+    logging: *default-logging
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${KGC_DB_USER:-kgc}:${KGC_DB_PASSWORD}@kgc-dev-db:5432/${KGC_DB_NAME:-kgc_dev}
+      REDIS_URL: redis://kgc-dev-redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-${JWT_SECRET}}
+      APP_BASE_URL: https://dev-kgc.mflerp.com
+      CORS_ORIGIN: https://dev-kgc.mflerp.com
+      # MinIO
+      MINIO_ENDPOINT: kgc-dev-minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_USE_SSL: 'false'
+      # Rate limiting - disabled for dev
+      RATE_LIMIT_ENABLED: 'false'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://localhost:3000/api/v1/health',
+        ]
+      <<: *healthcheck-app
+    restart: unless-stopped
+    networks:
+      - kgc-dev-network
+
+  # ============================================================================
+  # KGC Web (Vite + React PWA Frontend)
+  # ============================================================================
+  kgc-dev-web:
+    build:
+      context: ../../../
+      dockerfile: apps/kgc-web/Dockerfile
+      args:
+        VITE_API_URL: https://dev-kgc.mflerp.com/api
+        VITE_APP_NAME: ${VITE_APP_NAME:-KGC ERP Dev}
+        VITE_APP_VERSION: ${VITE_APP_VERSION:-7.0.3-dev}
+    container_name: kgc-dev-web
+    ports:
+      - '127.0.0.1:3030:80'
+    depends_on:
+      kgc-dev-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 64M
+    logging: *default-logging
+    healthcheck:
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:80/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - kgc-dev-network
+
+  # ============================================================================
+  # PostgreSQL Database
+  # ============================================================================
+  kgc-dev-db:
+    image: postgres:16-alpine
+    container_name: kgc-dev-db
+    ports:
+      - '127.0.0.1:5441:5432'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+    logging: *default-logging
+    environment:
+      POSTGRES_USER: ${KGC_DB_USER:-kgc}
+      POSTGRES_PASSWORD: ${KGC_DB_PASSWORD}
+      POSTGRES_DB: ${KGC_DB_NAME:-kgc_dev}
+    volumes:
+      - kgc-dev-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${KGC_DB_USER:-kgc} -d ${KGC_DB_NAME:-kgc_dev}']
+      <<: *healthcheck-db
+    restart: unless-stopped
+    networks:
+      - kgc-dev-network
+
+  # ============================================================================
+  # Redis Cache
+  # ============================================================================
+  kgc-dev-redis:
+    image: redis:7-alpine
+    container_name: kgc-dev-redis
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+        reservations:
+          memory: 64M
+    logging: *default-logging
+    volumes:
+      - kgc-dev-redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - kgc-dev-network
+
+  # ============================================================================
+  # MinIO (S3-compatible Object Storage)
+  # ============================================================================
+  kgc-dev-minio:
+    image: minio/minio:latest
+    container_name: kgc-dev-minio
+    ports:
+      - '127.0.0.1:9011:9001'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+    logging: *default-logging
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - kgc-dev-minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - kgc-dev-network
+
+# ==============================================================================
+# VOLUMES
+# ==============================================================================
+volumes:
+  kgc-dev-db-data:
+    name: kgc-dev-db-data
+  kgc-dev-redis-data:
+    name: kgc-dev-redis-data
+  kgc-dev-minio-data:
+    name: kgc-dev-minio-data
+
+# ==============================================================================
+# NETWORKS
+# ==============================================================================
+networks:
+  kgc-dev-network:
+    name: kgc-dev-network
+    driver: bridge

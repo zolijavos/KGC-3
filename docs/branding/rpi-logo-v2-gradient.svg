@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- rπ Logo - Modern Gradient Style -->
+  <defs>
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb"/>
+      <stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+    <style>
+      .logo-text { font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="200" height="200" fill="#ffffff"/>
+
+  <!-- Main logo text with gradient -->
+  <text x="100" y="125" text-anchor="middle" class="logo-text" font-size="80" font-weight="400" fill="url(#blueGradient)">
+    rπ
+  </text>
+</svg>

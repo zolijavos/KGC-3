@@ -62,8 +62,12 @@ services:
       - ./entrypoint-override.sh:/app/entrypoint-kgc.sh:ro
     entrypoint: ['/bin/bash', '/app/entrypoint-kgc.sh']
     healthcheck:
+      # Use Python since curl is not available in the container
       test:
-        ['CMD', 'curl', '-fL', '-o', '/dev/null', '-w', '%{http_code}', 'http://localhost:8000/']
+        [
+          'CMD-SHELL',
+          'python3 -c "import urllib.request; urllib.request.urlopen(\"http://localhost:8000/\", timeout=5)" || exit 1',
+        ]
       interval: 30s
       timeout: 10s
       retries: 5

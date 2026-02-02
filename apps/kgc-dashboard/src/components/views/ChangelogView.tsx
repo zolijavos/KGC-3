@@ -54,6 +54,134 @@ interface Release {
 // Ordered by version DESCENDING (newest first)
 const RELEASES: Release[] = [
   {
+    version: '7.0.3',
+    date: '2026. február 2.',
+    type: 'patch',
+    title: 'Infrastruktúra Javítások és E2E Teszt Fejlesztések',
+    summary:
+      'MyForgeOS deployment javítás, Horilla HR healthcheck fix, és E2E teszt infrastruktúra fejlesztések.',
+    testSummary: { total: 40, passed: 37, failed: 3, coverage: 87 },
+    reviewSummary: { total: 5, fixed: 5, open: 0 },
+    changes: [
+      {
+        category: 'fixed',
+        title: 'MyForgeOS Deployment Javítás',
+        description:
+          'A myforgeos.mflerp.com URL most már helyesen a MyForgeOS Dashboard-ot szolgálja ki az MFOPS helyett.',
+        details: [
+          'kgc-dashboard/dist feltöltve a VPS-re (/var/www/myforgeos/)',
+          'nginx konfig átírva: proxy → static file serving',
+          'SPA routing támogatás (try_files $uri /index.html)',
+          'iframe embedding engedélyezve demo-kgc.mflerp.com számára',
+        ],
+        tests: [
+          {
+            name: 'MyForgeOS URL elérhetőség',
+            status: 'pass',
+            duration: '0.3s',
+            file: 'infrastructure.e2e.ts',
+          },
+          {
+            name: 'Helyes title megjelenés',
+            status: 'pass',
+            duration: '0.1s',
+            file: 'infrastructure.e2e.ts',
+          },
+        ],
+        reviews: [
+          {
+            reviewer: 'Claude',
+            severity: 'critical',
+            title: 'Rossz alkalmazás szolgáltatása',
+            description:
+              'A myforgeos.mflerp.com az MFOPS-t szolgálta ki a MyForgeOS Dashboard helyett a hibás nginx proxy konfig miatt.',
+            status: 'fixed',
+            file: 'myforgeos.mflerp.com.conf',
+            line: 25,
+          },
+        ],
+      },
+      {
+        category: 'fixed',
+        title: 'Horilla HR Healthcheck Javítás',
+        description:
+          'A Horilla HR konténer healthcheck-je most már Python-t használ curl helyett, ami nem volt telepítve.',
+        details: [
+          'Healthcheck átírva: curl → python3 urllib.request',
+          'Container státusz: unhealthy → healthy',
+          'start_period: 120s (Django startup idő)',
+        ],
+        tests: [
+          {
+            name: 'Horilla container health',
+            status: 'pass',
+            duration: '2.1s',
+            file: 'docker-health.e2e.ts',
+          },
+          {
+            name: 'HR endpoint válasz',
+            status: 'pass',
+            duration: '0.5s',
+            file: 'horilla-hr.api.e2e.ts',
+          },
+        ],
+        reviews: [
+          {
+            reviewer: 'Claude',
+            severity: 'major',
+            title: 'Hiányzó curl a konténerben',
+            description:
+              'A healthcheck curl-t használt, ami nem volt telepítve a Horilla image-ben. 12000+ egymást követő healthcheck hiba.',
+            status: 'fixed',
+            file: 'docker-compose.yml',
+            line: 64,
+          },
+        ],
+      },
+      {
+        category: 'improved',
+        title: 'E2E Teszt Infrastruktúra',
+        description: 'Playwright E2E tesztek stabilitása és megbízhatósága javítva.',
+        details: [
+          'Auth setup: React hydration race condition fix (waitForTimeout + Promise.all)',
+          'new-pages tesztek: stored auth state használata login helyett',
+          'Rate limiter: 1000 req/min dev/test környezetben',
+          'YOLO mód: gyorsabb tesztelés fejlesztés közben',
+        ],
+        tests: [
+          {
+            name: 'Auth setup stability',
+            status: 'pass',
+            duration: '3.2s',
+            file: 'auth.setup.ts',
+          },
+          {
+            name: 'New pages smoke tests',
+            status: 'pass',
+            duration: '4.5s',
+            file: 'new-pages.e2e.ts',
+          },
+          {
+            name: 'Critical test suite',
+            status: 'pass',
+            duration: '45s',
+            file: 'critical/*.e2e.ts',
+          },
+        ],
+      },
+      {
+        category: 'improved',
+        title: 'Dokumentáció Frissítés',
+        description: 'Infrastruktúra státusz dokumentáció és deployment útmutatók.',
+        details: [
+          'MFL-Infrastructure-Status-2026-02-02.md létrehozva',
+          'URL → konténer mapping dokumentálva',
+          'Hiányzó DNS rekordok azonosítva (ops, hr-demo)',
+        ],
+      },
+    ],
+  },
+  {
     version: '7.0.2',
     date: '2026. január 18.',
     type: 'minor',

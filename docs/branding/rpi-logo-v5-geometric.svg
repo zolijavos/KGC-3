@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- rπ Logo - Geometric/Constructivist Style -->
+  <defs>
+    <style>
+      .logo-text { font-family: 'Courier New', 'Monaco', monospace; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="200" height="200" fill="#f8fafc"/>
+
+  <!-- Geometric decorations -->
+  <circle cx="40" cy="40" r="8" fill="#2563eb" opacity="0.3"/>
+  <circle cx="160" cy="160" r="12" fill="#2563eb" opacity="0.2"/>
+  <line x1="20" y1="170" x2="60" y2="170" stroke="#2563eb" stroke-width="2" opacity="0.4"/>
+  <line x1="140" y1="30" x2="180" y2="30" stroke="#2563eb" stroke-width="2" opacity="0.4"/>
+
+  <!-- Grid lines (subtle) -->
+  <line x1="100" y1="20" x2="100" y2="180" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="20" y1="100" x2="180" y2="100" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- Main logo text -->
+  <text x="100" y="115" text-anchor="middle" class="logo-text" font-size="72" font-weight="700" fill="#0f172a">
+    rπ
+  </text>
+
+  <!-- Underline accent -->
+  <rect x="55" y="135" width="90" height="4" fill="#2563eb"/>
+</svg>
