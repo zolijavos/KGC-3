@@ -141,11 +141,17 @@ export class AuthModule {
             expiresIn: process.env['JWT_ACCESS_EXPIRATION'] ?? '24h',
           },
         }),
+
         ThrottlerModule.forRoot([
           {
-            name: 'login',
+            name: 'default',
             ttl: 60000, // 1 minute in milliseconds
-            limit: 5, // 5 requests per minute per IP
+            limit: (() => {
+              const env = process.env['NODE_ENV'] ?? '';
+              const limit = ['development', 'test'].includes(env) ? 1000 : 5;
+              console.log(`[AuthModule] Configuring Throttler: ENV=${env}, Limit=${limit}`);
+              return limit;
+            })(),
           },
         ]),
       ],

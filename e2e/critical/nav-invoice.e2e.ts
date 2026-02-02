@@ -243,7 +243,7 @@ test.describe('@P0 @NAV @Penzugy Hibakezelés', () => {
 
   test('[P0] NAV kapcsolati hiba esetén újrapróbálkozás', async ({ page, request }) => {
     // GIVEN: MockSzamlazzhuService beállítása TIMEOUT hibára
-    await request.post('/api/test/mock/szamlazz-hu/configure', {
+    await request.post('/api/v1/test/mock/szamlazz-hu/configure', {
       headers: { 'X-Tenant-ID': seedData.tenant.id },
       data: { forceError: 'TIMEOUT' },
     });
@@ -273,7 +273,7 @@ test.describe('@P0 @NAV @Penzugy Hibakezelés', () => {
     await expect(page.getByRole('button', { name: 'Újrapróbálkozás' })).toBeVisible();
 
     // Reset mock for cleanup
-    await request.post('/api/test/mock/szamlazz-hu/configure', {
+    await request.post('/api/v1/test/mock/szamlazz-hu/configure', {
       headers: { 'X-Tenant-ID': seedData.tenant.id },
       data: { forceError: null },
     });
@@ -312,7 +312,7 @@ test.describe('@P0 @NAV @API Számlázz.hu integráció', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Számla létrehozása API-n keresztül
-    const invoiceResponse = await request.post('/api/invoices', {
+    const invoiceResponse = await request.post('/api/v1/invoices', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -341,7 +341,7 @@ test.describe('@P0 @NAV @API Számlázz.hu integráció', () => {
     expect(invoice.data.invoiceNumber).toBeDefined();
 
     // THEN: NAV státusz ellenőrzés (mock Számlázz.hu visszaadja)
-    const navStatusResponse = await request.get(`/api/invoices/${invoice.data.id}/nav-status`, {
+    const navStatusResponse = await request.get(`/api/v1/invoices/${invoice.data.id}/nav-status`, {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -368,7 +368,7 @@ test.describe('@P0 @NAV @API Számlázz.hu integráció', () => {
     const endDate = new Date().toISOString();
 
     const vatResponse = await request.get(
-      `/api/reports/vat-summary?start=${startDate}&end=${endDate}`,
+      `/api/v1/reports/vat-summary?start=${startDate}&end=${endDate}`,
       {
         headers: {
           'X-Tenant-ID': seedData.tenant.id,
@@ -403,13 +403,13 @@ test.describe('@P0 @NAV @API Számlázz.hu integráció', () => {
     expect(userToken).toBeDefined();
 
     // Configure mock to return NAV error
-    await request.post('/api/test/mock/szamlazz-hu/configure', {
+    await request.post('/api/v1/test/mock/szamlazz-hu/configure', {
       headers: { 'X-Tenant-ID': seedData.tenant.id },
       data: { forceError: 'NAV' },
     });
 
     // WHEN: Próbálunk számlát kiállítani
-    const invoiceResponse = await request.post('/api/invoices', {
+    const invoiceResponse = await request.post('/api/v1/invoices', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -436,7 +436,7 @@ test.describe('@P0 @NAV @API Számlázz.hu integráció', () => {
     }
 
     // Cleanup: Reset mock
-    await request.post('/api/test/mock/szamlazz-hu/configure', {
+    await request.post('/api/v1/test/mock/szamlazz-hu/configure', {
       headers: { 'X-Tenant-ID': seedData.tenant.id },
       data: { forceError: null },
     });

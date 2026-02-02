@@ -23,7 +23,7 @@ test.describe('@P1 @API @Integration @Horilla Employee Sync', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Trigger sync from Horilla to KGC
-    const response = await request.post('/api/horilla-hr/sync/employees', {
+    const response = await request.post('/api/v1/horilla-hr/sync/employees', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -69,7 +69,7 @@ test.describe('@P1 @API @Integration @Horilla Employee Sync', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Trigger sync from KGC to Horilla
-    const response = await request.post('/api/horilla-hr/sync/employees', {
+    const response = await request.post('/api/v1/horilla-hr/sync/employees', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -108,7 +108,7 @@ test.describe('@P1 @API @Integration @Horilla Employee Sync', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Trigger bidirectional sync
-    const response = await request.post('/api/horilla-hr/sync/employees', {
+    const response = await request.post('/api/v1/horilla-hr/sync/employees', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -151,7 +151,7 @@ test.describe('@P1 @API @Integration @Horilla Employee Sync', () => {
     expect(operatorId).toBeDefined();
 
     // WHEN: Sync specific users
-    const response = await request.post('/api/horilla-hr/sync/employees', {
+    const response = await request.post('/api/v1/horilla-hr/sync/employees', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${adminToken}`,
@@ -191,7 +191,7 @@ test.describe('@P1 @API @Integration @Horilla Conflict Resolution', () => {
     const userToken = seedData.users?.[0]?.token;
 
     // WHEN: Sync with LAST_WRITE_WINS strategy
-    const response = await request.post('/api/horilla-hr/sync/employees', {
+    const response = await request.post('/api/v1/horilla-hr/sync/employees', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -224,7 +224,7 @@ test.describe('@P1 @API @Integration @Horilla Conflict Resolution', () => {
     const userToken = seedData.users?.[0]?.token;
 
     // WHEN: Sync with HORILLA_WINS strategy
-    const response = await request.post('/api/horilla-hr/sync/employees', {
+    const response = await request.post('/api/v1/horilla-hr/sync/employees', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -256,7 +256,7 @@ test.describe('@P1 @API @Integration @Horilla Conflict Resolution', () => {
     const userToken = seedData.users?.[0]?.token;
 
     // WHEN: Sync with KGC_WINS strategy
-    const response = await request.post('/api/horilla-hr/sync/employees', {
+    const response = await request.post('/api/v1/horilla-hr/sync/employees', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -291,7 +291,7 @@ test.describe('@P1 @API @Integration @Horilla Mapping Management', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Get mappings
-    const response = await request.get('/api/horilla-hr/mappings', {
+    const response = await request.get('/api/v1/horilla-hr/mappings', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -325,7 +325,7 @@ test.describe('@P1 @API @Integration @Horilla Mapping Management', () => {
     expect(operatorId).toBeDefined();
 
     // WHEN: Create mapping
-    const response = await request.post('/api/horilla-hr/mappings', {
+    const response = await request.post('/api/v1/horilla-hr/mappings', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${adminToken}`,
@@ -364,7 +364,7 @@ test.describe('@P1 @API @Integration @Horilla Mapping Management', () => {
     const operatorId = seedData.users?.[1]?.id;
 
     // First create a mapping
-    const createResponse = await request.post('/api/horilla-hr/mappings', {
+    const createResponse = await request.post('/api/v1/horilla-hr/mappings', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${adminToken}`,
@@ -388,7 +388,7 @@ test.describe('@P1 @API @Integration @Horilla Mapping Management', () => {
     const mapping = await createResponse.json();
 
     // WHEN: Delete mapping
-    const deleteResponse = await request.delete(`/api/horilla-hr/mappings/${mapping.id}`, {
+    const deleteResponse = await request.delete(`/api/v1/horilla-hr/mappings/${mapping.id}`, {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${adminToken}`,
@@ -414,7 +414,7 @@ test.describe('@P1 @API @Integration @Horilla Mapping Management', () => {
     const horillaId = `EMP-DUP-${Date.now()}`;
 
     // Create first mapping
-    const firstResponse = await request.post('/api/horilla-hr/mappings', {
+    const firstResponse = await request.post('/api/v1/horilla-hr/mappings', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${adminToken}`,
@@ -438,7 +438,7 @@ test.describe('@P1 @API @Integration @Horilla Mapping Management', () => {
     expect(firstResponse.status()).toBe(201);
 
     // WHEN: Try to create duplicate mapping
-    const duplicateResponse = await request.post('/api/horilla-hr/mappings', {
+    const duplicateResponse = await request.post('/api/v1/horilla-hr/mappings', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${adminToken}`,
@@ -469,7 +469,7 @@ test.describe('@P1 @API @Integration @Horilla Error Handling', () => {
     const userToken = seedData.users?.[0]?.token;
 
     // WHEN: Call without tenantId
-    const response = await request.post('/api/horilla-hr/sync/employees', {
+    const response = await request.post('/api/v1/horilla-hr/sync/employees', {
       headers: {
         Authorization: `Bearer ${userToken}`,
       },
@@ -496,7 +496,7 @@ test.describe('@P1 @API @Integration @Horilla Error Handling', () => {
     const userToken = seedData.users?.[0]?.token;
 
     // WHEN: Call with invalid direction
-    const response = await request.post('/api/horilla-hr/sync/employees', {
+    const response = await request.post('/api/v1/horilla-hr/sync/employees', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,

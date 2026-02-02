@@ -102,7 +102,7 @@ export class BergepFactory {
       headers['X-Tenant-ID'] = this.tenantId;
     }
 
-    const response = await this.request.post('/api/bergepek', {
+    const response = await this.request.post('/api/v1/bergepek', {
       data,
       headers,
     });
@@ -147,7 +147,7 @@ export class BergepFactory {
 
     for (const id of this.createdIds) {
       try {
-        await this.request.delete(`/api/bergepek/${id}`, { headers });
+        await this.request.delete(`/api/v1/bergepek/${id}`, { headers });
       } catch {
         // Ignore cleanup errors
       }

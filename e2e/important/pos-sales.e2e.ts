@@ -273,7 +273,7 @@ test.describe('@P1 @Aruhaz @API POS API', () => {
     expect(productId).toBeDefined();
 
     // WHEN: POS tranzakció létrehozása
-    const response = await request.post('/api/pos/transactions', {
+    const response = await request.post('/api/v1/pos/transactions', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -317,7 +317,7 @@ test.describe('@P1 @Aruhaz @API POS API', () => {
 
     // WHEN: Napi zárás lekérése
     const today = new Date().toISOString().split('T')[0];
-    const response = await request.get(`/api/pos/daily-report?date=${today}`, {
+    const response = await request.get(`/api/v1/pos/daily-report?date=${today}`, {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,

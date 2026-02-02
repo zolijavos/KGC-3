@@ -5,7 +5,7 @@ import type { APIRequestContext } from '@playwright/test';
  * Sprint 0 Blocker #2: Multi-Tenant Test Fixtures
  *
  * Provides isolated tenant environments for parallel E2E test execution.
- * Uses the /api/test/seed endpoint created in Sprint 0 Blocker #1.
+ * Uses the /api/v1/test/seed endpoint created in Sprint 0 Blocker #1.
  *
  * @example
  * import { TestSeedingFactory } from '@e2e/support/fixtures/factories';
@@ -81,6 +81,7 @@ export interface SeededUser {
   role: UserRole;
   tenantId: string;
   password: string; // Plain text for test login
+  token: string; // JWT token (generated server-side at seed time)
 }
 
 export interface SeededPartner {
@@ -165,7 +166,7 @@ export class TestSeedingFactory {
       return this.seedResponse!;
     }
 
-    const response = await this.request.post('/api/test/seed', {
+    const response = await this.request.post('/api/v1/test/seed', {
       data: {
         testRunId: this.testRunId,
         tenant: config.tenant ?? {
@@ -185,6 +186,9 @@ export class TestSeedingFactory {
 
     this.seedResponse = await response.json();
     this.seeded = true;
+
+    // NOTE: Tokens are now generated server-side by the seed endpoint
+    // No need to call login endpoint (avoids rate limiting issues)
 
     return this.seedResponse!;
   }
@@ -267,7 +271,7 @@ export class TestSeedingFactory {
       };
     }
 
-    const response = await this.request.delete('/api/test/cleanup', {
+    const response = await this.request.delete('/api/v1/test/cleanup', {
       data: { testRunId: this.testRunId },
     });
 

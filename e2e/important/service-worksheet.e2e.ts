@@ -233,7 +233,7 @@ test.describe('@P1 @Szerviz @API Munkalap API', () => {
     expect(partnerId).toBeDefined();
 
     // Munkalap létrehozása
-    const createResponse = await request.post('/api/worksheets', {
+    const createResponse = await request.post('/api/v1/worksheets', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -257,7 +257,7 @@ test.describe('@P1 @Szerviz @API Munkalap API', () => {
     expect(worksheet.data.status).toBe('RECEIVED');
 
     // WHEN: Érvénytelen átmenet (RECEIVED → COMPLETED nem megengedett)
-    const invalidResponse = await request.patch(`/api/worksheets/${worksheet.data.id}/status`, {
+    const invalidResponse = await request.patch(`/api/v1/worksheets/${worksheet.data.id}/status`, {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -281,7 +281,7 @@ test.describe('@P1 @Szerviz @API Munkalap API', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Munkalapok lekérése státusz szűréssel
-    const response = await request.get('/api/worksheets?status=RECEIVED', {
+    const response = await request.get('/api/v1/worksheets?status=RECEIVED', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,

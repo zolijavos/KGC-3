@@ -106,6 +106,8 @@ export interface SeededUser {
   tenantId: string;
   /** Plain text password for test login */
   password: string;
+  /** JWT access token for API calls (generated at seed time) */
+  token: string;
 }
 
 export interface SeededPartner {

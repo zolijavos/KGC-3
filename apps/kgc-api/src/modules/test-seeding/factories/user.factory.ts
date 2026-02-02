@@ -1,14 +1,18 @@
 /**
  * User Factory
  * Creates test users with predictable data for E2E tests.
+ * Generates JWT tokens directly to avoid rate limiting on login endpoint.
  */
 
 import { PrismaClient, Role, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
 import { SeedUserRequest, SeededUser } from '../types';
 
 const SALT_ROUNDS = 10;
 const DEFAULT_PASSWORD = 'Test123!';
+const JWT_SECRET =
+  process.env['JWT_SECRET'] ?? 'kgc-dev-super-secret-jwt-key-min-32-characters-long-2026';
 
 export class UserFactory {
   constructor(private readonly prisma: PrismaClient) {}
@@ -36,6 +40,19 @@ export class UserFactory {
       },
     });
 
+    // Generate JWT token directly (avoids rate limiting on login endpoint)
+    const token = jwt.sign(
+      {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        tenantId: user.tenantId,
+        type: 'access',
+      },
+      JWT_SECRET,
+      { expiresIn: '24h', algorithm: 'HS256' }
+    );
+
     return {
       id: user.id,
       email: user.email,
@@ -43,6 +60,7 @@ export class UserFactory {
       role: user.role,
       tenantId: user.tenantId,
       password, // Return plain password for test login
+      token, // JWT token for API calls
     };
   }
 

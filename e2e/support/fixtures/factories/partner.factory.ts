@@ -70,7 +70,7 @@ export class PartnerFactory {
       headers['X-Tenant-ID'] = this.tenantId;
     }
 
-    const response = await this.request.post('/api/partners', {
+    const response = await this.request.post('/api/v1/partners-direct', {
       data,
       headers,
     });
@@ -108,7 +108,7 @@ export class PartnerFactory {
 
     for (const id of this.createdIds) {
       try {
-        await this.request.delete(`/api/partners/${id}`, { headers });
+        await this.request.delete(`/api/v1/partners-direct/${id}`, { headers });
       } catch {
         // Ignore cleanup errors - partner may already be deleted
       }

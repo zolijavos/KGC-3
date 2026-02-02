@@ -151,7 +151,7 @@ export class ApiHelper {
    * Login and get auth token
    */
   async login(email: string, password: string): Promise<string> {
-    const response = await this.post<{ token: string }>('/api/auth/login', {
+    const response = await this.post<{ token: string }>('/api/v1/auth/login', {
       email,
       password,
     });

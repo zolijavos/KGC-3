@@ -104,6 +104,55 @@ async function main() {
   console.log(`✅ Operator user: ${operatorUser.email}`);
 
   // ============================================
+  // TEST USERS (E2E)
+  // ============================================
+  const testAdminHash = await bcrypt.hash('TestAdmin123!', 10);
+  await prisma.user.upsert({
+    where: { email: 'admin@kgc-test.hu' },
+    update: { passwordHash: testAdminHash, status: UserStatus.ACTIVE },
+    create: {
+      email: 'admin@kgc-test.hu',
+      passwordHash: testAdminHash,
+      name: 'E2E Admin',
+      role: Role.SUPER_ADMIN,
+      tenantId: tenant.id,
+      locationId: location.id,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  const testManagerHash = await bcrypt.hash('TestManager123!', 10);
+  await prisma.user.upsert({
+    where: { email: 'boltvezeto@kgc-test.hu' },
+    update: { passwordHash: testManagerHash, status: UserStatus.ACTIVE },
+    create: {
+      email: 'boltvezeto@kgc-test.hu',
+      passwordHash: testManagerHash,
+      name: 'E2E Boltvezető',
+      role: Role.BOLTVEZETO,
+      tenantId: tenant.id,
+      locationId: location.id,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  const testSalesHash = await bcrypt.hash('TestSales123!', 10);
+  await prisma.user.upsert({
+    where: { email: 'elado@kgc-test.hu' },
+    update: { passwordHash: testSalesHash, status: UserStatus.ACTIVE },
+    create: {
+      email: 'elado@kgc-test.hu',
+      passwordHash: testSalesHash,
+      name: 'E2E Eladó',
+      role: Role.OPERATOR,
+      tenantId: tenant.id,
+      locationId: location.id,
+      status: UserStatus.ACTIVE,
+    },
+  });
+  console.log(`✅ E2E Test users created`);
+
+  // ============================================
   // WAREHOUSE
   // ============================================
   const warehouse = await prisma.warehouse.upsert({
@@ -442,7 +491,7 @@ async function main() {
     },
   });
 
-  const _equipment2 = await prisma.rentalEquipment.upsert({
+  await prisma.rentalEquipment.upsert({
     where: {
       tenantId_equipmentCode: { tenantId: tenant.id, equipmentCode: 'EQ-002' },
     },
@@ -494,7 +543,7 @@ async function main() {
     },
   });
 
-  const _equipment4 = await prisma.rentalEquipment.upsert({
+  await prisma.rentalEquipment.upsert({
     where: {
       tenantId_equipmentCode: { tenantId: tenant.id, equipmentCode: 'EQ-004' },
     },
@@ -891,7 +940,7 @@ async function main() {
   });
   console.log(`✅ Worksheet ML-2024-00003 (WAITING_PARTS): Stihl FS 55`);
 
-  const _worksheet4 = await prisma.worksheet.upsert({
+  await prisma.worksheet.upsert({
     where: { id: '00000000-0000-0000-0002-000000000004' },
     update: {},
     create: {
@@ -1001,7 +1050,7 @@ async function main() {
   });
   console.log(`✅ Invoice KGC-2024-00002 (SENT): ${partnerKovacs.name}`);
 
-  const _invoice3 = await prisma.invoice.upsert({
+  await prisma.invoice.upsert({
     where: { id: '00000000-0000-0000-0004-000000000003' },
     update: {},
     create: {
@@ -1025,7 +1074,7 @@ async function main() {
   });
   console.log(`✅ Invoice KGC-2024-00003 (DRAFT proforma): ${partnerKertesz.name}`);
 
-  const _invoice4 = await prisma.invoice.upsert({
+  await prisma.invoice.upsert({
     where: { id: '00000000-0000-0000-0004-000000000004' },
     update: {},
     create: {

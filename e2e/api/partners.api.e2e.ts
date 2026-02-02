@@ -20,7 +20,7 @@ test.describe('@P1 @API @Partner CRUD Operations', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Partner létrehozása
-    const response = await request.post('/api/partners', {
+    const response = await request.post('/api/v1/partners-direct', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -63,7 +63,7 @@ test.describe('@P1 @API @Partner CRUD Operations', () => {
     expect(partnerId).toBeDefined();
 
     // WHEN: Partner lekérése
-    const response = await request.get(`/api/partners/${partnerId}`, {
+    const response = await request.get(`/api/v1/partners-direct/${partnerId}`, {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -89,7 +89,7 @@ test.describe('@P1 @API @Partner CRUD Operations', () => {
     expect(partnerId).toBeDefined();
 
     // WHEN: Partner frissítése
-    const response = await request.patch(`/api/partners/${partnerId}`, {
+    const response = await request.patch(`/api/v1/partners-direct/${partnerId}`, {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -115,7 +115,7 @@ test.describe('@P1 @API @Partner CRUD Operations', () => {
     expect(userToken).toBeDefined();
 
     // Létrehozás kézzel (mert törölni fogjuk)
-    const createResponse = await request.post('/api/partners', {
+    const createResponse = await request.post('/api/v1/partners-direct', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -136,7 +136,7 @@ test.describe('@P1 @API @Partner CRUD Operations', () => {
     const partner = await createResponse.json();
 
     // WHEN: Partner törlése
-    const deleteResponse = await request.delete(`/api/partners/${partner.data.id}`, {
+    const deleteResponse = await request.delete(`/api/v1/partners-direct/${partner.data.id}`, {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -147,7 +147,7 @@ test.describe('@P1 @API @Partner CRUD Operations', () => {
     expect(deleteResponse.status()).toBe(204);
 
     // Ellenőrzés: már nem létezik
-    const getResponse = await request.get(`/api/partners/${partner.data.id}`, {
+    const getResponse = await request.get(`/api/v1/partners-direct/${partner.data.id}`, {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -175,7 +175,7 @@ test.describe('@P1 @API @Partner Listázás és szűrés', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Első oldal lekérése
-    const response = await request.get('/api/partners?page=1&limit=3', {
+    const response = await request.get('/api/v1/partners-direct?page=1&limit=3', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -207,12 +207,15 @@ test.describe('@P1 @API @Partner Listázás és szűrés', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Keresés név alapján
-    const response = await request.get(`/api/partners?search=${encodeURIComponent(uniqueName)}`, {
-      headers: {
-        'X-Tenant-ID': seedData.tenant.id,
-        Authorization: `Bearer ${userToken}`,
-      },
-    });
+    const response = await request.get(
+      `/api/v1/partners-direct?search=${encodeURIComponent(uniqueName)}`,
+      {
+        headers: {
+          'X-Tenant-ID': seedData.tenant.id,
+          Authorization: `Bearer ${userToken}`,
+        },
+      }
+    );
 
     if (!response.ok()) {
       test.skip(true, 'Partner API not available');
@@ -239,7 +242,7 @@ test.describe('@P1 @API @Partner Listázás és szűrés', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Szűrés COMPANY típusra
-    const response = await request.get('/api/partners?type=COMPANY', {
+    const response = await request.get('/api/v1/partners-direct?type=COMPANY', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -270,7 +273,7 @@ test.describe('@P1 @API @Partner Validáció', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Hiányos adatokkal létrehozás
-    const response = await request.post('/api/partners', {
+    const response = await request.post('/api/v1/partners-direct', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -297,7 +300,7 @@ test.describe('@P1 @API @Partner Validáció', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Érvénytelen email
-    const response = await request.post('/api/partners', {
+    const response = await request.post('/api/v1/partners-direct', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -323,7 +326,7 @@ test.describe('@P1 @API @Partner Validáció', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Érvénytelen adószám
-    const response = await request.post('/api/partners', {
+    const response = await request.post('/api/v1/partners-direct', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,

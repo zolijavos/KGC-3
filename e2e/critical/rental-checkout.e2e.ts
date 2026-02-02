@@ -221,7 +221,7 @@ test.describe('@P0 @Berles @DATA Készlet foglalás', () => {
     expect(productId).toBeDefined();
 
     // WHEN: Bérlés létrehozása API-n keresztül
-    const rentalResponse = await request.post('/api/rentals', {
+    const rentalResponse = await request.post('/api/v1/rentals', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -237,7 +237,7 @@ test.describe('@P0 @Berles @DATA Készlet foglalás', () => {
     // THEN: Sikeres létrehozás
     if (rentalResponse.ok()) {
       // Ellenőrzés: termék státusza RENTED
-      const productResponse = await request.get(`/api/inventory/products/${productId}`, {
+      const productResponse = await request.get(`/api/v1/inventory/products/${productId}`, {
         headers: {
           'X-Tenant-ID': seedData.tenant.id,
           Authorization: `Bearer ${userToken}`,
@@ -269,7 +269,7 @@ test.describe('@P0 @Berles @DATA Készlet foglalás', () => {
     expect(productId).toBeDefined();
 
     // Bérlés létrehozása
-    const rentalResponse = await request.post('/api/rentals', {
+    const rentalResponse = await request.post('/api/v1/rentals', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -290,7 +290,7 @@ test.describe('@P0 @Berles @DATA Készlet foglalás', () => {
     const rental = await rentalResponse.json();
 
     // WHEN: Visszavétel (bérlés lezárása)
-    const returnResponse = await request.patch(`/api/rentals/${rental.data.id}/return`, {
+    const returnResponse = await request.patch(`/api/v1/rentals/${rental.data.id}/return`, {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -303,7 +303,7 @@ test.describe('@P0 @Berles @DATA Készlet foglalás', () => {
 
     // THEN: Termék újra elérhető
     if (returnResponse.ok()) {
-      const productResponse = await request.get(`/api/inventory/products/${productId}`, {
+      const productResponse = await request.get(`/api/v1/inventory/products/${productId}`, {
         headers: {
           'X-Tenant-ID': seedData.tenant.id,
           Authorization: `Bearer ${userToken}`,

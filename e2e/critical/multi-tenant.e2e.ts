@@ -21,7 +21,7 @@ test.describe('@P0 @Multi-tenant @SEC RLS Isolation', () => {
     });
 
     // Második tenant létrehozása új factory-val (külön testRunId)
-    const tenantBResponse = await request.post('/api/test/seed', {
+    const tenantBResponse = await request.post('/api/v1/test/seed', {
       data: {
         testRunId: `tenant-b-${Date.now()}`,
         tenantSlug: 'tenant-b',
@@ -34,7 +34,7 @@ test.describe('@P0 @Multi-tenant @SEC RLS Isolation', () => {
     expect(partnerId).toBeDefined();
 
     // WHEN: Tenant B felhasználó próbálja lekérni Tenant A partner adatát
-    const crossTenantResponse = await request.get(`/api/partners/${partnerId}`, {
+    const crossTenantResponse = await request.get(`/api/v1/partners-direct/${partnerId}`, {
       headers: {
         'X-Tenant-ID': tenantBData.tenant.id,
         Authorization: `Bearer ${tenantBData.users[0].token}`,
@@ -45,7 +45,7 @@ test.describe('@P0 @Multi-tenant @SEC RLS Isolation', () => {
     expect(crossTenantResponse.status()).toBe(404);
 
     // Cleanup tenant B
-    await request.delete('/api/test/cleanup', {
+    await request.delete('/api/v1/test/cleanup', {
       data: { testRunId: tenantBData.testRunId },
     });
   });
@@ -64,7 +64,7 @@ test.describe('@P0 @Multi-tenant @SEC RLS Isolation', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Listázás a saját tenant-ból authentikálva
-    const listResponse = await request.get('/api/partners', {
+    const listResponse = await request.get('/api/v1/partners-direct', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -100,7 +100,7 @@ test.describe('@P0 @Multi-tenant @SEC RLS Isolation', () => {
     expect(productId).toBeDefined();
 
     // WHEN: Más tenant próbálja lekérni
-    const crossTenantResponse = await request.get(`/api/inventory/products/${productId}`, {
+    const crossTenantResponse = await request.get(`/api/v1/inventory/products/${productId}`, {
       headers: { 'X-Tenant-ID': 'nonexistent-tenant' },
     });
 
@@ -112,7 +112,7 @@ test.describe('@P0 @Multi-tenant @SEC RLS Isolation', () => {
     // GIVEN: API kérés tenant header nélkül
 
     // WHEN: Partner listázás tenant nélkül
-    const response = await request.get('/api/partners');
+    const response = await request.get('/api/v1/partners-direct');
 
     // THEN: 400 Bad Request vagy 401 Unauthorized
     expect([400, 401]).toContain(response.status());
@@ -123,7 +123,7 @@ test.describe('@P0 @Multi-tenant @SEC RLS Isolation', () => {
     const maliciousTenantId = "'; DROP TABLE partners; --";
 
     // WHEN: API hívás rosszindulatú tenant ID-val
-    const response = await request.get('/api/partners', {
+    const response = await request.get('/api/v1/partners-direct', {
       headers: { 'X-Tenant-ID': maliciousTenantId },
     });
 
@@ -145,7 +145,7 @@ test.describe('@P0 @Multi-tenant @SEC RLS Isolation', () => {
     const fakeUuid = '00000000-0000-0000-0000-000000000001';
 
     // WHEN: Próbálkozás hamis UUID-val
-    const response = await request.get(`/api/partners/${fakeUuid}`, {
+    const response = await request.get(`/api/v1/partners-direct/${fakeUuid}`, {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -177,7 +177,7 @@ test.describe('@P0 @Multi-tenant @DATA Tranzakció izoláció', () => {
     expect(productId).toBeDefined();
 
     // WHEN: Bérlés létrehozása authentikálva
-    const rentalResponse = await request.post('/api/rentals', {
+    const rentalResponse = await request.post('/api/v1/rentals', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -196,7 +196,7 @@ test.describe('@P0 @Multi-tenant @DATA Tranzakció izoláció', () => {
       expect(rental.data.tenantId).toBe(seedData.tenant.id);
 
       // Más tenant nem látja
-      const crossTenantResponse = await request.get(`/api/rentals/${rental.data.id}`, {
+      const crossTenantResponse = await request.get(`/api/v1/rentals/${rental.data.id}`, {
         headers: { 'X-Tenant-ID': 'other-tenant-id' },
       });
       expect(crossTenantResponse.status()).toBe(404);
@@ -214,7 +214,7 @@ test.describe('@P0 @Multi-tenant @DATA Tranzakció izoláció', () => {
     expect(userToken).toBeDefined();
 
     // WHEN: Munkalap lista lekérése
-    const worksheetResponse = await request.get('/api/worksheets', {
+    const worksheetResponse = await request.get('/api/v1/worksheets', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${userToken}`,
@@ -242,7 +242,7 @@ test.describe('@P0 @Multi-tenant @AUDIT Audit trail izoláció', () => {
     expect(adminToken).toBeDefined();
 
     // WHEN: Audit log lekérése
-    const auditResponse = await request.get('/api/audit-logs', {
+    const auditResponse = await request.get('/api/v1/audit-logs', {
       headers: {
         'X-Tenant-ID': seedData.tenant.id,
         Authorization: `Bearer ${adminToken}`,
