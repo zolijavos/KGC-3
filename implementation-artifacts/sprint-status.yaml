@@ -521,7 +521,7 @@ development_status:
   35-1-rbac-dashboard-layout: done # RBAC layout engine + widget registry + 3 layouts (2026-02-03)
   35-2-penzugyi-kpi-dashboard: done # KPI widgets MVP + code review (22 files, 768 tests) + 8 fixes (2026-02-03)
   35-3-keszlet-dashboard: done # 5 Készlet widgets + API + code review (55 files, 3670 tests) + 10 fixes + 91 TEA tests (2026-02-03)
-  35-4-alert-notification-panel: ready-for-dev # Notification panel + critical toast + 5 min polling (2026-02-03)
+  35-4-alert-notification-panel: done # Notification panel + 214 tests + code review + TEA (2026-02-03)
   epic-35-retrospective: optional
 
 # ============================================
