@@ -504,6 +504,25 @@ development_status:
   34-6-jogosultsagi-rendszer: done # RBAC: VEHICLE_* permissions, JwtAuthGuard + PermissionGuard
   epic-34-retrospective: optional
 
+  # ============================================
+  # DASHBOARD LAYER (1 epic) - MVP
+  # ============================================
+  # STATUS: 🟢 NEW - Dashboard foundation for role-based UI
+
+  # Epic 35: Dashboard Foundation - 1 story (MVP)
+  # CODE: @kgc/ui components + kgc-web dashboard | PRISMA: N/A (frontend-only)
+  # Updated 2026-02-03: First story (35-1) complete with RBAC layout engine
+  # - Shared UI: WidgetSkeleton, WidgetError, WidgetContainer (29 tests)
+  # - Widgets: WelcomeCard, EmptyStateWidget (13 tests)
+  # - Dashboard: Widget Registry, Layout Components, RoleBasedDashboard (35 tests)
+  # - E2E: 6 Playwright tests for role-based layouts
+  # - Test Coverage: 838 tests total (727 @kgc/ui + 111 kgc-web)
+  epic-35: in-progress # Story 35-1, 35-2 done, 35-3 ready, more stories to follow
+  35-1-rbac-dashboard-layout: done # RBAC layout engine + widget registry + 3 layouts (2026-02-03)
+  35-2-penzugyi-kpi-dashboard: done # KPI widgets MVP + code review (22 files, 768 tests) + 8 fixes (2026-02-03)
+  35-3-keszlet-dashboard: review # 5 Készlet widgets + alerts + API (40 files, 151 tests) - YOLO parallel mode (2026-02-03)
+  epic-35-retrospective: optional
+
 # ============================================
 # PRISMA MODELS STATUS (Updated 2026-01-25 - FULL AUDIT)
 # ============================================
@@ -548,14 +567,37 @@ development_status:
 # All Prisma models are now complete! No missing models.
 
 # ============================================
-# SUMMARY (Updated 2026-01-26 - Epic 28 Complete)
+# SUMMARY (Updated 2026-02-03 - Epic 35 Started)
 # ============================================
 # ✅ DONE: 32 epics (1-6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29-chatwoot, 29-favorites, 30, 31, 32, 33, 34)
-# 🟡 IN-PROGRESS: 0 epics
-# ⚪ BACKLOG: 0 epics - ALL EPICS COMPLETE!
+# 🟡 IN-PROGRESS: 1 epic (35 - Dashboard Foundation)
+# ⚪ BACKLOG: 0 epics
 #
-# LATEST UPDATE (2026-01-26):
+# LATEST UPDATE (2026-02-03):
 # ===========================
+# Epic 35 (Dashboard Foundation) - 🟡 IN-PROGRESS:
+#    - Story 35-1: RBAC Dashboard Layout Engine - ✅ DONE
+#      - Shared UI Components: WidgetSkeleton, WidgetError, WidgetContainer (29 tests)
+#      - Mock Widgets: WelcomeCard, EmptyStateWidget (13 tests)
+#      - Widget Registry: Lazy loading, role-based filtering (10 tests)
+#      - Layout Components: ScannerFocusLayout, DashboardFirstLayout, layout-config (14 tests)
+#      - Dashboard Container: RoleBasedDashboard (9 tests)
+#      - E2E Tests: 6 Playwright tests (role-based layouts, lazy loading, layout switching)
+#    - Story 35-2: Pénzügyi KPI Dashboard - ✅ DONE
+#      - Shared UI: TrendIndicator, ComparisonText, DateRangePicker (21 tests)
+#      - KPI Widgets: Revenue, NetRevenue, Receivables, Payments (30 tests)
+#      - Backend API: KpiController (4 endpoints), KpiService (mock data MVP)
+#      - TanStack Query: useKPIData hook (auto-refresh 5 min)
+#      - Widget Registry: 4 new KPI widgets (lazy loading)
+#      - Code Review: Adversarial review + auto-fix (8 problems fixed)
+#        - ARIA labels added, NaN/Infinity védelem, threshold config env
+#        - Index.ts export barrels created (widgets + dashboard components)
+#      - Test Coverage: 768 tests total (all passing)
+#      - Files: 22 files (17 new, 1 modified, 14 tests)
+#    - Status: Story 35-1, 35-2 DONE, more stories to follow
+#
+# PREVIOUS UPDATE (2026-01-26):
+# ==============================
 # 4. Epic 28 (twenty-crm) - ✅ COMPLETE:
 #    - @kgc/twenty-crm package: PartnerSyncService + DashboardEmbedService
 #    - TwentyCrmController: 14 REST endpoints (sync, mappings, auto-link, dashboards, tokens)

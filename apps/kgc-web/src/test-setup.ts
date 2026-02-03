@@ -4,6 +4,7 @@
  */
 
 import '@testing-library/react';
+import '@testing-library/jest-dom';
 
 // Mock window.matchMedia for components that use it
 Object.defineProperty(window, 'matchMedia', {
