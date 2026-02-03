@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
-import { AlertTriangle, AlertCircle, Info, X } from 'lucide-react';
+import { useEffect } from "react";
+import { AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { Button } from '../button';
+import { Button } from '../ui/button';
 
 interface CriticalAlertToastProps {
   type: 'critical' | 'warning' | 'info';
@@ -59,7 +59,7 @@ export function CriticalAlertToast({
     if (soundEnabled) {
       try {
         const audio = new Audio('/sounds/notification.mp3');
-        audio.play().catch((error) => {
+        audio.play().catch(error => {
           console.warn('Failed to play notification sound:', error);
         });
       } catch (error) {
@@ -102,11 +102,7 @@ export function CriticalAlertToast({
           <h3 className="text-sm font-semibold text-gray-900 mb-1">{title}</h3>
           <p className="text-sm text-gray-700 mb-3">{message}</p>
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              className={cn('text-white', colors.button)}
-              onClick={onAction}
-            >
+            <Button size="sm" className={cn('text-white', colors.button)} onClick={onAction}>
               {actionText}
             </Button>
           </div>

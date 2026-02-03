@@ -15,11 +15,7 @@ export class DashboardNotificationsService {
   /**
    * Get notifications for user
    */
-  async getNotifications(
-    userId: string,
-    tenantId: string,
-    query: GetNotificationsQueryDto
-  ) {
+  async getNotifications(userId: string, tenantId: string, query: GetNotificationsQueryDto) {
     const where: any = {
       userId,
       tenantId,
@@ -41,21 +37,25 @@ export class DashboardNotificationsService {
   /**
    * Mark notification as read
    */
-  async markAsRead(
-    notificationId: string,
-    userId: string,
-    tenantId: string
-  ): Promise<void> {
-    await this.prisma.userNotification.update({
-      where: {
-        id: notificationId,
-        userId,
-        tenantId,
-      },
-      data: {
-        isRead: true,
-      },
-    });
+  async markAsRead(notificationId: string, userId: string, tenantId: string): Promise<void> {
+    try {
+      await this.prisma.userNotification.update({
+        where: {
+          id: notificationId,
+          userId,
+          tenantId,
+        },
+        data: {
+          isRead: true,
+        },
+      });
+    } catch (error) {
+      // Prisma throws P2025 if record not found
+      if (error instanceof Error && 'code' in error && error.code === 'P2025') {
+        throw new Error('Notification not found or access denied');
+      }
+      throw error;
+    }
   }
 
   /**

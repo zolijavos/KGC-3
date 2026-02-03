@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 /**
@@ -41,7 +41,7 @@ export function useNotifications(unreadOnly = true) {
       }
 
       const data = await res.json();
-      return NotificationSchema.array().parse(data.data || data);
+      return NotificationSchema.array().parse(data.data);
     },
     refetchInterval: 5 * 60 * 1000, // 5 perc polling
     staleTime: 4 * 60 * 1000, // 4 perc stale time
@@ -82,15 +82,12 @@ export function useMarkAsRead() {
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      const res = await fetch(
-        `/api/v1/dashboard/notifications/${notificationId}/mark-read`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const res = await fetch(`/api/v1/dashboard/notifications/${notificationId}/mark-read`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!res.ok) {
         throw new Error(`Failed to mark as read: ${res.statusText}`);
@@ -99,7 +96,7 @@ export function useMarkAsRead() {
       return res.json();
     },
     // Optimistic update
-    onMutate: async (notificationId) => {
+    onMutate: async notificationId => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({
         queryKey: ['dashboard', 'notifications'],
@@ -117,10 +114,8 @@ export function useMarkAsRead() {
         ['dashboard', 'notifications', 'unread'],
         (old: Notification[] | undefined) => {
           if (!old) return old;
-          return old.map((notification) =>
-            notification.id === notificationId
-              ? { ...notification, isRead: true }
-              : notification
+          return old.map(notification =>
+            notification.id === notificationId ? { ...notification, isRead: true } : notification
           );
         }
       );

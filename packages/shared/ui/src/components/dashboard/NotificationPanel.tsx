@@ -1,7 +1,6 @@
-import React from 'react';
-import { X, RefreshCw, CheckCircle, Trash2 } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '../sheet';
-import { Button } from '../button';
+import { CheckCircle, RefreshCw, Trash2, X } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 import { NotificationList } from './NotificationList';
 import { WidgetSkeleton } from './WidgetSkeleton';
 
@@ -76,21 +75,14 @@ export function NotificationPanel({
         <div className="mt-6 flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="space-y-3">
-              <WidgetSkeleton />
+              <WidgetSkeleton size="medium" />
               <p className="text-center text-sm text-gray-500">Betöltés...</p>
             </div>
           ) : sortedNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <CheckCircle
-                className="h-12 w-12 text-green-500 mb-4"
-                aria-hidden="true"
-              />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Nincs értesítés
-              </h3>
-              <p className="text-sm text-gray-500">
-                Jelenleg nincsenek értesítéseid
-              </p>
+              <CheckCircle className="h-12 w-12 text-green-500 mb-4" aria-hidden="true" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Nincs értesítés</h3>
+              <p className="text-sm text-gray-500">Jelenleg nincsenek értesítéseid</p>
             </div>
           ) : (
             <>
@@ -110,10 +102,7 @@ export function NotificationPanel({
                   Összes törlése
                 </Button>
               </div>
-              <NotificationList
-                notifications={sortedNotifications}
-                onMarkAsRead={onMarkAsRead}
-              />
+              <NotificationList notifications={sortedNotifications} onMarkAsRead={onMarkAsRead} />
             </>
           )}
         </div>

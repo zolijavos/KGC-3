@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PermissionGuard } from '../../auth/guards/permission.guard';
-import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { DashboardNotificationsService } from './dashboard-notifications.service';
 import { GetNotificationsQuerySchema } from './dto/get-notifications.dto';
 import { toNotificationResponseDto } from './dto/notification-response.dto';
@@ -19,9 +19,7 @@ import { toNotificationResponseDto } from './dto/notification-response.dto';
 @Controller('api/v1/dashboard/notifications')
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class DashboardNotificationsController {
-  constructor(
-    private readonly notificationsService: DashboardNotificationsService
-  ) {}
+  constructor(private readonly notificationsService: DashboardNotificationsService) {}
 
   /**
    * GET /api/v1/dashboard/notifications
@@ -33,10 +31,7 @@ export class DashboardNotificationsController {
    */
   @Get()
   @RequirePermissions('DASHBOARD_VIEW')
-  async getNotifications(
-    @Query() query: Record<string, any>,
-    @CurrentUser() user: any
-  ) {
+  async getNotifications(@Query() query: Record<string, any>, @CurrentUser() user: any) {
     // Validate and transform query params
     const validatedQuery = GetNotificationsQuerySchema.parse(query);
 
@@ -46,7 +41,7 @@ export class DashboardNotificationsController {
       validatedQuery
     );
 
-    return notifications.map(toNotificationResponseDto);
+    return { data: notifications.map(toNotificationResponseDto) };
   }
 
   /**
@@ -56,10 +51,7 @@ export class DashboardNotificationsController {
   @Get('unread-count')
   @RequirePermissions('DASHBOARD_VIEW')
   async getUnreadCount(@CurrentUser() user: any) {
-    const count = await this.notificationsService.getUnreadCount(
-      user.id,
-      user.tenantId
-    );
+    const count = await this.notificationsService.getUnreadCount(user.id, user.tenantId);
 
     return { count };
   }

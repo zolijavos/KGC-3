@@ -1,6 +1,6 @@
 # Story 35.4: Alert Notification Panel
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -13,6 +13,7 @@ hogy gyorsan reagálhassak a kritikus helyzetekre (készlethiány, fizetési hib
 ## Acceptance Criteria
 
 ### AC1: Notification Panel (Slide-in Sheet)
+
 1. ✅ Badge (piros) megjelenik a header-ben olvasatlan értesítések számával
 2. ✅ Badge click → Slide-in panel nyílik (shadcn Sheet komponens, jobb oldalról)
 3. ✅ Lista: értesítések időrend szerint (legújabb felül)
@@ -25,6 +26,7 @@ hogy gyorsan reagálhassak a kritikus helyzetekre (készlethiány, fizetési hib
 7. ✅ Üres állapot: "Nincs értesítés" (CheckCircle icon + üzenet)
 
 ### AC2: Critical Alert Toast
+
 1. ✅ shadcn Toast komponens használata
 2. ✅ Kritikus események automatikus toast megjelenítése:
    - Készlethiány (< 50% min threshold)
@@ -35,6 +37,7 @@ hogy gyorsan reagálhassak a kritikus helyzetekre (készlethiány, fizetési hib
 5. ✅ Sound alert opcionális (feature flag: `NOTIFICATION_SOUND_ENABLED`)
 
 ### AC3: API Integration
+
 1. ✅ `GET /api/v1/dashboard/notifications?unread=true` endpoint
 2. ✅ `POST /api/v1/dashboard/notifications/:id/mark-read` endpoint
 3. ✅ `POST /api/v1/dashboard/notifications/clear-all` endpoint
@@ -53,6 +56,7 @@ hogy gyorsan reagálhassak a kritikus helyzetekre (készlethiány, fizetési hib
    ```
 
 ### AC4: Auto-Refresh (TanStack Query Polling)
+
 1. ✅ 5 perces polling a notification lista frissítésére
 2. ✅ `refetchInterval: 5 * 60 * 1000` (5 perc)
 3. ✅ `staleTime: 4 * 60 * 1000` (4 perc)
@@ -62,6 +66,7 @@ hogy gyorsan reagálhassak a kritikus helyzetekre (készlethiány, fizetési hib
 ## Tasks / Subtasks
 
 ### Task 1: Shared UI komponensek (AC1)
+
 - [x] `NotificationPanel.tsx` komponens implementálása (shadcn Sheet)
   - [x] Slide-in animáció (jobb oldalról)
   - [x] Lista renderelés időrendben (desc)
@@ -78,6 +83,7 @@ hogy gyorsan reagálhassak a kritikus helyzetekre (készlethiány, fizetési hib
   - [x] Truncate long messages (max 100 char, "..." + tooltip)
 
 ### Task 2: Critical Alert Toast (AC2)
+
 - [x] `CriticalAlertToast.tsx` komponens (shadcn Toast)
   - [x] Type-based színkód (critical: piros, warning: sárga, info: kék)
   - [x] Action button: "Részletek" → redirect
@@ -89,6 +95,7 @@ hogy gyorsan reagálhassak a kritikus helyzetekre (készlethiány, fizetési hib
   - [x] Action URL navigation
 
 ### Task 3: Backend API (AC3)
+
 - [x] `dashboard/notifications.controller.ts` (NestJS)
   - [x] `GET /api/v1/dashboard/notifications` (query: `unread=true`)
   - [x] `POST /api/v1/dashboard/notifications/:id/mark-read`
@@ -108,6 +115,7 @@ hogy gyorsan reagálhassak a kritikus helyzetekre (készlethiány, fizetési hib
   - [x] `GetNotificationsDto.ts`
 
 ### Task 4: TanStack Query Integration (AC4)
+
 - [x] `useNotifications.ts` hook
   - [x] `useQuery` setup (5 perc polling)
   - [x] `refetchInterval`, `staleTime` config
@@ -120,6 +128,7 @@ hogy gyorsan reagálhassak a kritikus helyzetekre (készlethiány, fizetési hib
   - [x] Refetch after success
 
 ### Task 5: Widget Registry Integration (AC1)
+
 - [x] `NotificationPanel` widget regisztráció
   - [x] Widget metadata: `{ id: 'notification-panel', roles: [] }` (all roles)
   - [x] Lazy load import
@@ -128,6 +137,7 @@ hogy gyorsan reagálhassak a kritikus helyzetekre (készlethiány, fizetési hib
   - [x] Pozíció: jobb felső sarok (user avatar mellett)
 
 ### Task 6: Unit + E2E tesztek (KÖTELEZŐ TDD!)
+
 - [x] `NotificationPanel.test.tsx` (Vitest)
   - [x] Empty state megjelenítés
   - [x] Notification lista renderelés (3 type)
@@ -158,28 +168,33 @@ hogy gyorsan reagálhassak a kritikus helyzetekre (készlethiány, fizetési hib
 ### Architektúra Döntések (ADR-041)
 
 **Widget Registry Pattern:**
+
 - `NotificationPanel` widget regisztrálása: `WIDGET_REGISTRY['notification-panel']`
 - Lazy load: `React.lazy(() => import('./NotificationPanel'))`
 - Role-based visibility: minden szerepkör látja (OPERATOR, STORE_MANAGER, ADMIN)
 
 **shadcn/ui komponensek (ADR-023):**
+
 - `Sheet` komponens (slide-in panel, right side)
 - `Toast` komponens (critical alert, auto-dismiss 10s)
 - `Badge` komponens (header-ben, olvasatlan szám)
 - `Button` komponens (Clear all, Részletek)
 
 **TanStack Query polling (ADR-041):**
+
 - 5 perc polling interval (`refetchInterval: 5 * 60 * 1000`)
 - 4 perc stale time (`staleTime: 4 * 60 * 1000`)
 - Optimistic update: mark as read azonnal UI-ban, rollback on error
 
 **Feature Flag:**
+
 - `NOTIFICATION_SOUND_ENABLED` environment variable (default: `false` MVP-ben)
 - Sound file: `/public/sounds/notification.mp3` (opcionális asset)
 
 ### NestJS Backend Implementáció
 
 **Controller struktura:**
+
 ```typescript
 @Controller('api/v1/dashboard/notifications')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -205,6 +220,7 @@ export class DashboardNotificationsController {
 ```
 
 **Service logika:**
+
 - **Kritikus esemény detekció:** Event hooks (EventEmitter2 vagy WebSocket Phase 2-ben)
   - `StockAlert.created` event → ha `severity === 'critical'` → create notification
   - `Payment.failed` event → create notification
@@ -234,11 +250,13 @@ apps/kgc-web/src/features/dashboard/
 ### Testing Standards (ADR-024 TDD/ATDD)
 
 **TDD kötelező:**
+
 - Unit tesztek (Vitest): > 80% coverage
 - Property-based tesztek (fast-check): notification lista rendering (random types)
 - Mock TanStack Query: `QueryClient` + `QueryClientProvider` wrapper
 
 **E2E teszt (Playwright):**
+
 - Critical toast megjelenítés tesztelése: mock notification event trigger
 - Panel slide-in animáció tesztelése
 - Optimistic update + rollback tesztelése (network failure mock)
@@ -246,6 +264,7 @@ apps/kgc-web/src/features/dashboard/
 ### RBAC (ADR-032)
 
 **Permissions:**
+
 - `DASHBOARD_VIEW` - minden role rendelkezik vele (OPERATOR, STORE_MANAGER, ADMIN)
 - Notification-ok user-scoped: `WHERE user_id = currentUser.id AND tenant_id = currentTenant.id`
 
@@ -264,17 +283,20 @@ apps/kgc-web/src/features/dashboard/
 ### Previous Story Intelligence (Story 35-3 learnings)
 
 **Közös komponensek újrahasznosítása:**
+
 - `WidgetSkeleton` - loading state (már létezik, használd!)
 - `WidgetError` - error boundary (már létezik, használd!)
 - `TrendIndicator` - NE használd (nem releváns notification-höz)
 - `DateRangePicker` - NE használd (notification-nek nincs date filter MVP-ben)
 
 **API konvenciók (Story 35-2, 35-3 alapján):**
+
 - Response format: `{ data: T[] }` wrapper (NestJS interceptor)
 - Error format: `{ error: { code: string, message: string } }`
 - Zod validation minden endpoint-nál (DTO-k)
 
 **TanStack Query best practices (Story 35-2 alapján):**
+
 ```typescript
 export function useNotifications() {
   return useQuery({
@@ -286,12 +308,13 @@ export function useNotifications() {
       return NotificationResponseSchema.array().parse(data.data);
     },
     refetchInterval: 5 * 60 * 1000, // 5 perc
-    staleTime: 4 * 60 * 1000,       // 4 perc
+    staleTime: 4 * 60 * 1000, // 4 perc
   });
 }
 ```
 
 **Code Review tanulságok (Story 35-3 fixes):**
+
 - ARIA labels MINDEN interaktív elemhez (badge, panel, toast)
 - Error boundary MINDEN widget körül (már megvan: `WidgetError`)
 - Number formázás: Hungarian locale (`new Intl.NumberFormat('hu-HU')`)
@@ -300,12 +323,14 @@ export function useNotifications() {
 ### Git Intelligence (Recent commits)
 
 Utolsó 5 commit alapján:
+
 1. **Story 35-3 (Készlet Dashboard):** 91 TEA teszt generálva, 10 code review fix
 2. **Widget pattern:** Lazy load + Registry + RBAC filtering működik
 3. **TanStack Query:** Polling + auto-refresh stabil
 4. **Recharts használat:** Heatmap és LineChart komponensek jól működnek
 
 **Fontos megállapítások:**
+
 - shadcn/ui komponensek (`Sheet`, `Toast`, `Badge`) már telepítve vannak
 - TanStack Query config (`QueryClientProvider`) már létezik `apps/kgc-web/src/app/`-ban
 - RBAC middleware (`JwtAuthGuard`, `PermissionGuard`) már működik (Epic 1-2 alapján)
@@ -313,6 +338,7 @@ Utolsó 5 commit alapján:
 ### Project Structure Notes
 
 **Package struktúra (ADR-010 micro-modules):**
+
 ```
 packages/shared/ui/                # @kgc/ui package
 └── src/
@@ -344,6 +370,7 @@ apps/kgc-api/                      # NestJS backend
 ```
 
 **Prisma Model (ha nincs még):**
+
 ```prisma
 model UserNotification {
   id         String   @id @default(cuid())
@@ -397,6 +424,36 @@ No debug issues encountered during implementation.
 
 ### Completion Notes List
 
+**ADVERSARIAL CODE REVIEW COMPLETED (2026-02-03)**
+
+Found and FIXED 10 issues (3 HIGH, 5 MEDIUM, 2 LOW):
+
+- **HIGH-1 (FIXED)**: API response wrapper inconsistency - Added `{ data: T[] }` wrapper to controller
+- **HIGH-2 (FIXED)**: Missing Prisma migration - Ran `prisma db push` to sync database schema
+- **HIGH-3 (FIXED)**: Missing NestJS module registration - Created `dashboard.module.ts`
+- **MED-1 (FIXED)**: Removed unused `_service` variable in controller test
+- **MED-2 (FIXED)**: Added error handling in `markAsRead` service method (Prisma P2025 handling)
+- **MED-3 (DOCUMENTED)**: Foreign key constraints handle user validation automatically (onDelete: Cascade)
+- **MED-4 (FIXED)**: Added `@@index([createdAt])` to UserNotification for 90-day cleanup CRON
+- **MED-5 (DEFERRED)**: Rate limiting on clear-all endpoint (requires @nestjs/throttler, defer to Epic 36)
+- **LOW-1 (NOTED)**: Missing truncation boundary test (acceptable, property-based testing in Phase 2)
+- **LOW-2 (FALSE ALARM)**: Toast cleanup is correctly implemented with useEffect cleanup function
+
+**Fixed Files:**
+
+1. `apps/kgc-api/src/modules/dashboard/notifications.controller.ts` - Response wrapper
+2. `apps/kgc-web/src/hooks/useNotifications.ts` - Removed workaround
+3. `apps/kgc-api/prisma/schema.prisma` - Added createdAt index
+4. `apps/kgc-api/src/modules/dashboard/dashboard.module.ts` - NEW FILE (module registration)
+5. `apps/kgc-api/src/modules/dashboard/dashboard-notifications.service.ts` - Error handling
+6. `apps/kgc-api/src/modules/dashboard/__tests__/notifications.controller.spec.ts` - Removed unused variable
+
+**Database Changes:**
+
+- Ran `pnpm prisma db push` twice (initial schema + index addition)
+- UserNotification table created with all indexes
+- All foreign key constraints active (onDelete: Cascade)
+
 **Implementation Summary:**
 
 Story 35-4 (Alert Notification Panel) successfully implemented in YOLO mode following TDD methodology.
@@ -436,9 +493,11 @@ Story 35-4 (Alert Notification Panel) successfully implemented in YOLO mode foll
 ### File List
 
 **Prisma Schema:**
+
 - apps/kgc-api/prisma/schema.prisma (UserNotification model + NotificationType enum added)
 
 **Shared UI Components:**
+
 - packages/shared/ui/src/components/dashboard/NotificationPanel.tsx
 - packages/shared/ui/src/components/dashboard/NotificationPanel.test.tsx
 - packages/shared/ui/src/components/dashboard/NotificationBadge.tsx
@@ -450,23 +509,37 @@ Story 35-4 (Alert Notification Panel) successfully implemented in YOLO mode foll
 - packages/shared/ui/src/components/dashboard/index.ts (updated)
 
 **Backend API:**
+
+- apps/kgc-api/src/modules/dashboard/dashboard.module.ts (NEW - module registration)
 - apps/kgc-api/src/modules/dashboard/notifications.controller.ts
 - apps/kgc-api/src/modules/dashboard/dashboard-notifications.service.ts
 - apps/kgc-api/src/modules/dashboard/dto/notification-response.dto.ts
 - apps/kgc-api/src/modules/dashboard/dto/get-notifications.dto.ts
-- apps/kgc-api/src/modules/dashboard/__tests__/notifications.controller.spec.ts
-- apps/kgc-api/src/modules/dashboard/__tests__/dashboard-notifications.service.spec.ts
+- apps/kgc-api/src/modules/dashboard/**tests**/notifications.controller.spec.ts
+- apps/kgc-api/src/modules/dashboard/**tests**/dashboard-notifications.service.spec.ts
 
 **Frontend Hooks:**
+
 - apps/kgc-web/src/hooks/useNotifications.ts
 - apps/kgc-web/src/hooks/useNotificationToast.ts
-- apps/kgc-web/src/hooks/__tests__/useNotifications.spec.ts
+- apps/kgc-web/src/hooks/**tests**/useNotifications.spec.ts
 
 **Widget Integration:**
+
 - apps/kgc-web/src/features/dashboard/widgets/NotificationPanelWidget.tsx
 - apps/kgc-web/src/features/dashboard/lib/widget-registry.ts (updated)
 
 **E2E Tests:**
+
 - tests/e2e/dashboard/notification-panel.e2e.ts
 
-**Total Files:** 21 files (16 new, 5 updated)
+**Total Files:** 22 files (17 new, 5 updated)
+
+**Code Review Fixes (2026-02-03):**
+
+- apps/kgc-api/src/modules/dashboard/notifications.controller.ts (updated - response wrapper)
+- apps/kgc-web/src/hooks/useNotifications.ts (updated - removed workaround)
+- apps/kgc-api/prisma/schema.prisma (updated - createdAt index)
+- apps/kgc-api/src/modules/dashboard/dashboard.module.ts (NEW - code review fix)
+- apps/kgc-api/src/modules/dashboard/dashboard-notifications.service.ts (updated - error handling)
+- apps/kgc-api/src/modules/dashboard/**tests**/notifications.controller.spec.ts (updated - removed unused variable)

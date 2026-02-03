@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DashboardNotificationsController } from '../notifications.controller';
-import { DashboardNotificationsService } from '../dashboard-notifications.service';
 import { NotificationType } from '@prisma/client';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DashboardNotificationsService } from '../dashboard-notifications.service';
+import { DashboardNotificationsController } from '../notifications.controller';
 
 describe('DashboardNotificationsController', () => {
   let controller: DashboardNotificationsController;
@@ -32,12 +32,7 @@ describe('DashboardNotificationsController', () => {
       ],
     }).compile();
 
-    controller = module.get<DashboardNotificationsController>(
-      DashboardNotificationsController
-    );
-    _service = module.get<DashboardNotificationsService>(
-      DashboardNotificationsService
-    );
+    controller = module.get<DashboardNotificationsController>(DashboardNotificationsController);
 
     vi.clearAllMocks();
   });
@@ -66,11 +61,10 @@ describe('DashboardNotificationsController', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]?.title).toBe('Készlethiány');
-      expect(mockService.getNotifications).toHaveBeenCalledWith(
-        mockUser.id,
-        mockUser.tenantId,
-        { unread: false, limit: 50 }
-      );
+      expect(mockService.getNotifications).toHaveBeenCalledWith(mockUser.id, mockUser.tenantId, {
+        unread: false,
+        limit: 50,
+      });
     });
 
     it('should filter unread notifications when unread=true', async () => {
@@ -78,11 +72,10 @@ describe('DashboardNotificationsController', () => {
 
       await controller.getNotifications({ unread: true, limit: 50 }, mockUser as any);
 
-      expect(mockService.getNotifications).toHaveBeenCalledWith(
-        mockUser.id,
-        mockUser.tenantId,
-        { unread: true, limit: 50 }
-      );
+      expect(mockService.getNotifications).toHaveBeenCalledWith(mockUser.id, mockUser.tenantId, {
+        unread: true,
+        limit: 50,
+      });
     });
 
     it('should apply custom limit', async () => {
@@ -90,11 +83,10 @@ describe('DashboardNotificationsController', () => {
 
       await controller.getNotifications({ unread: false, limit: 20 }, mockUser as any);
 
-      expect(mockService.getNotifications).toHaveBeenCalledWith(
-        mockUser.id,
-        mockUser.tenantId,
-        { unread: false, limit: 20 }
-      );
+      expect(mockService.getNotifications).toHaveBeenCalledWith(mockUser.id, mockUser.tenantId, {
+        unread: false,
+        limit: 20,
+      });
     });
 
     it('should use default limit of 50', async () => {
@@ -140,9 +132,9 @@ describe('DashboardNotificationsController', () => {
     it('should throw error if notification not found', async () => {
       mockService.markAsRead.mockRejectedValue(new Error('Not found'));
 
-      await expect(
-        controller.markAsRead('invalid-id', mockUser as any)
-      ).rejects.toThrow('Not found');
+      await expect(controller.markAsRead('invalid-id', mockUser as any)).rejects.toThrow(
+        'Not found'
+      );
     });
 
     it('should verify user ownership', async () => {
@@ -177,10 +169,7 @@ describe('DashboardNotificationsController', () => {
       const result = await controller.clearAll(mockUser as any);
 
       expect(result.count).toBe(5);
-      expect(mockService.clearAll).toHaveBeenCalledWith(
-        mockUser.id,
-        mockUser.tenantId
-      );
+      expect(mockService.clearAll).toHaveBeenCalledWith(mockUser.id, mockUser.tenantId);
     });
 
     it('should return count of cleared notifications', async () => {
@@ -194,19 +183,13 @@ describe('DashboardNotificationsController', () => {
     it('should only clear current user notifications', async () => {
       await controller.clearAll(mockUser as any);
 
-      expect(mockService.clearAll).toHaveBeenCalledWith(
-        mockUser.id,
-        expect.any(String)
-      );
+      expect(mockService.clearAll).toHaveBeenCalledWith(mockUser.id, expect.any(String));
     });
 
     it('should only clear current tenant notifications', async () => {
       await controller.clearAll(mockUser as any);
 
-      expect(mockService.clearAll).toHaveBeenCalledWith(
-        expect.any(String),
-        mockUser.tenantId
-      );
+      expect(mockService.clearAll).toHaveBeenCalledWith(expect.any(String), mockUser.tenantId);
     });
   });
 
@@ -217,10 +200,7 @@ describe('DashboardNotificationsController', () => {
       const result = await controller.getUnreadCount(mockUser as any);
 
       expect(result.count).toBe(7);
-      expect(mockService.getUnreadCount).toHaveBeenCalledWith(
-        mockUser.id,
-        mockUser.tenantId
-      );
+      expect(mockService.getUnreadCount).toHaveBeenCalledWith(mockUser.id, mockUser.tenantId);
     });
 
     it('should return 0 when no unread notifications', async () => {
@@ -235,10 +215,7 @@ describe('DashboardNotificationsController', () => {
   describe('RBAC', () => {
     it('should require DASHBOARD_VIEW permission', () => {
       // Check that controller methods have @RequirePermissions decorator
-      const metadata = Reflect.getMetadata(
-        'permissions',
-        controller.getNotifications
-      );
+      const metadata = Reflect.getMetadata('permissions', controller.getNotifications);
       expect(metadata).toBeDefined();
     });
 

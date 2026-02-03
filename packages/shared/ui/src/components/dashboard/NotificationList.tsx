@@ -1,7 +1,6 @@
-import React from 'react';
-import { AlertTriangle, AlertCircle, Info, Check } from 'lucide-react';
-import { Button } from '../button';
+import { AlertCircle, AlertTriangle, Check, Info } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { Button } from '../ui/button';
 
 interface Notification {
   id: string;
@@ -61,12 +60,8 @@ function formatTimestamp(timestamp: string): string {
 
 export function NotificationList({ notifications, onMarkAsRead }: NotificationListProps) {
   return (
-    <ul
-      className="space-y-3"
-      role="list"
-      aria-label="Értesítések listája"
-    >
-      {notifications.map((notification) => {
+    <ul className="space-y-3" role="list" aria-label="Értesítések listája">
+      {notifications.map(notification => {
         const Icon = iconMap[notification.type];
         const colors = colorMap[notification.type];
         const truncatedMessage = truncateMessage(notification.message);
@@ -93,9 +88,7 @@ export function NotificationList({ notifications, onMarkAsRead }: NotificationLi
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
-                  <h4 className="text-sm font-semibold text-gray-900">
-                    {notification.title}
-                  </h4>
+                  <h4 className="text-sm font-semibold text-gray-900">{notification.title}</h4>
                   {notification.isRead && (
                     <span className="text-xs text-gray-500 flex items-center gap-1">
                       <Check className="h-3 w-3" aria-hidden="true" />
@@ -110,20 +103,12 @@ export function NotificationList({ notifications, onMarkAsRead }: NotificationLi
                   {truncatedMessage}
                 </p>
                 <div className="mt-2 flex items-center justify-between gap-2">
-                  <time
-                    className="text-xs text-gray-500"
-                    dateTime={notification.timestamp}
-                  >
+                  <time className="text-xs text-gray-500" dateTime={notification.timestamp}>
                     {formatTimestamp(notification.timestamp)}
                   </time>
                   <div className="flex items-center gap-2">
                     {notification.actionUrl && (
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="h-auto p-0 text-xs"
-                        asChild
-                      >
+                      <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild>
                         <a href={notification.actionUrl}>Részletek</a>
                       </Button>
                     )}

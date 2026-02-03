@@ -3146,5 +3146,6 @@ model UserNotification {
   @@index([userId, tenantId, isRead])
   @@index([timestamp])
   @@index([tenantId])
+  @@index([createdAt]) // For 90-day retention cleanup CRON job
   @@map("user_notifications")
 }

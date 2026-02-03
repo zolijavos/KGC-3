@@ -1,7 +1,6 @@
-import React from 'react';
 import { Bell } from 'lucide-react';
-import { Button } from '../button';
-import { Badge } from '../badge';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 
 interface NotificationBadgeProps {
   unreadCount: number;
@@ -28,11 +27,7 @@ export function NotificationBadge({ unreadCount, onClick }: NotificationBadgePro
       onClick={onClick}
       aria-label={ariaLabel}
     >
-      <Bell
-        className="h-5 w-5"
-        data-testid="bell-icon"
-        aria-hidden="true"
-      />
+      <Bell className="h-5 w-5" data-testid="bell-icon" aria-hidden="true" />
       <Badge
         variant="destructive"
         className="absolute -top-1 -right-1 h-5 min-w-[1.25rem] px-1 flex items-center justify-center bg-red-600 text-white text-xs font-semibold"
