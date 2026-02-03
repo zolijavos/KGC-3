@@ -16,7 +16,11 @@ export interface ReceivablesKPICardProps {
 }
 
 // Default threshold from environment or fallback
-const DEFAULT_THRESHOLD = Number(process.env.NEXT_PUBLIC_RECEIVABLES_THRESHOLD) || 500000;
+// Vite uses import.meta.env instead of process.env
+const DEFAULT_THRESHOLD =
+  typeof import.meta !== 'undefined'
+    ? Number(import.meta.env.VITE_RECEIVABLES_THRESHOLD) || 500000
+    : 500000;
 
 /**
  * ReceivablesKPICard Widget

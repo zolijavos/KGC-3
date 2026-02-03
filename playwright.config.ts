@@ -65,8 +65,8 @@ export default defineConfig({
 
   // Shared settings for all projects
   use: {
-    // Base URL
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
+    // Base URL - Vite dev server runs on 5173
+    baseURL: process.env.E2E_BASE_URL || 'http://localhost:5173',
 
     // Action timeout
     actionTimeout,
@@ -134,7 +134,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
       },
-      dependencies: ['setup'],
+      // dependencies: ['setup'], // Temporarily disabled for dashboard widget tests
     },
 
     // ============================================
@@ -180,7 +180,7 @@ export default defineConfig({
       ? undefined
       : {
           command: 'turbo run dev --concurrency 20',
-          url: 'http://localhost:3000',
+          url: 'http://localhost:5173',
           reuseExistingServer: true,
           timeout: 120000,
         },
