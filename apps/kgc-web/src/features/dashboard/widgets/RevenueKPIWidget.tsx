@@ -23,14 +23,15 @@ export default function RevenueKPIWidget() {
     staleTime: 240_000, // 4 minutes
   });
 
-  // Transform API response to KPIData format
-  const kpiData: KPIData | undefined = apiData
-    ? {
-        current: apiData.current.value,
-        previous: apiData.previous?.value ?? apiData.current.value,
-        trend: apiData.delta?.trend ?? 'neutral',
-      }
-    : undefined;
+  // Transform API response to KPIData format with defensive checks
+  const kpiData: KPIData | undefined =
+    apiData?.current?.value !== undefined
+      ? {
+          current: apiData.current.value,
+          previous: apiData.previous?.value ?? apiData.current.value,
+          trend: apiData.delta?.trend ?? 'neutral',
+        }
+      : undefined;
 
   // Show loading state or render with data
   if (isLoading || !kpiData) {

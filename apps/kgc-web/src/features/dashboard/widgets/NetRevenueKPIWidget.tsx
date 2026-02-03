@@ -24,8 +24,9 @@ export default function NetRevenueKPIWidget() {
   });
 
   // Transform API response to KPIData format
-  const kpiData: KPIData | undefined = apiData
-    ? {
+  const kpiData: KPIData | undefined =
+    apiData?.current?.value !== undefined
+      ? {
         current: apiData.current.value,
         previous: apiData.previous?.value ?? apiData.current.value,
         trend: apiData.delta?.trend ?? 'neutral',
