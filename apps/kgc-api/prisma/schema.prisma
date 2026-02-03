@@ -181,6 +181,7 @@ model Tenant {
   users         User[]
   locations     Location[]
   conversations Conversation[]
+  notifications UserNotification[]
 
   @@index([status])
   @@index([parentTenantId])
@@ -259,6 +260,9 @@ model User {
   conversationParticipants ConversationParticipant[]
   sentMessages             Message[]
   readReceipts             ReadReceipt[]
+
+  // Dashboard relations
+  notifications UserNotification[]
 
   @@index([email])
   @@index([tenantId])
@@ -3111,4 +3115,36 @@ model ReadReceipt {
   @@unique([conversationId, userId], name: "conversationId_userId")
   @@index([userId])
   @@map("read_receipts")
+}
+
+/// Notification type enum
+enum NotificationType {
+  CRITICAL // Kritikus esemény (piros)
+  WARNING  // Figyelmeztetés (sárga)
+  INFO     // Információ (kék)
+}
+
+/// UserNotification - Dashboard értesítések (Epic 35: Story 35-4)
+model UserNotification {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id") @db.Uuid
+  tenantId  String           @map("tenant_id") @db.Uuid
+  type      NotificationType
+  title     String           @db.VarChar(255)
+  message   String           @db.Text
+  actionUrl String?          @map("action_url") @db.VarChar(500)
+  metadata  Json?
+
+  isRead    Boolean  @default(false) @map("is_read")
+  timestamp DateTime @default(now()) @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([userId, tenantId, isRead])
+  @@index([timestamp])
+  @@index([tenantId])
+  @@map("user_notifications")
 }

@@ -6,7 +6,7 @@ export type WidgetCategory = 'general' | 'finance' | 'inventory' | 'service' | '
 
 export interface WidgetConfig {
   id: string;
-  component: ComponentType<any>;
+  component: ComponentType<Record<string, unknown>>;
   roles: UserRole[]; // Empty array = all roles can see
   category: WidgetCategory;
   refreshInterval: number | null; // seconds, null = no auto-refresh
@@ -83,6 +83,14 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
     category: 'inventory',
     refreshInterval: 300, // 5 minutes
   },
+
+  // Notification Panel Widget (Story 35-4)
+  'notification-panel': {
+    component: lazy(() => import('../widgets/NotificationPanelWidget')),
+    roles: [], // All roles can see notifications
+    category: 'alerts',
+    refreshInterval: 300, // 5 minutes (managed by TanStack Query polling)
+  },
 };
 
 /**
@@ -91,7 +99,7 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
  */
 export function getWidgetsByRole(role: UserRole): WidgetConfig[] {
   return Object.entries(WIDGET_REGISTRY)
-    .filter(([_widgetId, config]) => {
+    .filter(([, config]) => {
       // Empty roles = all roles can see
       if (config.roles.length === 0) return true;
       // Check if user role is in widget's allowed roles
