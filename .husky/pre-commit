@@ -9,11 +9,16 @@ echo "🔍 Running pre-commit checks..."
 # Lint-staged futtatása
 pnpm exec lint-staged
 
-# TypeScript ellenőrzés (csak staged fájlokra)
-echo "📝 Type checking staged files..."
-pnpm exec tsc --noEmit --skipLibCheck 2>/dev/null || {
-  echo "❌ TypeScript errors found. Please fix before committing."
-  exit 1
-}
+# TypeScript ellenőrzés (monorepo turbo használatával)
+echo "📝 Type checking project..."
+# Csak akkor ellenőrizzük, ha van .ts/.tsx fájl a staged-ben
+if git diff --cached --name-only | grep -qE '\.(ts|tsx)$'; then
+  pnpm typecheck || {
+    echo "❌ TypeScript errors found. Please fix before committing."
+    exit 1
+  }
+else
+  echo "⏭️  No TypeScript files staged, skipping type check."
+fi
 
 echo "✅ Pre-commit checks passed!"
