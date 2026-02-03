@@ -2,6 +2,7 @@ import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { StockAlertBadge } from '../components/dashboard/StockAlertBadge';
 import { WidgetSkeleton } from '../components/dashboard/WidgetSkeleton';
+import { EmptyState } from '../components/dashboard/EmptyState';
 import { cn } from '../lib/utils';
 
 // FIX #6: Module-level Hungarian number formatter (avoid re-creation on every render)
@@ -48,6 +49,11 @@ export function StockAlertList({
 }: StockAlertListProps) {
   if (isLoading) {
     return <WidgetSkeleton size="large" />;
+  }
+
+  // Guard against undefined data
+  if (!data || data.length === 0) {
+    return <EmptyState icon={AlertTriangle} message="Nincs készlethiány alert" />;
   }
 
   const limitedData = data.slice(0, 10); // Max 10 alerts
