@@ -237,6 +237,8 @@ export { Skeleton } from './components/ui/skeleton';
 
 export { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
 
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './components/ui/tooltip';
+
 // =============================================================================
 // PWA Components
 // =============================================================================
@@ -341,3 +343,39 @@ export {
 // =============================================================================
 export { FavoriteButton, FavoritesSidebar } from './components/favorites';
 export type { FavoriteButtonProps, FavoritesSidebarProps } from './components/favorites';
+
+// =============================================================================
+// Dashboard Widgets
+// =============================================================================
+export { WelcomeCard } from './widgets/WelcomeCard';
+export type { WelcomeCardProps } from './widgets/WelcomeCard';
+
+export { EmptyStateWidget } from './widgets/EmptyStateWidget';
+export type { EmptyStateWidgetProps } from './widgets/EmptyStateWidget';
+
+export { RevenueKPICard } from './widgets/RevenueKPICard';
+export type { KPIData, RevenueKPICardProps } from './widgets/RevenueKPICard';
+
+export { NetRevenueKPICard } from './widgets/NetRevenueKPICard';
+export type { NetRevenueKPICardProps } from './widgets/NetRevenueKPICard';
+
+export { ReceivablesKPICard } from './widgets/ReceivablesKPICard';
+export type { ReceivablesKPICardProps } from './widgets/ReceivablesKPICard';
+
+export { PaymentsKPICard } from './widgets/PaymentsKPICard';
+export type { PaymentsKPICardProps } from './widgets/PaymentsKPICard';
+
+export { StockSummaryCard } from './widgets/StockSummaryCard';
+export type { StockSummaryCardProps, StockSummaryData } from './widgets/StockSummaryCard';
+
+export { UtilizationCard } from './widgets/UtilizationCard';
+export type { UtilizationCardProps, UtilizationData } from './widgets/UtilizationCard';
+
+export { StockAlertList } from './widgets/StockAlertList';
+export type { StockAlert, StockAlertListProps } from './widgets/StockAlertList';
+
+export { StockMovementChart } from './widgets/StockMovementChart';
+export type { StockMovement, StockMovementChartProps } from './widgets/StockMovementChart';
+
+export { StockHeatmap } from './widgets/StockHeatmap';
+export type { StockHeatmapData, StockHeatmapProps } from './widgets/StockHeatmap';
