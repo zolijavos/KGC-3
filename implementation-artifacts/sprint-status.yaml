@@ -534,7 +534,7 @@ development_status:
   # Phase 2 stories (Sprint 3-4):
   35-5-szerviz-dashboard: done # Szerviz Dashboard - 4 widgets + API + 163 tests + adversarial review PASS (2026-02-04)
   35-6-partner-dashboard: done # Partner Dashboard - 4 widgets + API + 163 tests + adversarial review PASS (2026-02-04)
-  35-7-websocket-realtime: backlog # WebSocket real-time events (kritikus események)
+  35-7-websocket-realtime: ready-for-dev # WebSocket real-time events - story drafted (2026-02-04)
   epic-35-retrospective: optional
 
   # ============================================
