@@ -1,3 +1,4 @@
+import { TooltipProvider } from '@kgc/ui';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import WarrantyRatioPlaceholder from '../WarrantyRatioPlaceholder';
@@ -10,7 +11,11 @@ import WarrantyRatioPlaceholder from '../WarrantyRatioPlaceholder';
  */
 describe('WarrantyRatioPlaceholder', () => {
   const renderWidget = () => {
-    return render(<WarrantyRatioPlaceholder />);
+    return render(
+      <TooltipProvider>
+        <WarrantyRatioPlaceholder />
+      </TooltipProvider>
+    );
   };
 
   describe('Display', () => {

@@ -205,6 +205,24 @@ describe('ServiceRevenueWidget', () => {
     });
   });
 
+  describe('Error Handling', () => {
+    it('[P1] should handle API error gracefully', async () => {
+      // GIVEN: API returns error
+      vi.mocked(api.get).mockRejectedValue(new Error('Network error'));
+
+      // WHEN: Widget is rendered
+      renderWidget();
+
+      // THEN: Widget renders with error state or empty state (not crash)
+      await waitFor(() => {
+        // Either shows error message or title (graceful degradation)
+        const titleOrError =
+          screen.queryByText('Szerviz bevétel') || screen.queryByText(/hiba|error/i);
+        expect(titleOrError).toBeInTheDocument();
+      });
+    });
+  });
+
   describe('Edge Cases', () => {
     it('[P2] should handle zero revenue', async () => {
       // GIVEN: API returns zero revenue

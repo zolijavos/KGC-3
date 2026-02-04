@@ -1,3 +1,4 @@
+import { TooltipProvider } from '@kgc/ui';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import PartnerCreditPlaceholder from '../PartnerCreditPlaceholder';
@@ -10,7 +11,11 @@ import PartnerCreditPlaceholder from '../PartnerCreditPlaceholder';
  */
 describe('PartnerCreditPlaceholder', () => {
   const renderWidget = () => {
-    return render(<PartnerCreditPlaceholder />);
+    return render(
+      <TooltipProvider>
+        <PartnerCreditPlaceholder />
+      </TooltipProvider>
+    );
   };
 
   describe('Placeholder Mode (Feature Disabled)', () => {
