@@ -85,12 +85,12 @@ Státusz meghatározás:
 
 ## Technikai Feladatok
 
-### Task 1: EquipmentProfitService - TDD ⏳
+### Task 1: EquipmentProfitService - TDD ✅ KÉSZ
 
-- [ ] Interface definíció: `IEquipmentProfitResult`
-- [ ] `EquipmentProfitService.calculateProfit(equipmentId, tenantId?)`
-- [ ] Unit tesztek: min. 20 db (TDD KÖTELEZŐ!)
-- [ ] Property-based tesztek: 10 db (boundary cases)
+- [x] Interface definíció: `IEquipmentProfitResult`
+- [x] `EquipmentProfitService.calculateProfit(equipmentId, tenantId?)`
+- [x] Unit tesztek: 17 db PASS (TDD KÖTELEZŐ!)
+- [ ] Property-based tesztek: 10 db (boundary cases) - TODO
 
 **TDD Teszt szkenáriók:**
 

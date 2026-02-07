@@ -665,7 +665,7 @@ development_status:
   # STATUS: 🟡 IN-PROGRESS - Sprint 9
   epic-40: in-progress
   40-1-bergep-vetelaar-raforditas: done # YOLO pipeline - 2026-02-07 (11 tests, code review PASS)
-  40-2-bergep-megterules-kalkulacio: ready-for-dev # YOLO pipeline - 2026-02-07 (TDD KÖTELEZŐ!)
+  40-2-bergep-megterules-kalkulacio: in-progress # YOLO pipeline - 2026-02-07 (17 tests PASS)
   40-3-bergep-elozmenyek-ful: backlog # Ki adta ki, ki vette vissza
   40-4-bergep-megterules-widget: backlog # Dashboard widget
   epic-40-retrospective: optional
