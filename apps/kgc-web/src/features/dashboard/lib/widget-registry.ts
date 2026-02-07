@@ -159,6 +159,14 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
     category: 'finance',
     refreshInterval: 300, // 5 minutes
   },
+
+  // Revenue Forecast Widget (Story 41-2)
+  'revenue-forecast': {
+    component: lazy(() => import('../widgets/RevenueForecastWidget')),
+    roles: ['STORE_MANAGER', 'ADMIN'],
+    category: 'finance',
+    refreshInterval: 300, // 5 minutes
+  },
 };
 
 /**

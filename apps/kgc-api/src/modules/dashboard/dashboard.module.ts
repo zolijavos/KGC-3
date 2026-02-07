@@ -12,6 +12,8 @@ import { PartnerDashboardController } from './partner/partner.controller';
 import { PartnerDashboardService } from './partner/partner.service';
 import { ReceivablesDashboardController } from './receivables/receivables.controller';
 import { ReceivablesDashboardService } from './receivables/receivables.service';
+import { RevenueForecastController } from './revenue/revenue.controller';
+import { RevenueForecastDashboardService } from './revenue/revenue.service';
 import { ServiceDashboardController } from './service/service.controller';
 import { ServiceDashboardService } from './service/service.service';
 import { DashboardEventsService } from './websocket/dashboard-events.service';
@@ -29,6 +31,7 @@ import { DashboardGateway } from './websocket/dashboard.gateway';
  * - WebSocket Real-Time Events (Story 35-7)
  * - Equipment Profit widgets (Story 40-4)
  * - Receivables Aging Report (Story 41-1)
+ * - Revenue Forecast (Story 41-2)
  */
 @Module({})
 export class DashboardModule {
@@ -43,6 +46,7 @@ export class DashboardModule {
         PartnerDashboardController,
         EquipmentProfitDashboardController,
         ReceivablesDashboardController,
+        RevenueForecastController,
       ],
       providers: [
         {
@@ -58,6 +62,8 @@ export class DashboardModule {
         EquipmentProfitDashboardService,
         // Receivables Aging (Story 41-1)
         ReceivablesDashboardService,
+        // Revenue Forecast (Story 41-2)
+        RevenueForecastDashboardService,
         // WebSocket (Story 35-7)
         DashboardEventsService,
         DashboardGateway,
@@ -70,6 +76,7 @@ export class DashboardModule {
         PartnerDashboardService,
         EquipmentProfitDashboardService,
         ReceivablesDashboardService,
+        RevenueForecastDashboardService,
         // WebSocket exports for other modules
         DashboardEventsService,
         DashboardGateway,
