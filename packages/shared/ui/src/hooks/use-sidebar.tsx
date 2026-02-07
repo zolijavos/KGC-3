@@ -1,5 +1,5 @@
+import type { ReactElement, ReactNode } from 'react';
 import { createContext, useCallback, useContext, useState } from 'react';
-import type { ReactNode } from 'react';
 
 export interface SidebarContextValue {
   /** Whether the sidebar is currently open (mobile) or expanded (desktop) */
@@ -44,12 +44,12 @@ export function SidebarProvider({
   children,
   defaultOpen = true,
   defaultCollapsed = false,
-}: SidebarProviderProps): JSX.Element {
+}: SidebarProviderProps): ReactElement {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
   const toggle = useCallback(() => {
-    setIsOpen((prev) => !prev);
+    setIsOpen(prev => !prev);
   }, []);
 
   const setOpen = useCallback((open: boolean) => {

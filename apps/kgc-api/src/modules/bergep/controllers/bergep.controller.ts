@@ -1,6 +1,7 @@
 /**
  * Bergep Controller - Rental Equipment REST API
  * Epic 13: Bérgép Management
+ * Epic 40: Bérgép Megtérülés & Előzmények
  *
  * Endpoints:
  * - GET    /bergep              - List equipment with filters
@@ -20,6 +21,7 @@
  * - POST   /bergep/:id/maintenance      - Add maintenance record
  * - GET    /bergep/alerts/maintenance   - Get maintenance alerts
  * - GET    /bergep/statistics           - Get equipment statistics
+ * - GET    /bergep/:id/costs            - Get service costs (Epic 40)
  */
 
 import {
@@ -30,6 +32,7 @@ import {
   MaintenanceType,
   RentalEquipmentService,
 } from '@kgc/bergep';
+import { EquipmentCostService, EquipmentProfitService } from '@kgc/rental-core';
 import {
   BadRequestException,
   Body,
@@ -68,6 +71,13 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { EquipmentCostResponseDto } from '../dto/equipment-cost-response.dto';
+import {
+  EquipmentProfitResponseDto,
+  EquipmentProfitStatusDto,
+} from '../dto/equipment-profit-response.dto';
+import { EquipmentRentalHistoryResponseDto } from '../dto/equipment-rental-history-response.dto';
+import { PrismaEquipmentHistoryRepository } from '../repositories/prisma-equipment-history.repository';
 
 // ============================================
 // DTOs for Swagger with class-validator
@@ -353,7 +363,12 @@ class CreateMaintenanceDto {
 export class BergepController {
   private readonly logger = new Logger(BergepController.name);
 
-  constructor(private readonly equipmentService: RentalEquipmentService) {}
+  constructor(
+    private readonly equipmentService: RentalEquipmentService,
+    private readonly equipmentCostService: EquipmentCostService,
+    private readonly equipmentProfitService: EquipmentProfitService,
+    private readonly equipmentHistoryRepository: PrismaEquipmentHistoryRepository
+  ) {}
 
   /**
    * Build permission context from request
@@ -821,5 +836,193 @@ export class BergepController {
     if (dto.notes) input.notes = dto.notes;
 
     return this.equipmentService.addMaintenanceRecord(input, context);
+  }
+
+  // ============================================
+  // COST OPERATIONS (Epic 40)
+  // ============================================
+
+  @Get(':id/costs')
+  @ApiOperation({
+    summary: 'Get equipment service costs',
+    description:
+      'Returns total service costs (ráfordítások) for equipment. ' +
+      'Warranty repairs are excluded as per business rules (ADR-051).',
+  })
+  @ApiParam({ name: 'id', description: 'Equipment ID' })
+  @ApiQuery({ name: 'tenantId', required: true })
+  @ApiQuery({ name: 'locationId', required: true })
+  @ApiQuery({ name: 'userId', required: true })
+  @ApiResponse({
+    status: 200,
+    description: 'Equipment service costs',
+    type: EquipmentCostResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Equipment not found' })
+  async getCosts(
+    @Param('id') id: string,
+    @Query('tenantId') tenantId: string,
+    @Query('locationId') locationId: string,
+    @Query('userId') userId: string
+  ): Promise<EquipmentCostResponseDto> {
+    const context = this.buildContext(tenantId, locationId, userId);
+
+    // Verify equipment exists
+    const equipment = await this.equipmentService.findById(id, context);
+    if (!equipment) {
+      throw new NotFoundException(`Equipment not found: ${id}`);
+    }
+
+    // Get cost summary (with tenant isolation - ADR-001)
+    const summary = await this.equipmentCostService.getCostSummary(id, tenantId);
+
+    // Transform to response DTO
+    return {
+      equipmentId: summary.equipmentId,
+      totalServiceCost: summary.totalServiceCost,
+      worksheetCount: summary.worksheetCount,
+      warrantyWorksheetCount: summary.warrantyWorksheetCount,
+      breakdown: summary.breakdown.map(item => ({
+        worksheetId: item.worksheetId,
+        worksheetNumber: item.worksheetNumber,
+        totalCost: item.totalCost,
+        completedAt: item.completedAt.toISOString(),
+      })),
+      lastServiceDate: summary.lastServiceDate?.toISOString() ?? null,
+    };
+  }
+
+  @Get(':id/profit')
+  @ApiOperation({
+    summary: 'Get equipment profitability (megtérülés)',
+    description:
+      'Calculates profit and ROI for rental equipment. ' +
+      'PROFIT = totalRentalRevenue - purchasePrice - totalServiceCost. ' +
+      'Warranty repairs are excluded from service costs (ADR-051).',
+  })
+  @ApiParam({ name: 'id', description: 'Equipment ID' })
+  @ApiQuery({ name: 'tenantId', required: true })
+  @ApiQuery({ name: 'locationId', required: true })
+  @ApiQuery({ name: 'userId', required: true })
+  @ApiResponse({
+    status: 200,
+    description: 'Equipment profitability calculation',
+    type: EquipmentProfitResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Equipment not found' })
+  async getProfit(
+    @Param('id') id: string,
+    @Query('tenantId') tenantId: string,
+    @Query('locationId') locationId: string,
+    @Query('userId') userId: string
+  ): Promise<EquipmentProfitResponseDto> {
+    const context = this.buildContext(tenantId, locationId, userId);
+
+    // Verify equipment exists
+    const equipment = await this.equipmentService.findById(id, context);
+    if (!equipment) {
+      throw new NotFoundException(`Equipment not found: ${id}`);
+    }
+
+    // Calculate profit (with tenant isolation - ADR-001)
+    const result = await this.equipmentProfitService.calculateProfit(id, tenantId);
+
+    // Transform to response DTO
+    const response: EquipmentProfitResponseDto = {
+      equipmentId: result.equipmentId,
+      purchasePrice: result.purchasePrice,
+      totalRentalRevenue: result.totalRentalRevenue,
+      totalServiceCost: result.totalServiceCost,
+      profit: result.profit,
+      roi: result.roi,
+      status: EquipmentProfitStatusDto[result.status],
+    };
+
+    // Only add error if present (exactOptionalPropertyTypes compliance)
+    if (result.error) {
+      response.error = result.error;
+    }
+
+    return response;
+  }
+
+  // ============================================
+  // RENTAL HISTORY (Epic 40 - Story 40-3)
+  // ============================================
+
+  @Get(':id/rental-history')
+  @ApiOperation({
+    summary: 'Get equipment rental history (előzmények)',
+    description:
+      'Returns rental history for equipment with partner info, dates, ' +
+      'who issued and returned the equipment, and amounts. ' +
+      'Paginated, newest rentals first.',
+  })
+  @ApiParam({ name: 'id', description: 'Equipment ID' })
+  @ApiQuery({ name: 'tenantId', required: true })
+  @ApiQuery({ name: 'locationId', required: true })
+  @ApiQuery({ name: 'userId', required: true })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (1-based)' })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    type: Number,
+    description: 'Items per page (max 50)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Equipment rental history',
+    type: EquipmentRentalHistoryResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Equipment not found' })
+  async getRentalHistory(
+    @Param('id') id: string,
+    @Query('tenantId') tenantId: string,
+    @Query('locationId') locationId: string,
+    @Query('userId') userId: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string
+  ): Promise<EquipmentRentalHistoryResponseDto> {
+    const context = this.buildContext(tenantId, locationId, userId);
+
+    // Verify equipment exists
+    const equipment = await this.equipmentService.findById(id, context);
+    if (!equipment) {
+      throw new NotFoundException(`Equipment not found: ${id}`);
+    }
+
+    // Get rental history (with tenant isolation - ADR-001)
+    const result = await this.equipmentHistoryRepository.getRentalHistory(
+      id,
+      tenantId,
+      page ? parseInt(page, 10) : 1,
+      pageSize ? parseInt(pageSize, 10) : 20
+    );
+
+    // Transform to response DTO
+    return {
+      equipmentId: result.equipmentId,
+      totalRentals: result.totalRentals,
+      lastRenterName: result.lastRenterName,
+      worksheetCount: result.worksheetCount,
+      rentals: result.rentals.map(r => ({
+        rentalId: r.rentalId,
+        rentalCode: r.rentalCode,
+        partnerName: r.partnerName,
+        partnerId: r.partnerId,
+        startDate: r.startDate.toISOString().split('T')[0] ?? r.startDate.toISOString(),
+        expectedEnd: r.expectedEnd.toISOString().split('T')[0] ?? r.expectedEnd.toISOString(),
+        actualEnd: r.actualEnd
+          ? (r.actualEnd.toISOString().split('T')[0] ?? r.actualEnd.toISOString())
+          : null,
+        issuedByName: r.issuedByName,
+        returnedByName: r.returnedByName,
+        itemTotal: r.itemTotal,
+        status: r.status,
+      })),
+      page: result.page,
+      pageSize: result.pageSize,
+      totalPages: result.totalPages,
+    };
   }
 }

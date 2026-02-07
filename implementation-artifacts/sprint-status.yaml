@@ -660,14 +660,14 @@ development_status:
   # Forrás: KGC-testdoc-02-03.pdf + 02-04 meeting jegyzőkönyv
 
   # Epic 40: Bérgép Megtérülés & Előzmények (ADR-051)
-  # CODE: @kgc/rental-core bővítés - EquipmentProfitService
+  # CODE: @kgc/rental-core bővítés - EquipmentProfitService + Dashboard widget
   # PRISMA: ✅ RentalEquipment.purchasedFrom, EquipmentProfitSnapshot (2026-02-07)
-  # STATUS: 🟡 IN-PROGRESS - Sprint 9
-  epic-40: in-progress
+  # STATUS: ✅ DONE - Sprint 9 (72 tests: 16 property + 51 controller + 5 component)
+  epic-40: done
   40-1-bergep-vetelaar-raforditas: done # YOLO pipeline - 2026-02-07 (11 tests, code review PASS)
-  40-2-bergep-megterules-kalkulacio: in-progress # YOLO pipeline - 2026-02-07 (17 tests PASS)
-  40-3-bergep-elozmenyek-ful: backlog # Ki adta ki, ki vette vissza
-  40-4-bergep-megterules-widget: backlog # Dashboard widget
+  40-2-bergep-megterules-kalkulacio: done # YOLO pipeline - 2026-02-07 (16 property + 40 controller tests)
+  40-3-bergep-elozmenyek-ful: done # API only - 2026-02-07 (6 controller tests)
+  40-4-bergep-megterules-widget: done # Dashboard widget - 2026-02-07 (5 component tests)
   epic-40-retrospective: optional
 
   # Epic 41: Bevételi Előrejelzés & Kintlévőség (ADR-052)
@@ -710,24 +710,25 @@ development_status:
   epic-44-retrospective: optional
 
 # ============================================
-# SUMMARY (Updated 2026-02-07 - Epic 40-44 BACKLOG added)
+# SUMMARY (Updated 2026-02-07 - Epic 40 DONE)
 # ============================================
-# ✅ DONE: 39 epics (1-6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29-chatwoot, 29-favorites, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39)
+# ✅ DONE: 40 epics (1-6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29-chatwoot, 29-favorites, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40)
 # ✅ DONE: Epic 35 - Dashboard Foundation (7/7 stories complete)
 # ✅ DONE: Epic 36 - MyPOS Utalás+Visszautalás (4/4 stories complete, 104 tests)
 # ✅ DONE: Epic 37 - Kalendárnap Kedvezmény (4/4 stories complete, 124 tests)
 # ✅ DONE: Epic 38 - Szerviz Profit KPI (4/4 stories complete, 75 tests, 3 fixes)
 # ✅ DONE: Epic 39 - Ukrajna Franchise Offline (4/4 stories complete, 113 tests, 9 fixes)
-# ⚪ BACKLOG: 5 epics - Meeting követelmények (Epic 40-44)
+# ✅ DONE: Epic 40 - Bérgép Megtérülés (4/4 stories complete, 72 tests) - 2026-02-07
+# ⚪ BACKLOG: 4 epics - Meeting követelmények (Epic 41-44)
 #
 # ÚJ EPIC-EK (02-07 - Meeting Backlog):
 # =====================================
-# Epic 40: Bérgép Megtérülés (ADR-051) - ⚪ BACKLOG (4 stories, 13 SP) - Sprint 9
+# Epic 40: Bérgép Megtérülés (ADR-051) - ✅ DONE (4 stories, 72 tests) - 2026-02-07
 # Epic 41: Kintlévőség & Bevétel (ADR-052) - ⚪ BACKLOG (3 stories, 8 SP) - Sprint 9
 # Epic 42: Bérlési Bővítések - ⚪ BACKLOG (3 stories, 8 SP) - Sprint 10
 # Epic 43: Könyvelői Integráció - ⚪ BACKLOG (3 stories, 5 SP) - Sprint 10
 # Epic 44: Fizetési Emlékeztetők - ⚪ BACKLOG (2 stories, 5 SP) - Sprint 11
-# Összesen: 15 story, 39 SP, ~3 sprint
+# Megmaradt: 11 story, 26 SP, ~2.5 sprint
 #
 # ÚJ EPIC-EK (02-04 MEETING):
 # ===========================

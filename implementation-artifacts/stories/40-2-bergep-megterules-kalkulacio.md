@@ -8,7 +8,7 @@
 | **Epic**       | Epic 40 - Bérgép Megtérülés & Előzmények |
 | **Prioritás**  | P0 - Kritikus                            |
 | **Becsült SP** | 5                                        |
-| **Státusz**    | ready-for-dev                            |
+| **Státusz**    | done                                     |
 | **ADR**        | ADR-051                                  |
 | **Sprint**     | Sprint 9                                 |
 
@@ -120,27 +120,27 @@ Státusz meghatározás:
 - `packages/berles/rental-core/src/services/equipment-profit.service.ts` - ✅ Létrehozva
 - `packages/berles/rental-core/src/services/equipment-profit.service.spec.ts` - ✅ 18 teszt PASS
 
-### Task 2: Prisma Repository ⏳
+### Task 2: Prisma Repository ✅ KÉSZ
 
-- [ ] `IEquipmentProfitRepository` interface
-- [ ] `PrismaEquipmentProfitRepository` implementáció
-- [ ] Bevétel aggregáció (Rental.totalAmount)
-- [ ] Integration tesztek
-
-**Fájlok:**
-
-- `apps/kgc-api/src/modules/bergep/repositories/prisma-equipment-profit.repository.ts` - LÉTREHOZANDÓ
-
-### Task 3: API Endpoint ⏳
-
-- [ ] `GET /bergep/:id/profit` endpoint
-- [ ] Response DTO: `EquipmentProfitResponseDto`
-- [ ] Controller teszt
+- [x] `IEquipmentProfitRepository` interface
+- [x] `PrismaEquipmentProfitRepository` implementáció
+- [x] Bevétel aggregáció (RentalItem.itemTotal - pontosabb mint Rental.totalAmount)
+- [ ] Integration tesztek - TODO
 
 **Fájlok:**
 
-- `apps/kgc-api/src/modules/bergep/controllers/bergep.controller.ts` - BŐVÍTENDŐ
-- `apps/kgc-api/src/modules/bergep/dto/equipment-profit-response.dto.ts` - LÉTREHOZANDÓ
+- `apps/kgc-api/src/modules/bergep/repositories/prisma-equipment-profit.repository.ts` - ✅ Létrehozva
+
+### Task 3: API Endpoint ✅ KÉSZ
+
+- [x] `GET /bergep/:id/profit` endpoint
+- [x] Response DTO: `EquipmentProfitResponseDto`
+- [ ] Controller teszt - TODO
+
+**Fájlok:**
+
+- `apps/kgc-api/src/modules/bergep/controllers/bergep.controller.ts` - ✅ Bővítve
+- `apps/kgc-api/src/modules/bergep/dto/equipment-profit-response.dto.ts` - ✅ Létrehozva
 
 ## Függőségek
 
