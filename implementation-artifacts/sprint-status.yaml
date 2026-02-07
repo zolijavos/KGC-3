@@ -673,9 +673,9 @@ development_status:
   # Epic 41: Bevételi Előrejelzés & Kintlévőség (ADR-052)
   # CODE: @kgc/sales-invoice bővítés - ReceivablesService
   # PRISMA: N/A (meglévő Invoice model)
-  # STATUS: ⚪ BACKLOG - Sprint 9
-  epic-41: backlog
-  41-1-kintlevoseg-rendszerezes: backlog # 30/60/90 napos aging report
+  # STATUS: 🟡 IN-PROGRESS - Sprint 9 (YOLO Pipeline)
+  epic-41: in-progress
+  41-1-kintlevoseg-rendszerezes: done # 30/60/90 napos aging report - YOLO 2026-02-07 (26 tests, 2 fixes)
   41-2-havi-varhato-bevetel-dashboard: backlog # Várható bevétel widget
   41-3-top-10-partner-riport: backlog # Ajándékra jogosultak
   epic-41-retrospective: optional

@@ -10,13 +10,15 @@ import { KpiService } from './kpi/kpi.service';
 import { DashboardNotificationsController } from './notifications.controller';
 import { PartnerDashboardController } from './partner/partner.controller';
 import { PartnerDashboardService } from './partner/partner.service';
+import { ReceivablesDashboardController } from './receivables/receivables.controller';
+import { ReceivablesDashboardService } from './receivables/receivables.service';
 import { ServiceDashboardController } from './service/service.controller';
 import { ServiceDashboardService } from './service/service.service';
 import { DashboardEventsService } from './websocket/dashboard-events.service';
 import { DashboardGateway } from './websocket/dashboard.gateway';
 
 /**
- * Dashboard Module (Epic 35: Dashboard Foundation)
+ * Dashboard Module (Epic 35: Dashboard Foundation + Epic 41)
  *
  * Provides dashboard functionality:
  * - Notifications (Story 35-4)
@@ -26,6 +28,7 @@ import { DashboardGateway } from './websocket/dashboard.gateway';
  * - Partner widgets (Story 35-6)
  * - WebSocket Real-Time Events (Story 35-7)
  * - Equipment Profit widgets (Story 40-4)
+ * - Receivables Aging Report (Story 41-1)
  */
 @Module({})
 export class DashboardModule {
@@ -39,6 +42,7 @@ export class DashboardModule {
         ServiceDashboardController,
         PartnerDashboardController,
         EquipmentProfitDashboardController,
+        ReceivablesDashboardController,
       ],
       providers: [
         {
@@ -52,6 +56,8 @@ export class DashboardModule {
         PartnerDashboardService,
         // Equipment Profit (Story 40-4)
         EquipmentProfitDashboardService,
+        // Receivables Aging (Story 41-1)
+        ReceivablesDashboardService,
         // WebSocket (Story 35-7)
         DashboardEventsService,
         DashboardGateway,
@@ -63,6 +69,7 @@ export class DashboardModule {
         ServiceDashboardService,
         PartnerDashboardService,
         EquipmentProfitDashboardService,
+        ReceivablesDashboardService,
         // WebSocket exports for other modules
         DashboardEventsService,
         DashboardGateway,

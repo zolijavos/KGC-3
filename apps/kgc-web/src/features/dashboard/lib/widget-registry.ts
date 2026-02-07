@@ -151,6 +151,14 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
     category: 'finance',
     refreshInterval: 300, // 5 minutes
   },
+
+  // Receivables Aging Widget (Story 41-1)
+  'receivables-aging': {
+    component: lazy(() => import('../widgets/ReceivablesAgingWidget')),
+    roles: ['STORE_MANAGER', 'ADMIN'],
+    category: 'finance',
+    refreshInterval: 300, // 5 minutes
+  },
 };
 
 /**
