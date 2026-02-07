@@ -116,7 +116,8 @@ export class EquipmentProfitService {
     }
 
     // Validate purchase price (required for profit calculation)
-    if (data.purchasePrice === null || data.purchasePrice === 0) {
+    // M1 fix: Also check for negative values (invalid business data)
+    if (data.purchasePrice === null || data.purchasePrice <= 0) {
       return {
         equipmentId: data.equipmentId,
         purchasePrice: data.purchasePrice,
@@ -125,7 +126,10 @@ export class EquipmentProfitService {
         profit: null,
         roi: null,
         status: EquipmentProfitStatus.INCOMPLETE,
-        error: 'Vételár szükséges a megtérülés számításhoz',
+        error:
+          data.purchasePrice !== null && data.purchasePrice < 0
+            ? 'Vételár nem lehet negatív'
+            : 'Vételár szükséges a megtérülés számításhoz',
       };
     }
 
@@ -136,7 +140,8 @@ export class EquipmentProfitService {
 
     // Calculate ROI with 2 decimal precision
     // ROI = (PROFIT / purchasePrice) × 100
-    const rawRoi = (profit / data.purchasePrice) * 100;
+    // M2 fix: Use rawProfit for ROI to avoid double rounding error
+    const rawRoi = (rawProfit / data.purchasePrice) * 100;
     const roi = Math.round(rawRoi * 100) / 100;
 
     // Determine status

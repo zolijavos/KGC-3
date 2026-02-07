@@ -146,6 +146,23 @@ describe('EquipmentProfitService', () => {
         expect(result.error).toBe('Vételár szükséges a megtérülés számításhoz');
       });
 
+      it('should handle equipment with negative purchase price (M1 fix)', async () => {
+        // Given: Invalid negative purchase price
+        repository.setEquipmentData('eq-005b', {
+          equipmentId: 'eq-005b',
+          purchasePrice: -100000,
+          totalRentalRevenue: 500000,
+          totalServiceCost: 50000,
+        });
+
+        // When
+        const result = await service.calculateProfit('eq-005b');
+
+        // Then: Negative purchase price is invalid
+        expect(result.status).toBe(EquipmentProfitStatus.INCOMPLETE);
+        expect(result.error).toBe('Vételár nem lehet negatív');
+      });
+
       it('should handle equipment with no revenue (only costs)', async () => {
         // Given: New equipment, never rented
         repository.setEquipmentData('eq-006', {
