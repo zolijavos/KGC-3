@@ -133,12 +133,14 @@ services:
       context: ../../../
       dockerfile: apps/kgc-web/Dockerfile
       args:
-        VITE_API_URL: https://${DEMO_DOMAIN:-demo-kgc.mflerp.com}/api
+        VITE_API_URL: /api/v1
         VITE_APP_NAME: ${VITE_APP_NAME:-KGC_ERP}
         VITE_APP_VERSION: ${VITE_APP_VERSION:-7.0.0}
     container_name: kgc-demo-web
     ports:
       - '127.0.0.1:3020:80'
+    environment:
+      API_UPSTREAM: kgc-api
     depends_on:
       kgc-api:
         condition: service_healthy

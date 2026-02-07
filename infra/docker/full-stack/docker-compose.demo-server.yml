@@ -101,12 +101,14 @@ services:
       context: ../../../
       dockerfile: apps/kgc-web/Dockerfile
       args:
-        VITE_API_URL: https://demo-kgc.mflerp.com/api
+        VITE_API_URL: /api/v1
         VITE_APP_NAME: ${VITE_APP_NAME:-KGC ERP Demo}
         VITE_APP_VERSION: ${VITE_APP_VERSION:-7.0.0}
     container_name: kgc-demo-web
     ports:
       - '127.0.0.1:3020:80'
+    environment:
+      API_UPSTREAM: kgc-demo-api
     depends_on:
       kgc-demo-api:
         condition: service_healthy
@@ -119,7 +121,7 @@ services:
           memory: 64M
     logging: *default-logging
     healthcheck:
-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:80/health']
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://127.0.0.1:80/health']
       interval: 30s
       timeout: 5s
       retries: 3
