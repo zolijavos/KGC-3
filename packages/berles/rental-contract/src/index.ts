@@ -8,6 +8,7 @@ export { ContractModule } from './contract.module';
 
 // Interfaces
 export * from './interfaces/contract.interface';
+export * from './interfaces/multi-equipment-contract.interface';
 
 // DTOs
 export * from './dto/contract.dto';
@@ -19,6 +20,7 @@ export * from './repositories/contract.repository';
 export { ArchiveService, InMemoryStorageAdapter } from './services/archive.service';
 export type { StorageAdapter } from './services/archive.service';
 export { ContractService } from './services/contract.service';
+export { MultiEquipmentContractService } from './services/multi-equipment-contract.service';
 export { PdfService } from './services/pdf.service';
 export { SignatureService } from './services/signature.service';
 export { TemplateService } from './services/template.service';
