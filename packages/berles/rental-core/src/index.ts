@@ -63,3 +63,11 @@ export {
   type EquipmentProfitResult,
   type IEquipmentProfitRepository,
 } from './services/equipment-profit.service';
+
+// Epic 42: Rental Expiration Service (Story 42-2)
+export {
+  ExpirationLevel,
+  RentalExpirationService,
+  type RentalExpirationNotification,
+  type RentalForExpiration,
+} from './services/rental-expiration.service';
