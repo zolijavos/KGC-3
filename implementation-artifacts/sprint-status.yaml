@@ -681,13 +681,13 @@ development_status:
   epic-41-retrospective: optional
 
   # Epic 42: Bérlési Bővítések
-  # CODE: @kgc/rental-core + @kgc/rental-contract bővítés
+  # CODE: @kgc/rental-core + @kgc/rental-contract + @kgc/rental-checkout bővítés
   # PRISMA: RentalContract package support
-  # STATUS: ⚪ BACKLOG - Sprint 10
-  epic-42: backlog
-  42-1-tobb-gep-szerzodes-csomagok: backlog # Egy szerződés több gép
-  42-2-automatikus-megujulas-ertesites: backlog # Lejárat előtt értesítés
-  42-3-kartya-lejar-berles-kozben: backlog # Új kártya kezelés
+  # STATUS: ✅ DONE - Sprint 10 (YOLO Pipeline 2026-02-07, 50 tests)
+  epic-42: done
+  42-1-tobb-gep-szerzodes-csomagok: done # Több gépes szerződés - YOLO 2026-02-07 (19 tests)
+  42-2-automatikus-megujulas-ertesites: done # Lejárat értesítés - YOLO 2026-02-07 (19 tests)
+  42-3-kartya-lejar-berles-kozben: done # Kártya lejárat kezelés - YOLO 2026-02-07 (12 tests)
   epic-42-retrospective: optional
 
   # Epic 43: Könyvelői Integráció
