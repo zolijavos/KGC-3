@@ -1,6 +1,6 @@
 # KGC ERP v7.0 Sprint Status
 # generated: 2026-01-15
-# updated: 2026-02-04 (02-04 meeting: ADR-047-050, max 4 hét bérlés, Epic 35 in-progress)
+# updated: 2026-02-07 (Epic 40-44 BACKLOG: Meeting követelmények - ADR-051, ADR-052)
 # project: KGC-3
 # project_key: KGC
 # tracking_system: file-system
@@ -13,7 +13,17 @@
 # 3. ADR-049: Szerviz profitabilitás KPI (alkatrész árrés + munkadíj = profit/szerelő)
 # 4. ADR-050: Ukrajna franchise offline (UK nyelv + IndexedDB + Service Worker)
 # 5. Hosszú távú bérlés: 30+ nap = hosszú távú kategória (bármeddig bérelhető!)
-# 6. Epic 35 Dashboard - 6 story KÉSZ (35-1, 35-2, 35-3, 35-4, 35-5, 35-6)
+# 6. Epic 35 Dashboard - 7 story KÉSZ (35-1, 35-2, 35-3, 35-4, 35-5, 35-6, 35-7)
+#
+# 02-07 MEETING BACKLOG (hiányzó követelmények):
+# ==============================================
+# 7. ADR-051: Bérgép megtérülés kalkuláció (vételár + ráfordítás - bevétel = profit)
+# 8. ADR-052: Kintlévőség rendszerezés (30/60/90 napos aging report)
+# 9. Epic 40: Bérgép Megtérülés & Előzmények (4 story, 13 SP) - Sprint 9
+# 10. Epic 41: Bevételi Előrejelzés & Kintlévőség (3 story, 8 SP) - Sprint 9
+# 11. Epic 42: Bérlési Bővítések (3 story, 8 SP) - Sprint 10
+# 12. Epic 43: Könyvelői Integráció (3 story, 5 SP) - Sprint 10
+# 13. Epic 44: Fizetési Emlékeztetők (2 story, 5 SP) - Sprint 11
 
 # STATUS DEFINITIONS:
 # ==================
@@ -51,7 +61,7 @@
 # Priority: Add missing Prisma models before continuing with controllers.
 
 generated: 2026-01-15
-updated: 2026-02-04
+updated: 2026-02-07 # Epic 40-44 BACKLOG added (Meeting követelmények: ADR-051, ADR-052)
 project: KGC-3
 project_key: KGC
 tracking_system: file-system
@@ -139,14 +149,14 @@ development_status:
 
   # Epic 7: Partner Management (@kgc/partner) - 6 stories ✅ COMPLETE
   # CODE: 23 ts files + Prisma repos | PRISMA: ✅ Partner, Representative, LoyaltyTier, LoyaltyHistory
-  # Updated 2026-01-25: Prisma repositories implemented with code review fixes
+  # Updated 2026-02-04: All 6 stories complete + adversarial code review (9 fixes)
   epic-7: done
   7-1-partner-crud-maganszemely-es-ceg: done
   7-2-meghatalmazott-kezeles: done
   7-3-torzsvendeg-kartya-rendszer: done
   7-4-partner-hitelkeret-kezeles: done
-  7-5-partner-blacklist-es-figyelmeztetesek: backlog # No story file
-  7-6-partner-kereses-es-azonositas: backlog # No story file
+  7-5-partner-blacklist-es-figyelmeztetesek: done # FR30: BlacklistService + 12 tests + code review
+  7-6-partner-kereses-es-azonositas: done # FR31/FR33: PartnerSearchService + 10 tests + code review
   epic-7-retrospective: optional
 
   # Epic 8: Product Catalog (@kgc/cikk) - 5 stories ✅ COMPLETE
@@ -526,7 +536,7 @@ development_status:
   # - Dashboard: Widget Registry, Layout Components, RoleBasedDashboard (35 tests)
   # - E2E: 6 Playwright tests for role-based layouts
   # - Test Coverage: 838 tests total (727 @kgc/ui + 111 kgc-web)
-  epic-35: in-progress # Story 35-1, 35-2, 35-3, 35-4 DONE - Phase 2 stories TBD
+  epic-35: done # All 7 stories COMPLETE (35-1 to 35-7)
   35-1-rbac-dashboard-layout: done # RBAC layout engine + widget registry + 3 layouts (2026-02-03)
   35-2-penzugyi-kpi-dashboard: done # KPI widgets MVP + code review (22 files, 768 tests) + 8 fixes (2026-02-03)
   35-3-keszlet-dashboard: done # 5 Készlet widgets + API + code review (55 files, 3670 tests) + 10 fixes + 91 TEA tests (2026-02-03)
@@ -534,8 +544,8 @@ development_status:
   # Phase 2 stories (Sprint 3-4):
   35-5-szerviz-dashboard: done # Szerviz Dashboard - 4 widgets + API + 163 tests + adversarial review PASS (2026-02-04)
   35-6-partner-dashboard: done # Partner Dashboard - 4 widgets + API + 163 tests + adversarial review PASS (2026-02-04)
-  35-7-websocket-realtime: ready-for-dev # WebSocket real-time events - story drafted (2026-02-04)
-  epic-35-retrospective: optional
+  35-7-websocket-realtime: done # WebSocket real-time events - 27 tests + code review (5 fixes) (2026-02-04)
+  epic-35-retrospective: done # Retrospective completed 2026-02-04
 
   # ============================================
   # ÚJ EPIC-EK - 02-04 MEETING KÖVETELMÉNYEK
@@ -544,106 +554,187 @@ development_status:
   # FONTOS: 30+ nap = hosszú távú bérlés kategória (bármeddig bérelhető!)
 
   # Epic 36: MyPOS Utalás+Visszautalás Workflow (ADR-047)
-  # CODE: @kgc/mypos package + kaució kezelés módosítás
-  # PRISMA: MyPosTransaction, Deposit model bővítés
-  # STATUS: backlog - ADR-047 alapján implementálandó
-  epic-36: backlog
-  36-1-mypos-utala-api: backlog # createTransfer() - kaució átutalás MyPOS-ra
-  36-2-mypos-visszautala-api: backlog # processRefund() - visszautalás partner számlára
-  36-3-kaucio-workflow-modositas: backlog # Deposit workflow: PENDING→TRANSFERRED→REFUNDED
-  36-4-mypos-transaction-log: backlog # MyPosTransaction tábla + audit trail
+  # CODE: @kgc/rental-checkout bővítés - sale(), refund(), DepositWorkflowService
+  # PRISMA: MyPosTransaction interface (Prisma migration deferred)
+  # STATUS: ✅ DONE - 2026-02-04, 104 tests, 6 code review fixes
+  epic-36: done
+  36-1-mypos-sale-api: done # sale() - kaució beszedés MyPOS SALE-lal (2026-02-04)
+  36-2-mypos-refund-api: done # refund() - visszautalás REFUND/PARTIAL_REFUND (2026-02-04)
+  36-3-deposit-workflow-sale-refund: done # DepositWorkflowService ADR-047 (2026-02-04)
+  36-4-mypos-transaction-log: done # MyPosTransactionLogService + InMemory repo (2026-02-04)
   epic-36-retrospective: optional
 
   # Epic 37: Kalendárnap Kedvezmény Rendszer (ADR-048)
-  # CODE: @kgc/rental-core bővítés + DiscountRule
-  # PRISMA: DiscountRule, RentalDiscount modellek
-  # STATUS: backlog - ADR-048 alapján implementálandó
+  # CODE: @kgc/rental-core - 4 services, 124 tests
+  # PRISMA: In-memory repos (Prisma migration deferred)
+  # STATUS: ✅ DONE - 2026-02-04
   # MEGJEGYZÉS: 30+ nap = hosszú távú bérlés (bármeddig bérelhető, külön kedvezmény sáv)
-  epic-37: backlog
-  37-1-kalendarnap-kedvezmeny-engine: backlog # 1 hét=10%, 2 hét=15%, 3 hét=20-30%
-  37-2-hazi-szabaly-konfiguracio: backlog # Tenant-szintű kedvezmény konfiguráció
-  37-3-korai-lemondas-ujraszamitas: backlog # Visszamenőleges díjkorrekció
-  37-4-kedvezmeny-audit-trail: backlog # RentalDiscount tábla + history
+  epic-37: done
+  37-1-kalendarnap-kedvezmeny-engine: done # RentalDurationDiscountCalculator + 50 tests (2026-02-04)
+  37-2-hazi-szabaly-konfiguracio: done # RentalDiscountTierService + 29 tests (2026-02-04)
+  37-3-korai-lemondas-ujraszamitas: done # EarlyCancellationCalculator + 20 tests (2026-02-04)
+  37-4-kedvezmeny-audit-trail: done # RentalDiscountAuditService + 25 tests (2026-02-04)
   epic-37-retrospective: optional
 
   # Epic 38: Szerviz Profitabilitás KPI (ADR-049)
-  # CODE: Dashboard bővítés + @kgc/service-core KPI számítás
-  # PRISMA: Worksheet bővítés (profitFields)
-  # STATUS: backlog - ADR-049 alapján implementálandó
-  epic-38: backlog
-  38-1-alkatresz-arres-kalkulacio: backlog # (eladási nettó - beszerzési nettó) per munkalap
-  38-2-munkadij-profit-kalkulacio: backlog # Munkadíj nettó per szerelő
-  38-3-szerelo-profit-aggregacio: backlog # Havi/negyedéves összesítés szerelőnként
-  38-4-profit-kpi-widget: backlog # Dashboard widget: szerviz profit + éves összehasonlítás
+  # CODE: @kgc/service-core package - 4 services, 75 tests
+  # PRISMA: In-memory repos (Prisma migration deferred)
+  # STATUS: ✅ DONE - 2026-02-04, 75 tests, 3 code review fixes
+  # - PartsMarginCalculator: Alkatrész árrés (WARRANTY=0)
+  # - WorksheetProfitCalculator: Teljes munkalap profit
+  # - TechnicianPerformanceAggregator: Havi összesítés szerelőnként
+  # - MonthlyReportGenerator: Profit KPI report + YoY összehasonlítás
+  epic-38: done
+  38-1-alkatresz-arres-kalkulacio: done # PartsMarginCalculator + 23 tests (2026-02-04)
+  38-2-munkadij-profit-kalkulacio: done # WorksheetProfitCalculator + 23 tests (2026-02-04)
+  38-3-szerelo-profit-aggregacio: done # TechnicianPerformanceAggregator + 14 tests (2026-02-04)
+  38-4-profit-kpi-widget: done # MonthlyReportGenerator + 15 tests (2026-02-04)
   epic-38-retrospective: optional
 
   # Epic 39: Ukrajna Franchise Offline Támogatás (ADR-050)
-  # CODE: @kgc/i18n bővítés + PWA offline enhancement
+  # CODE: @kgc/i18n bővítés (113 tests) - 4 services, 2 React hooks, 1 component
   # PRISMA: N/A (frontend-only, IndexedDB)
-  # STATUS: backlog - ADR-050 alapján implementálandó
-  epic-39: backlog
-  39-1-ukran-nyelvi-tamogatas: backlog # UK locale + i18n fájlok
-  39-2-indexeddb-offline-storage: backlog # Kritikus adatok offline tárolása
-  39-3-service-worker-sync: backlog # Offline queue + konfliktuskezelés
-  39-4-offline-indicator-ui: backlog # Offline mód jelzése + sync státusz
+  # STATUS: ✅ DONE - 2026-02-04, 113 tests, 9 code review fixes
+  # - I18nService: UK locale, hu/en/uk translations
+  # - OfflineDbService: IndexedDB with tenant isolation (ADR-001)
+  # - OfflineSyncService: Auth headers, retry backoff, Background Sync API
+  # - useOfflineStatus + NetworkStatusIndicator: i18n-aware status display
+  # Code Review Fixes: H1 (tenant security), H2 (auth headers), H3 (background sync),
+  #   H4 (conflict resolution), M1 (i18n time units), M2 (retry delay),
+  #   M4 (setLocale validation), M5 (error preservation), L2 (isOffline property)
+  epic-39: done
+  39-1-ukran-nyelvi-tamogatas: done # UK locale + i18n fájlok - 34 tests (2026-02-04)
+  39-2-indexeddb-offline-storage: done # OfflineDbService + tenant isolation - 24 tests (2026-02-04)
+  39-3-service-worker-sync: done # OfflineSyncService + auth + retry - 22 tests (2026-02-04)
+  39-4-offline-indicator-ui: done # useOfflineStatus + NetworkStatusIndicator - 20 tests (2026-02-04)
   epic-39-retrospective: optional
 
-# ============================================
-# PRISMA MODELS STATUS (Updated 2026-01-25 - FULL AUDIT)
-# ============================================
-# ✅ EXISTS (Core + Auth):
-#   - Tenant, TenantAuditLog, Location
-#   - User, RefreshToken, LoginAttempt, PasswordResetToken, TrustedDevice, PinAttempt
-#
-# ✅ EXISTS (Inventory - Epic 9):
-#   - Warehouse, StockLocation, InventoryItem, StockMovement, StockAlert
-#   - InventoryTransfer, TransferItem, StockLevelSetting, LocationStructure
-#
-# ✅ EXISTS (Partner - Epic 7):
-#   - Partner, Representative, LoyaltyTier, LoyaltyHistory
-#
-# ✅ EXISTS (Product - Epic 8):
-#   - Product, ProductCategory, Supplier, PriceRule
-#
-# ✅ EXISTS (Rental - Epic 13-16):
-#   - RentalEquipment, RentalAccessory (Epic 13) + PRISMA REPO COMPLETE
-#   - Rental, RentalItem, RentalExtension (Epic 14)
-#   - RentalContract, ContractTemplate (Epic 15)
-#   - Deposit, DepositTransaction (Epic 16)
-#
-# ✅ EXISTS (Vehicle - Epic 34) + PRISMA REPOS COMPLETE:
-#   - RentalVehicle, CompanyVehicle, VehicleDocumentReminder
-#
-# ✅ EXISTS (Service Domain - Epic 17-20) - VERIFIED 2026-01-25:
-#   - Worksheet, WorksheetItem (Epic 17) - needs Prisma repo
-#   - Quote, QuoteItem (Epic 18) - needs Prisma repo
-#   - WarrantyClaim (Epic 19) - needs Prisma repo
-#   - ServiceNorm (Epic 20) - needs Prisma repo
-#
-# ✅ EXISTS (Invoice - Epic 10) - VERIFIED 2026-01-25:
-#   - Invoice, InvoiceItem - needs Prisma repo
-#
-# ✅ EXISTS (Task - Epic 12) - VERIFIED 2026-01-25:
-#   - Task - needs Prisma repo
-#
-# ✅ EXISTS (Goods Receipt - Epic 21) - ADDED 2026-01-26:
-#   - Avizo, AvizoItem, GoodsReceipt, GoodsReceiptItem, ReceiptDiscrepancy
-#
-# All Prisma models are now complete! No missing models.
+  # ============================================
+  # PRISMA MODELS STATUS (Updated 2026-01-25 - FULL AUDIT)
+  # ============================================
+  # ✅ EXISTS (Core + Auth):
+  #   - Tenant, TenantAuditLog, Location
+  #   - User, RefreshToken, LoginAttempt, PasswordResetToken, TrustedDevice, PinAttempt
+  #
+  # ✅ EXISTS (Inventory - Epic 9):
+  #   - Warehouse, StockLocation, InventoryItem, StockMovement, StockAlert
+  #   - InventoryTransfer, TransferItem, StockLevelSetting, LocationStructure
+  #
+  # ✅ EXISTS (Partner - Epic 7):
+  #   - Partner, Representative, LoyaltyTier, LoyaltyHistory
+  #
+  # ✅ EXISTS (Product - Epic 8):
+  #   - Product, ProductCategory, Supplier, PriceRule
+  #
+  # ✅ EXISTS (Rental - Epic 13-16):
+  #   - RentalEquipment, RentalAccessory (Epic 13) + PRISMA REPO COMPLETE
+  #   - Rental, RentalItem, RentalExtension (Epic 14)
+  #   - RentalContract, ContractTemplate (Epic 15)
+  #   - Deposit, DepositTransaction (Epic 16)
+  #
+  # ✅ EXISTS (Vehicle - Epic 34) + PRISMA REPOS COMPLETE:
+  #   - RentalVehicle, CompanyVehicle, VehicleDocumentReminder
+  #
+  # ✅ EXISTS (Service Domain - Epic 17-20) - VERIFIED 2026-01-25:
+  #   - Worksheet, WorksheetItem (Epic 17) - needs Prisma repo
+  #   - Quote, QuoteItem (Epic 18) - needs Prisma repo
+  #   - WarrantyClaim (Epic 19) - needs Prisma repo
+  #   - ServiceNorm (Epic 20) - needs Prisma repo
+  #
+  # ✅ EXISTS (Invoice - Epic 10) - VERIFIED 2026-01-25:
+  #   - Invoice, InvoiceItem - needs Prisma repo
+  #
+  # ✅ EXISTS (Task - Epic 12) - VERIFIED 2026-01-25:
+  #   - Task - needs Prisma repo
+  #
+  # ✅ EXISTS (Goods Receipt - Epic 21) - ADDED 2026-01-26:
+  #   - Avizo, AvizoItem, GoodsReceipt, GoodsReceiptItem, ReceiptDiscrepancy
+  #
+  # All Prisma models are now complete! No missing models.
+
+  # ============================================
+  # MEETING BACKLOG LAYER (5 epics) - Sprint 9-11
+  # ============================================
+  # STATUS: 🟡 BACKLOG - 02-04 + 02-03 meeting hiányzó követelmények
+  # ADR-051, ADR-052 alapján
+  # Forrás: KGC-testdoc-02-03.pdf + 02-04 meeting jegyzőkönyv
+
+  # Epic 40: Bérgép Megtérülés & Előzmények (ADR-051)
+  # CODE: @kgc/rental-core bővítés - EquipmentProfitService
+  # PRISMA: ✅ RentalEquipment.purchasedFrom, EquipmentProfitSnapshot (2026-02-07)
+  # STATUS: 🟡 IN-PROGRESS - Sprint 9
+  epic-40: in-progress
+  40-1-bergep-vetelaar-raforditas: done # YOLO pipeline - 2026-02-07 (11 tests, code review PASS)
+  40-2-bergep-megterules-kalkulacio: backlog # TDD KÖTELEZŐ - pénzügyi!
+  40-3-bergep-elozmenyek-ful: backlog # Ki adta ki, ki vette vissza
+  40-4-bergep-megterules-widget: backlog # Dashboard widget
+  epic-40-retrospective: optional
+
+  # Epic 41: Bevételi Előrejelzés & Kintlévőség (ADR-052)
+  # CODE: @kgc/sales-invoice bővítés - ReceivablesService
+  # PRISMA: N/A (meglévő Invoice model)
+  # STATUS: ⚪ BACKLOG - Sprint 9
+  epic-41: backlog
+  41-1-kintlevoseg-rendszerezes: backlog # 30/60/90 napos aging report
+  41-2-havi-varhato-bevetel-dashboard: backlog # Várható bevétel widget
+  41-3-top-10-partner-riport: backlog # Ajándékra jogosultak
+  epic-41-retrospective: optional
+
+  # Epic 42: Bérlési Bővítések
+  # CODE: @kgc/rental-core + @kgc/rental-contract bővítés
+  # PRISMA: RentalContract package support
+  # STATUS: ⚪ BACKLOG - Sprint 10
+  epic-42: backlog
+  42-1-tobb-gep-szerzodes-csomagok: backlog # Egy szerződés több gép
+  42-2-automatikus-megujulas-ertesites: backlog # Lejárat előtt értesítés
+  42-3-kartya-lejar-berles-kozben: backlog # Új kártya kezelés
+  epic-42-retrospective: optional
+
+  # Epic 43: Könyvelői Integráció
+  # CODE: @kgc/sales-invoice API bővítés
+  # PRISMA: N/A
+  # STATUS: ⚪ BACKLOG - Sprint 10
+  epic-43: backlog
+  43-1-konyveloi-api-vegpontok: backlog # /api/v1/accounting/*
+  43-2-konyveloi-riportok: backlog # ÁFA, számla export
+  43-3-automatikus-email-riportok: backlog # Havi riport küldés
+  epic-43-retrospective: optional
+
+  # Epic 44: Fizetési Emlékeztetők & Felfüggesztés
+  # CODE: @kgc/partner + notification service bővítés
+  # PRISMA: Partner.suspendedAt, PaymentReminder model
+  # STATUS: ⚪ BACKLOG - Sprint 11
+  epic-44: backlog
+  44-1-fizetesi-emlekeztetok: backlog # 3 szintű eszkaláció
+  44-2-partner-felfuggesztes: backlog # Késedelmes fizetésnél
+  epic-44-retrospective: optional
 
 # ============================================
-# SUMMARY (Updated 2026-02-04 - 02-04 Meeting + Epic 35 Progress)
+# SUMMARY (Updated 2026-02-07 - Epic 40-44 BACKLOG added)
 # ============================================
-# ✅ DONE: 34 epics (1-6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29-chatwoot, 29-favorites, 30, 31, 32, 33, 34)
-# 🟡 IN-PROGRESS: 1 epic (35 - Dashboard Foundation, 6/7 stories done)
-# ⚪ BACKLOG: 4 epics (36-39, ADR-047-050 követelmények)
+# ✅ DONE: 39 epics (1-6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29-chatwoot, 29-favorites, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39)
+# ✅ DONE: Epic 35 - Dashboard Foundation (7/7 stories complete)
+# ✅ DONE: Epic 36 - MyPOS Utalás+Visszautalás (4/4 stories complete, 104 tests)
+# ✅ DONE: Epic 37 - Kalendárnap Kedvezmény (4/4 stories complete, 124 tests)
+# ✅ DONE: Epic 38 - Szerviz Profit KPI (4/4 stories complete, 75 tests, 3 fixes)
+# ✅ DONE: Epic 39 - Ukrajna Franchise Offline (4/4 stories complete, 113 tests, 9 fixes)
+# ⚪ BACKLOG: 5 epics - Meeting követelmények (Epic 40-44)
+#
+# ÚJ EPIC-EK (02-07 - Meeting Backlog):
+# =====================================
+# Epic 40: Bérgép Megtérülés (ADR-051) - ⚪ BACKLOG (4 stories, 13 SP) - Sprint 9
+# Epic 41: Kintlévőség & Bevétel (ADR-052) - ⚪ BACKLOG (3 stories, 8 SP) - Sprint 9
+# Epic 42: Bérlési Bővítések - ⚪ BACKLOG (3 stories, 8 SP) - Sprint 10
+# Epic 43: Könyvelői Integráció - ⚪ BACKLOG (3 stories, 5 SP) - Sprint 10
+# Epic 44: Fizetési Emlékeztetők - ⚪ BACKLOG (2 stories, 5 SP) - Sprint 11
+# Összesen: 15 story, 39 SP, ~3 sprint
 #
 # ÚJ EPIC-EK (02-04 MEETING):
 # ===========================
-# Epic 36: MyPOS Utalás+Visszautalás (ADR-047) - 4 stories
-# Epic 37: Kalendárnap Kedvezmény (ADR-048) - 4 stories
-# Epic 38: Szerviz Profit KPI (ADR-049) - 4 stories
-# Epic 39: Ukrajna Franchise Offline (ADR-050) - 4 stories
+# Epic 36: MyPOS Utalás+Visszautalás (ADR-047) - ✅ DONE (2026-02-04, 104 tests)
+# Epic 37: Kalendárnap Kedvezmény (ADR-048) - ✅ DONE (2026-02-04, 124 tests, 3 fixes)
+# Epic 38: Szerviz Profit KPI (ADR-049) - ✅ DONE (2026-02-04, 75 tests, 3 fixes)
+# Epic 39: Ukrajna Franchise Offline (ADR-050) - ✅ DONE (2026-02-04, 113 tests, 9 fixes)
 #
 # HOSSZÚ TÁVÚ BÉRLÉS:
 # ===================
@@ -659,20 +750,20 @@ development_status:
 # - ADR-050: Ukrajna franchise offline
 # - 30+ nap = hosszú távú bérlés (bármeddig bérelhető!)
 #
-# Epic 35 (Dashboard Foundation) - 🟡 IN-PROGRESS (6/7 stories):
+# Epic 35 (Dashboard Foundation) - ✅ COMPLETE (7/7 stories):
 #    - Story 35-1: RBAC Dashboard Layout Engine - ✅ DONE
 #    - Story 35-2: Pénzügyi KPI Dashboard - ✅ DONE
 #    - Story 35-3: Készlet Dashboard - ✅ DONE
 #    - Story 35-4: Alert Notification Panel - ✅ DONE
 #    - Story 35-5: Szerviz Dashboard - ✅ DONE (Phase 2) - 4 widgets + API + 163 tests + adversarial review
 #    - Story 35-6: Partner Dashboard - ✅ DONE (Phase 2) - 4 widgets + API + 163 tests + adversarial review
-#    - Story 35-7: WebSocket Realtime - ⚪ BACKLOG (Phase 2)
+#    - Story 35-7: WebSocket Realtime - ✅ DONE (Phase 2) - 27 tests + code review (5 fixes)
 #
 # ÚJ EPIC-EK (02-04 Meeting - ADR-047-050):
-#    - Epic 36: MyPOS Utalás+Visszautalás (4 stories) - ⚪ BACKLOG
-#    - Epic 37: Kalendárnap Kedvezmény (4 stories) - ⚪ BACKLOG
-#    - Epic 38: Szerviz Profit KPI (4 stories) - ⚪ BACKLOG
-#    - Epic 39: Ukrajna Franchise Offline (4 stories) - ⚪ BACKLOG
+#    - Epic 36: MyPOS Utalás+Visszautalás (4 stories) - ✅ DONE (104 tests, 6 fixes)
+#    - Epic 37: Kalendárnap Kedvezmény (4 stories) - ✅ DONE (124 tests, 3 fixes)
+#    - Epic 38: Szerviz Profit KPI (4 stories) - ✅ DONE (75 tests, 3 fixes)
+#    - Epic 39: Ukrajna Franchise Offline (4 stories) - ✅ DONE (113 tests, 9 fixes)
 #
 # PREVIOUS UPDATE (2026-02-03):
 # =============================
