@@ -228,7 +228,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./infra/docker/Dockerfile.api
+          file: ./apps/kgc-api/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}/kgc-api:${{ github.sha }}
           cache-from: type=gha
@@ -238,7 +238,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./infra/docker/Dockerfile.web
+          file: ./apps/kgc-web/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}/kgc-web:${{ github.sha }}
           cache-from: type=gha

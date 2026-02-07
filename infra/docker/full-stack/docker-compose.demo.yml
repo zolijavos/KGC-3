@@ -166,9 +166,9 @@ services:
   kgc-db:
     image: postgres:16-alpine
     container_name: kgc-demo-db
-    # Port exposed for external access (optional, remove in production)
+    # SECURITY: Bind to localhost only. For external access, use SSH tunnel.
     ports:
-      - '${KGC_DB_PORT:-5432}:5432'
+      - '127.0.0.1:${KGC_DB_PORT:-5432}:5432'
     deploy:
       resources:
         limits:
@@ -220,12 +220,13 @@ services:
 
   # ============================================================================
   # MinIO (S3-compatible Object Storage)
+  # SECURITY: Set MINIO_ACCESS_KEY and MINIO_SECRET_KEY in .env file!
   # ============================================================================
   kgc-minio:
     image: minio/minio:latest
     container_name: kgc-demo-minio
     ports:
-      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+      - '127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001'
     expose:
       - '9000'
     deploy:
@@ -237,8 +238,8 @@ services:
           memory: 256M
     logging: *default-logging
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:?MINIO_ACCESS_KEY is required}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:?MINIO_SECRET_KEY is required}
     volumes:
       - kgc-demo-minio-data:/data
     command: server /data --console-address ":9001"

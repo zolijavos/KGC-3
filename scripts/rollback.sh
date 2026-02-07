@@ -59,6 +59,8 @@ echo -e "Rolling back to: ${GREEN}$LATEST_BACKUP${NC}"
 # Confirm rollback for production
 if [[ "$ENVIRONMENT" == "production" ]]; then
     echo -e "${RED}WARNING: You are about to rollback PRODUCTION${NC}"
+    echo -e "${YELLOW}NOTE: Database migrations are NOT rolled back automatically.${NC}"
+    echo -e "${YELLOW}If migrations ran, you may need to manually rollback the database.${NC}"
     read -p "Are you sure? (yes/no): " confirm
     if [[ "$confirm" != "yes" ]]; then
         echo "Rollback cancelled."
@@ -79,10 +81,11 @@ echo -e "${YELLOW}Running health check...${NC}"
 sleep 10
 
 # Use HTTPS for production, HTTP for staging
+# Health endpoint: /api/v1/health (consistent with Dockerfile and docker-compose)
 if [[ "$ENVIRONMENT" == "production" ]]; then
-    HEALTH_URL="https://$DEPLOY_HOST/health"
+    HEALTH_URL="https://$DEPLOY_HOST/api/v1/health"
 else
-    HEALTH_URL="http://$DEPLOY_HOST:3000/api/health"
+    HEALTH_URL="http://$DEPLOY_HOST:3000/api/v1/health"
 fi
 
 if curl -sf "$HEALTH_URL" > /dev/null 2>&1; then

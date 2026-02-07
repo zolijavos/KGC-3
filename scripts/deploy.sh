@@ -98,18 +98,25 @@ ssh "$SERVER" "cd $DEPLOY_PATH/current/infra/docker/full-stack && \
 
 # Run database migrations
 echo -e "${YELLOW}[5/6] Running database migrations...${NC}"
-ssh "$SERVER" "cd $DEPLOY_PATH/current/infra/docker/full-stack && \
-    docker compose -f $COMPOSE_FILES --env-file $ENV_FILE exec -T kgc-api npx prisma migrate deploy || true"
+if ! ssh "$SERVER" "cd $DEPLOY_PATH/current/infra/docker/full-stack && \
+    docker compose -f $COMPOSE_FILES --env-file $ENV_FILE exec -T kgc-api npx prisma migrate deploy"; then
+    echo -e "${RED}ERROR: Database migration failed!${NC}"
+    echo -e "${YELLOW}Rolling back to previous version...${NC}"
+    ./scripts/rollback.sh "$ENVIRONMENT"
+    exit 1
+fi
+echo -e "${GREEN}Migrations completed successfully${NC}"
 
 # Health check
 echo -e "${YELLOW}[6/6] Running health checks...${NC}"
 sleep 10  # Wait for services to start
 
 # Use HTTPS for production, HTTP for staging
+# Health endpoint: /api/v1/health (consistent with Dockerfile and docker-compose)
 if [[ "$ENVIRONMENT" == "production" ]]; then
-    HEALTH_URL="https://$DEPLOY_HOST/health"
+    HEALTH_URL="https://$DEPLOY_HOST/api/v1/health"
 else
-    HEALTH_URL="http://$DEPLOY_HOST:3000/api/health"
+    HEALTH_URL="http://$DEPLOY_HOST:3000/api/v1/health"
 fi
 
 MAX_RETRIES=5
