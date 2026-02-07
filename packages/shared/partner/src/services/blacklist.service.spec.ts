@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BlacklistService } from './blacklist.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  IBlacklistRepository,
   BlacklistEntry,
   CreateBlacklistInput,
+  IBlacklistRepository,
 } from '../interfaces/blacklist.interface';
 import { IPartnerRepository, Partner } from '../interfaces/partner.interface';
+import { BlacklistService } from './blacklist.service';
 
 describe('BlacklistService', () => {
   let service: BlacklistService;
@@ -124,6 +124,57 @@ describe('BlacklistService', () => {
           createdBy: mockUserId,
         })
       ).rejects.toThrow('Leírás maximum 500 karakter');
+    });
+
+    it('should sanitize HTML tags from description (M5 XSS fix)', async () => {
+      const inputWithHtml: CreateBlacklistInput = {
+        partnerId: mockPartnerId,
+        tenantId: mockTenantId,
+        reason: 'PAYMENT_DEFAULT',
+        description: 'Fizetési <script>alert("xss")</script> késedelem',
+        severity: 'WARNING',
+        createdBy: mockUserId,
+      };
+
+      vi.mocked(mockPartnerRepository.findById).mockResolvedValue(mockPartner);
+      vi.mocked(mockRepository.create).mockImplementation(async input => ({
+        ...mockBlacklistEntry,
+        description: input.description,
+      }));
+
+      await service.addToBlacklist(inputWithHtml);
+
+      // Verify sanitized description was passed to repository
+      expect(mockRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: 'Fizetési alert("xss") késedelem',
+        })
+      );
+    });
+
+    it('should strip all HTML tags from description', async () => {
+      const inputWithTags: CreateBlacklistInput = {
+        partnerId: mockPartnerId,
+        tenantId: mockTenantId,
+        reason: 'DAMAGE_UNREPORTED',
+        description: '<b>Bold</b> and <a href="test">link</a> and <img src="x">',
+        severity: 'WARNING',
+        createdBy: mockUserId,
+      };
+
+      vi.mocked(mockPartnerRepository.findById).mockResolvedValue(mockPartner);
+      vi.mocked(mockRepository.create).mockImplementation(async input => ({
+        ...mockBlacklistEntry,
+        description: input.description,
+      }));
+
+      await service.addToBlacklist(inputWithTags);
+
+      expect(mockRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: 'Bold and link and',
+        })
+      );
     });
 
     it('should update partner status to BLACKLISTED when blocked', async () => {

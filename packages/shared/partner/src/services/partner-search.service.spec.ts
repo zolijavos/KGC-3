@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PartnerSearchService } from './partner-search.service';
-import { IPartnerRepository, Partner } from '../interfaces/partner.interface';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { IBlacklistRepository } from '../interfaces/blacklist.interface';
 import { ILoyaltyCardRepository, LoyaltyCard } from '../interfaces/loyalty-card.interface';
+import { IPartnerRepository, Partner } from '../interfaces/partner.interface';
+import { PartnerSearchService } from './partner-search.service';
 
 describe('PartnerSearchService', () => {
   let service: PartnerSearchService;
@@ -280,6 +280,192 @@ describe('PartnerSearchService', () => {
 
       expect(result.hasWarnings).toBe(true);
       expect(result.warnings).toContain('Fizetési késedelem');
+    });
+  });
+
+  describe('tax number validation (H2 fix)', () => {
+    it('should identify partner by Hungarian tax number', async () => {
+      const companyPartner = mockPartners[1]!;
+      vi.mocked(mockLoyaltyCardRepository.findByCardNumber).mockResolvedValue(null);
+      vi.mocked(mockLoyaltyCardRepository.findByQrCode).mockResolvedValue(null);
+      vi.mocked(mockPartnerRepository.query).mockResolvedValue({
+        items: [companyPartner],
+        total: 1,
+        page: 1,
+        limit: 1,
+        hasMore: false,
+      });
+      vi.mocked(mockBlacklistRepository.findActiveByPartner).mockResolvedValue([]);
+
+      const result = await service.identify({
+        tenantId: mockTenantId,
+        identifier: '12345678-1-42', // Hungarian format
+        operatorId: mockUserId,
+      });
+
+      expect(result.found).toBe(true);
+      expect(result.identifiedBy).toBe('TAX_NUMBER');
+    });
+
+    it('should identify partner by Ukrainian company tax number (8 digits)', async () => {
+      const ukrainianCompany: Partner = {
+        ...mockPartners[1]!,
+        taxNumber: '12345678', // Ukrainian EDRPOU format
+      };
+      vi.mocked(mockLoyaltyCardRepository.findByCardNumber).mockResolvedValue(null);
+      vi.mocked(mockLoyaltyCardRepository.findByQrCode).mockResolvedValue(null);
+      vi.mocked(mockPartnerRepository.query).mockResolvedValue({
+        items: [ukrainianCompany],
+        total: 1,
+        page: 1,
+        limit: 1,
+        hasMore: false,
+      });
+      vi.mocked(mockBlacklistRepository.findActiveByPartner).mockResolvedValue([]);
+
+      const result = await service.identify({
+        tenantId: mockTenantId,
+        identifier: '12345678',
+        operatorId: mockUserId,
+      });
+
+      expect(result.found).toBe(true);
+      expect(result.identifiedBy).toBe('TAX_NUMBER');
+    });
+
+    it('should identify partner by Ukrainian individual tax number (10 digits)', async () => {
+      const ukrainianIndividual: Partner = {
+        ...mockPartners[0]!,
+        taxNumber: '1234567890', // Ukrainian IPN format
+      };
+      vi.mocked(mockLoyaltyCardRepository.findByCardNumber).mockResolvedValue(null);
+      vi.mocked(mockLoyaltyCardRepository.findByQrCode).mockResolvedValue(null);
+      vi.mocked(mockPartnerRepository.query).mockResolvedValue({
+        items: [ukrainianIndividual],
+        total: 1,
+        page: 1,
+        limit: 1,
+        hasMore: false,
+      });
+      vi.mocked(mockBlacklistRepository.findActiveByPartner).mockResolvedValue([]);
+
+      const result = await service.identify({
+        tenantId: mockTenantId,
+        identifier: '1234567890',
+        operatorId: mockUserId,
+      });
+
+      expect(result.found).toBe(true);
+      expect(result.identifiedBy).toBe('TAX_NUMBER');
+    });
+  });
+
+  describe('validation edge cases (M1, M2 fixes)', () => {
+    it('should not identify by email with single-char TLD', async () => {
+      vi.mocked(mockLoyaltyCardRepository.findByCardNumber).mockResolvedValue(null);
+      vi.mocked(mockLoyaltyCardRepository.findByQrCode).mockResolvedValue(null);
+      vi.mocked(mockPartnerRepository.query).mockResolvedValue({
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 1,
+        hasMore: false,
+      });
+
+      // Invalid email with single-char TLD should not match email pattern
+      const result = await service.identify({
+        tenantId: mockTenantId,
+        identifier: 'test@example.a', // Invalid: TLD too short
+        operatorId: mockUserId,
+      });
+
+      expect(result.found).toBe(false);
+    });
+
+    it('should not identify phone with only special characters', async () => {
+      vi.mocked(mockLoyaltyCardRepository.findByCardNumber).mockResolvedValue(null);
+      vi.mocked(mockLoyaltyCardRepository.findByQrCode).mockResolvedValue(null);
+      vi.mocked(mockPartnerRepository.query).mockResolvedValue({
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 1,
+        hasMore: false,
+      });
+
+      // Invalid phone with only dashes/spaces should not match
+      const result = await service.identify({
+        tenantId: mockTenantId,
+        identifier: '--- ---', // Invalid: no digits
+        operatorId: mockUserId,
+      });
+
+      expect(result.found).toBe(false);
+    });
+
+    it('should not identify phone with fewer than 6 digits', async () => {
+      vi.mocked(mockLoyaltyCardRepository.findByCardNumber).mockResolvedValue(null);
+      vi.mocked(mockLoyaltyCardRepository.findByQrCode).mockResolvedValue(null);
+      vi.mocked(mockPartnerRepository.query).mockResolvedValue({
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 1,
+        hasMore: false,
+      });
+
+      const result = await service.identify({
+        tenantId: mockTenantId,
+        identifier: '12345', // Only 5 digits
+        operatorId: mockUserId,
+      });
+
+      expect(result.found).toBe(false);
+    });
+  });
+
+  describe('loyalty card usage logging (H4 fix)', () => {
+    it('should log loyalty card usage on successful identify', async () => {
+      vi.mocked(mockLoyaltyCardRepository.findByCardNumber).mockResolvedValue(mockLoyaltyCard);
+      vi.mocked(mockPartnerRepository.findById).mockResolvedValue(mockPartners[0]!);
+      vi.mocked(mockBlacklistRepository.findActiveByPartner).mockResolvedValue([]);
+
+      await service.identify({
+        tenantId: mockTenantId,
+        identifier: 'KGC-2026-00001234',
+        operatorId: mockUserId,
+      });
+
+      expect(mockLoyaltyCardRepository.logUsage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cardId: mockLoyaltyCard.id,
+          tenantId: mockTenantId,
+          action: 'SCAN',
+          operatorId: mockUserId,
+          successful: true,
+        })
+      );
+    });
+
+    it('should log QR code usage on successful identify', async () => {
+      vi.mocked(mockLoyaltyCardRepository.findByCardNumber).mockResolvedValue(null);
+      vi.mocked(mockLoyaltyCardRepository.findByQrCode).mockResolvedValue(mockLoyaltyCard);
+      vi.mocked(mockPartnerRepository.findById).mockResolvedValue(mockPartners[0]!);
+      vi.mocked(mockBlacklistRepository.findActiveByPartner).mockResolvedValue([]);
+
+      await service.identify({
+        tenantId: mockTenantId,
+        identifier: 'kgc:loyalty:...',
+        operatorId: mockUserId,
+      });
+
+      expect(mockLoyaltyCardRepository.logUsage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cardId: mockLoyaltyCard.id,
+          action: 'SCAN',
+          successful: true,
+        })
+      );
     });
   });
 

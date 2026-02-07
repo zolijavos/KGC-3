@@ -701,12 +701,12 @@ development_status:
   epic-43-retrospective: optional
 
   # Epic 44: Fizetési Emlékeztetők & Felfüggesztés
-  # CODE: @kgc/partner + notification service bővítés
+  # CODE: @kgc/partner - 35 tests (PaymentReminderService + PartnerSuspensionService)
   # PRISMA: Partner.suspendedAt, PaymentReminder model
-  # STATUS: ⚪ BACKLOG - Sprint 11
-  epic-44: backlog
-  44-1-fizetesi-emlekeztetok: backlog # 3 szintű eszkaláció
-  44-2-partner-felfuggesztes: backlog # Késedelmes fizetésnél
+  # STATUS: ✅ DONE - Sprint 11 (YOLO Pipeline 2026-02-07, 35 tests)
+  epic-44: done
+  44-1-fizetesi-emlekeztetok: done # PaymentReminderService - 20 tests (YOLO 2026-02-07)
+  44-2-partner-felfuggesztes: done # PartnerSuspensionService - 15 tests (YOLO 2026-02-07)
   epic-44-retrospective: optional
 
 # ============================================

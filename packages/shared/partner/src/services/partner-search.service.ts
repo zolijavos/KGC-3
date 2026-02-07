@@ -77,7 +77,7 @@ export class PartnerSearchService implements IPartnerSearchService {
 
       results.push({
         partner,
-        score: this.calculateScore(matchedFields, input.query),
+        score: this.calculateScore(matchedFields),
         matchedFields,
         hasWarnings: (blacklistData?.warnings.length ?? 0) > 0,
         isBlocked: blacklistData?.isBlocked ?? false,
@@ -111,6 +111,15 @@ export class PartnerSearchService implements IPartnerSearchService {
       const partner = await this.partnerRepository.findById(loyaltyCard.partnerId, input.tenantId);
 
       if (partner) {
+        // H4 fix: Log loyalty card usage for analytics
+        await this.loyaltyCardRepository.logUsage({
+          cardId: loyaltyCard.id,
+          tenantId: input.tenantId,
+          usedAt: new Date(),
+          action: 'SCAN',
+          operatorId: input.operatorId,
+          successful: true,
+        });
         return this.buildIdentifyResult(partner, input.tenantId, 'LOYALTY_CARD');
       }
     }
@@ -122,6 +131,15 @@ export class PartnerSearchService implements IPartnerSearchService {
       const partner = await this.partnerRepository.findById(qrCard.partnerId, input.tenantId);
 
       if (partner) {
+        // H4 fix: Log QR code usage for analytics
+        await this.loyaltyCardRepository.logUsage({
+          cardId: qrCard.id,
+          tenantId: input.tenantId,
+          usedAt: new Date(),
+          action: 'SCAN',
+          operatorId: input.operatorId,
+          successful: true,
+        });
         return this.buildIdentifyResult(partner, input.tenantId, 'LOYALTY_CARD');
       }
     }
@@ -227,8 +245,9 @@ export class PartnerSearchService implements IPartnerSearchService {
 
   /**
    * Relevancia pontszám számítás
+   * M4 fix: Remove unused parameter (position-based scoring not needed)
    */
-  private calculateScore(matchedFields: string[], _query: string): number {
+  private calculateScore(matchedFields: string[]): number {
     let score = 0;
 
     // Név egyezés a legfontosabb
@@ -257,10 +276,19 @@ export class PartnerSearchService implements IPartnerSearchService {
 
   /**
    * Személyes üdvözlés generálása
+   * H1 fix: i18n támogatás locale paraméterrel (ADR-050)
    */
-  private generateGreeting(partner: Partner): string {
+  private generateGreeting(partner: Partner, locale: 'hu' | 'en' | 'uk' = 'hu'): string {
+    const greetings: Record<'hu' | 'en' | 'uk', { company: string; individual: string }> = {
+      hu: { company: 'Üdvözöljük', individual: 'Üdv újra' },
+      en: { company: 'Welcome', individual: 'Welcome back' },
+      uk: { company: 'Ласкаво просимо', individual: 'З поверненням' },
+    };
+
+    const greeting = greetings[locale];
+
     if (partner.type === 'COMPANY') {
-      return `Üdvözöljük, ${partner.name}!`;
+      return `${greeting.company}, ${partner.name}!`;
     }
 
     const nameParts = partner.name.split(' ');
@@ -270,27 +298,48 @@ export class PartnerSearchService implements IPartnerSearchService {
         ? nameParts[0]
         : partner.name;
 
-    return `Üdv újra, ${lastName}!`;
+    return `${greeting.individual}, ${lastName}!`;
   }
 
   /**
    * Telefonszám-e?
+   * M2 fix: Require at least one digit, not just special chars
    */
   private looksLikePhone(value: string): boolean {
-    return /^[+]?[0-9\s\-()]{6,}$/.test(value);
+    // Must have at least 6 digits (not just special chars)
+    const hasEnoughDigits = (value.match(/\d/g) ?? []).length >= 6;
+    // Overall format check
+    const formatOk = /^[+]?[0-9\s\-()]{6,}$/.test(value);
+    return hasEnoughDigits && formatOk;
   }
 
   /**
    * Email-e?
+   * M1 fix: Require minimum 2-char TLD
    */
   private looksLikeEmail(value: string): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    // Require at least 2-character TLD (.hu, .com, .ua, etc.)
+    return /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(value);
   }
 
   /**
-   * Magyar adószám-e?
+   * Adószám-e? (Magyar vagy Ukrán)
+   * H2 fix: Multi-country tax number support (ADR-050)
+   * Magyar: 12345678-1-42 (8-1-2 digits)
+   * Ukrán: 1234567890 (10 digits) or 12345678 (8 digits for companies)
    */
   private looksLikeTaxNumber(value: string): boolean {
-    return /^\d{8}-\d{1}-\d{2}$/.test(value);
+    // Hungarian tax number: 8 digits - 1 digit - 2 digits
+    const hungarianPattern = /^\d{8}-\d{1}-\d{2}$/;
+    // Ukrainian EDRPOU (company): 8 digits
+    const ukrainianCompanyPattern = /^\d{8}$/;
+    // Ukrainian IPN (individual): 10 digits
+    const ukrainianIndividualPattern = /^\d{10}$/;
+
+    return (
+      hungarianPattern.test(value) ||
+      ukrainianCompanyPattern.test(value) ||
+      ukrainianIndividualPattern.test(value)
+    );
   }
 }

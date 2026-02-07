@@ -13,7 +13,7 @@ export type PartnerType = 'INDIVIDUAL' | 'COMPANY';
 /**
  * Partner státusz
  */
-export type PartnerStatus = 'ACTIVE' | 'INACTIVE' | 'BLACKLISTED' | 'DELETED';
+export type PartnerStatus = 'ACTIVE' | 'INACTIVE' | 'BLACKLISTED' | 'DELETED' | 'SUSPENDED';
 
 /**
  * Cím struktúra
