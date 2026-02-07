@@ -691,13 +691,13 @@ development_status:
   epic-42-retrospective: optional
 
   # Epic 43: Könyvelői Integráció
-  # CODE: @kgc/sales-invoice API bővítés
+  # CODE: @kgc/accounting package - 38 tests
   # PRISMA: N/A
-  # STATUS: ⚪ BACKLOG - Sprint 10
-  epic-43: backlog
-  43-1-konyveloi-api-vegpontok: backlog # /api/v1/accounting/*
-  43-2-konyveloi-riportok: backlog # ÁFA, számla export
-  43-3-automatikus-email-riportok: backlog # Havi riport küldés
+  # STATUS: ✅ DONE - Sprint 10 (YOLO Pipeline 2026-02-07, 38 tests)
+  epic-43: done
+  43-1-konyveloi-api-vegpontok: done # AccountingService - 16 tests (YOLO 2026-02-07)
+  43-2-konyveloi-riportok: done # AccountingReportService - 12 tests (YOLO 2026-02-07)
+  43-3-automatikus-email-riportok: done # ReportSchedulerService - 10 tests (YOLO 2026-02-07)
   epic-43-retrospective: optional
 
   # Epic 44: Fizetési Emlékeztetők & Felfüggesztés
