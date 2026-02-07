@@ -117,8 +117,8 @@ Státusz meghatározás:
 
 **Fájlok:**
 
-- `packages/berles/rental-core/src/services/equipment-profit.service.ts` - LÉTREHOZANDÓ
-- `packages/berles/rental-core/src/services/equipment-profit.service.spec.ts` - LÉTREHOZANDÓ
+- `packages/berles/rental-core/src/services/equipment-profit.service.ts` - ✅ Létrehozva
+- `packages/berles/rental-core/src/services/equipment-profit.service.spec.ts` - ✅ 18 teszt PASS
 
 ### Task 2: Prisma Repository ⏳
 
@@ -154,14 +154,14 @@ Státusz meghatározás:
 
 | Típus       | Darab | Fájl                                | Státusz |
 | ----------- | ----- | ----------------------------------- | ------- |
-| Unit (TDD)  | 20    | `equipment-profit.service.spec.ts`  | ⏳ TODO |
+| Unit (TDD)  | 18    | `equipment-profit.service.spec.ts`  | ✅ PASS |
 | Property    | 10    | `equipment-profit.property.spec.ts` | ⏳ TODO |
 | Integration | 5     | `bergep.controller.spec.ts`         | ⏳ TODO |
 
 ## Definition of Done
 
-- [ ] AC-1, AC-2, AC-3, AC-4 teljesül
-- [ ] TDD: Tesztek ELŐBB megírva
+- [x] AC-1, AC-2, AC-3, AC-4 teljesül (service szinten)
+- [x] TDD: Tesztek ELŐBB megírva
 - [ ] Unit tesztek PASS (20 db)
 - [ ] Property-based tesztek PASS (10 db)
 - [ ] Code review PASS
