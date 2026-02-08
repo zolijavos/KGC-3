@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { NetRevenueKPICard, type KPIData } from '@kgc/ui';
 import { api } from '@/api/client';
+import { NetRevenueKPICard, type KPIData } from '@kgc/ui';
+import { useQuery } from '@tanstack/react-query';
+import { dashboardKeys } from '../lib/query-keys';
 
 interface KpiApiResponse {
   kpiType: string;
@@ -17,7 +18,7 @@ interface KpiApiResponse {
  */
 export default function NetRevenueKPIWidget() {
   const { data: apiData, isLoading } = useQuery<KpiApiResponse>({
-    queryKey: ['dashboard-kpi', 'net-revenue'],
+    queryKey: dashboardKeys.kpi('net-revenue'),
     queryFn: () => api.get('/dashboard/kpi/net-revenue'),
     refetchInterval: 300_000, // 5 minutes
     staleTime: 240_000, // 4 minutes
@@ -27,15 +28,17 @@ export default function NetRevenueKPIWidget() {
   const kpiData: KPIData | undefined =
     apiData?.current?.value !== undefined
       ? {
-        current: apiData.current.value,
-        previous: apiData.previous?.value ?? apiData.current.value,
-        trend: apiData.delta?.trend ?? 'neutral',
-      }
-    : undefined;
+          current: apiData.current.value,
+          previous: apiData.previous?.value ?? apiData.current.value,
+          trend: apiData.delta?.trend ?? 'neutral',
+        }
+      : undefined;
 
   // Show loading state or render with data
   if (isLoading || !kpiData) {
-    return <NetRevenueKPICard data={{ current: 0, previous: 0, trend: 'neutral' }} isLoading={true} />;
+    return (
+      <NetRevenueKPICard data={{ current: 0, previous: 0, trend: 'neutral' }} isLoading={true} />
+    );
   }
 
   return <NetRevenueKPICard data={kpiData} />;

@@ -1,4 +1,18 @@
-// Layout components for Story 35-1
-export { ScannerFocusLayout, type ScannerFocusLayoutProps } from './ScannerFocusLayout';
-export { DashboardFirstLayout, type DashboardFirstLayoutProps } from './DashboardFirstLayout';
-export { RoleBasedDashboard, type RoleBasedDashboardProps } from './RoleBasedDashboard';
+export { DashboardFirstLayout } from './DashboardFirstLayout';
+export { RoleBasedDashboard } from './RoleBasedDashboard';
+export { ScannerFocusLayout } from './ScannerFocusLayout';
+export { WebSocketStatusIndicator } from './WebSocketStatusIndicator';
+
+// Story 35-8: Hybrid Dashboard Layout
+export { CollapsibleSection, type CollapsibleSectionProps } from './CollapsibleSection';
+export {
+  ExecutiveSummaryBar,
+  type BusinessHealthStatus,
+  type KpiSummaryData,
+  type WidgetStatus,
+} from './ExecutiveSummaryBar';
+export {
+  ExpandableWidgetWrapper,
+  type ExpandableWidgetWrapperProps,
+} from './ExpandableWidgetWrapper';
+export { HybridDashboardLayout } from './HybridDashboardLayout';

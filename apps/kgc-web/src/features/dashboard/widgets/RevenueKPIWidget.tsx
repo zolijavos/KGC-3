@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { RevenueKPICard, type KPIData } from '@kgc/ui';
 import { api } from '@/api/client';
+import { RevenueKPICard, type KPIData } from '@kgc/ui';
+import { useQuery } from '@tanstack/react-query';
+import { dashboardKeys } from '../lib/query-keys';
 
 interface KpiApiResponse {
   kpiType: string;
@@ -17,7 +18,7 @@ interface KpiApiResponse {
  */
 export default function RevenueKPIWidget() {
   const { data: apiData, isLoading } = useQuery<KpiApiResponse>({
-    queryKey: ['dashboard-kpi', 'revenue'],
+    queryKey: dashboardKeys.kpi('revenue'),
     queryFn: () => api.get('/dashboard/kpi/revenue'),
     refetchInterval: 300_000, // 5 minutes
     staleTime: 240_000, // 4 minutes

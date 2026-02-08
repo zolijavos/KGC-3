@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { ReceivablesKPICard, type KPIData } from '@kgc/ui';
 import { api } from '@/api/client';
+import { ReceivablesKPICard, type KPIData } from '@kgc/ui';
+import { useQuery } from '@tanstack/react-query';
+import { dashboardKeys } from '../lib/query-keys';
 
 interface KpiApiResponse {
   kpiType: string;
@@ -17,7 +18,7 @@ interface KpiApiResponse {
  */
 export default function ReceivablesKPIWidget() {
   const { data: apiData, isLoading } = useQuery<KpiApiResponse>({
-    queryKey: ['dashboard-kpi', 'receivables'],
+    queryKey: dashboardKeys.kpi('receivables'),
     queryFn: () => api.get('/dashboard/kpi/receivables'),
     refetchInterval: 300_000, // 5 minutes
     staleTime: 240_000, // 4 minutes
@@ -27,15 +28,17 @@ export default function ReceivablesKPIWidget() {
   const kpiData: KPIData | undefined =
     apiData?.current?.value !== undefined
       ? {
-        current: apiData.current.value,
-        previous: apiData.previous?.value ?? apiData.current.value,
-        trend: apiData.delta?.trend ?? 'neutral',
-      }
-    : undefined;
+          current: apiData.current.value,
+          previous: apiData.previous?.value ?? apiData.current.value,
+          trend: apiData.delta?.trend ?? 'neutral',
+        }
+      : undefined;
 
   // Show loading state or render with data
   if (isLoading || !kpiData) {
-    return <ReceivablesKPICard data={{ current: 0, previous: 0, trend: 'neutral' }} isLoading={true} />;
+    return (
+      <ReceivablesKPICard data={{ current: 0, previous: 0, trend: 'neutral' }} isLoading={true} />
+    );
   }
 
   return <ReceivablesKPICard data={kpiData} />;

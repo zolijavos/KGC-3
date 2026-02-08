@@ -26,6 +26,13 @@
   --color-kgc-error: #ef4444;
   --color-kgc-info: #3b82f6;
 
+  /* Section Theme Colors */
+  --color-section-finance: #22c55e;
+  --color-section-inventory: #3b82f6;
+  --color-section-service: #e87722;
+  --color-section-partner: #a855f7;
+  --color-section-analytics: #06b6d4;
+
   /* Radius */
   --radius-lg: 0.75rem;
   --radius-md: 0.5rem;
@@ -202,4 +209,470 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
+}
+
+/* ========================================
+   DASHBOARD STATUS COLORS (Story 35-8)
+   ======================================== */
+
+/* Status: Healthy - Zöld - NEON BORDER + STRONG GLOW */
+.border-status-healthy {
+  border-color: #00ff41;
+  box-shadow:
+    0 0 15px rgba(0, 255, 65, 0.6),
+    0 0 30px rgba(0, 255, 65, 0.3),
+    inset 0 0 8px rgba(0, 255, 65, 0.15);
+}
+.bg-status-healthy {
+  background-color: #22c55e;
+}
+.bg-status-healthy-bg {
+  background-color: #bbf7d0;
+}
+.text-status-healthy {
+  color: #15803d;
+}
+
+.dark .border-status-healthy {
+  border-color: #39ff14;
+  box-shadow:
+    0 0 20px rgba(57, 255, 20, 0.7),
+    0 0 40px rgba(57, 255, 20, 0.4),
+    inset 0 0 10px rgba(57, 255, 20, 0.2);
+}
+.dark .bg-status-healthy-bg {
+  background-color: rgba(34, 197, 94, 0.25);
+}
+.dark .text-status-healthy {
+  color: #4ade80;
+}
+
+/* Status: Warning - Sárga/Narancs - NEON BORDER + STRONG GLOW */
+.border-status-warning {
+  border-color: #ffd000;
+  box-shadow:
+    0 0 15px rgba(255, 208, 0, 0.6),
+    0 0 30px rgba(255, 208, 0, 0.3),
+    inset 0 0 8px rgba(255, 208, 0, 0.15);
+}
+.bg-status-warning {
+  background-color: #eab308;
+}
+.bg-status-warning-bg {
+  background-color: #fef08a;
+}
+.text-status-warning {
+  color: #a16207;
+}
+
+.dark .border-status-warning {
+  border-color: #ffea00;
+  box-shadow:
+    0 0 20px rgba(255, 234, 0, 0.7),
+    0 0 40px rgba(255, 234, 0, 0.4),
+    inset 0 0 10px rgba(255, 234, 0, 0.2);
+}
+.dark .bg-status-warning-bg {
+  background-color: rgba(234, 179, 8, 0.25);
+}
+.dark .text-status-warning {
+  color: #facc15;
+}
+
+/* Status: Critical - Piros - NEON BORDER + STRONG GLOW */
+.border-status-critical {
+  border-color: #ff0040;
+  box-shadow:
+    0 0 15px rgba(255, 0, 64, 0.6),
+    0 0 30px rgba(255, 0, 64, 0.3),
+    inset 0 0 8px rgba(255, 0, 64, 0.15);
+}
+.bg-status-critical {
+  background-color: #ef4444;
+}
+.bg-status-critical-bg {
+  background-color: #fecaca;
+}
+.text-status-critical {
+  color: #b91c1c;
+}
+
+.dark .border-status-critical {
+  border-color: #ff073a;
+  box-shadow:
+    0 0 20px rgba(255, 7, 58, 0.7),
+    0 0 40px rgba(255, 7, 58, 0.4),
+    inset 0 0 10px rgba(255, 7, 58, 0.2);
+}
+.dark .bg-status-critical-bg {
+  background-color: rgba(239, 68, 68, 0.25);
+}
+.dark .text-status-critical {
+  color: #f87171;
+}
+
+/* Status: Neutral - Cián/Kék - NEON BORDER + STRONG GLOW */
+.border-status-neutral {
+  border-color: #00d4ff;
+  box-shadow:
+    0 0 15px rgba(0, 212, 255, 0.5),
+    0 0 30px rgba(0, 212, 255, 0.25),
+    inset 0 0 8px rgba(0, 212, 255, 0.1);
+}
+.bg-status-neutral {
+  background-color: #6b7280;
+}
+.bg-status-neutral-bg {
+  background-color: #e5e7eb;
+}
+.text-status-neutral {
+  color: #374151;
+}
+
+.dark .border-status-neutral {
+  border-color: #00f0ff;
+  box-shadow:
+    0 0 20px rgba(0, 240, 255, 0.6),
+    0 0 40px rgba(0, 240, 255, 0.35),
+    inset 0 0 10px rgba(0, 240, 255, 0.15);
+}
+.dark .bg-status-neutral-bg {
+  background-color: rgba(107, 114, 128, 0.25);
+}
+.dark .text-status-neutral {
+  color: #9ca3af;
+}
+
+/* Critical Pulse Animation */
+@keyframes pulse-critical {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    opacity: 0.9;
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+.animate-pulse-critical {
+  animation: pulse-critical 2s ease-in-out infinite;
+}
+
+/* ========================================
+   DASHBOARD SECTION THEMES
+   ======================================== */
+
+/* Section: Finance - Zöld/Arany */
+.section-theme-finance {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(234, 179, 8, 0.08) 100%);
+  border-left: 6px solid #22c55e;
+  box-shadow: inset 0 0 30px rgba(34, 197, 94, 0.1);
+}
+.section-theme-finance .section-header-bg {
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.25) 0%, rgba(34, 197, 94, 0.05) 100%);
+}
+
+/* Section: Inventory - Kék */
+.section-theme-inventory {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(99, 102, 241, 0.08) 100%);
+  border-left: 6px solid #3b82f6;
+  box-shadow: inset 0 0 30px rgba(59, 130, 246, 0.1);
+}
+.section-theme-inventory .section-header-bg {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.25) 0%, rgba(59, 130, 246, 0.05) 100%);
+}
+
+/* Section: Service - Narancs */
+.section-theme-service {
+  background: linear-gradient(135deg, rgba(232, 119, 34, 0.15) 0%, rgba(249, 115, 22, 0.08) 100%);
+  border-left: 6px solid #e87722;
+  box-shadow: inset 0 0 30px rgba(232, 119, 34, 0.1);
+}
+.section-theme-service .section-header-bg {
+  background: linear-gradient(90deg, rgba(232, 119, 34, 0.25) 0%, rgba(232, 119, 34, 0.05) 100%);
+}
+
+/* Section: Partner - Lila */
+.section-theme-partner {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(139, 92, 246, 0.08) 100%);
+  border-left: 6px solid #a855f7;
+  box-shadow: inset 0 0 30px rgba(168, 85, 247, 0.1);
+}
+.section-theme-partner .section-header-bg {
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.25) 0%, rgba(168, 85, 247, 0.05) 100%);
+}
+
+/* Section: Analytics - Cián */
+.section-theme-analytics {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(14, 165, 233, 0.08) 100%);
+  border-left: 6px solid #06b6d4;
+  box-shadow: inset 0 0 30px rgba(6, 182, 212, 0.1);
+}
+.section-theme-analytics .section-header-bg {
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.25) 0%, rgba(6, 182, 212, 0.05) 100%);
+}
+
+/* Section: Executive Summary - Még Világosabb Slate */
+.section-theme-executive {
+  background: linear-gradient(135deg, #64748b 0%, #475569 50%, #334155 100%);
+  border: 3px solid #94a3b8;
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top accent bar for executive summary */
+.section-theme-executive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #94a3b8 0%, #cbd5e1 50%, #94a3b8 100%);
+}
+
+/* No shimmer - clean look */
+
+/* Dark mode section adjustments */
+.dark .section-theme-finance {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.04) 100%);
+  box-shadow: inset 0 0 30px rgba(34, 197, 94, 0.08);
+}
+.dark .section-theme-inventory {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.04) 100%);
+  box-shadow: inset 0 0 30px rgba(59, 130, 246, 0.08);
+}
+.dark .section-theme-service {
+  background: linear-gradient(135deg, rgba(232, 119, 34, 0.12) 0%, rgba(232, 119, 34, 0.04) 100%);
+  box-shadow: inset 0 0 30px rgba(232, 119, 34, 0.08);
+}
+.dark .section-theme-partner {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(168, 85, 247, 0.04) 100%);
+  box-shadow: inset 0 0 30px rgba(168, 85, 247, 0.08);
+}
+.dark .section-theme-analytics {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(6, 182, 212, 0.04) 100%);
+  box-shadow: inset 0 0 30px rgba(6, 182, 212, 0.08);
+}
+.dark .section-theme-executive {
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.98) 0%,
+    rgba(30, 41, 59, 0.95) 50%,
+    rgba(51, 65, 85, 0.9) 100%
+  );
+  border-color: #60a5fa;
+  box-shadow:
+    inset 0 0 60px rgba(59, 130, 246, 0.08),
+    0 0 35px rgba(59, 130, 246, 0.12),
+    0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Executive Summary text colors (sötét háttérhez) */
+.section-theme-executive {
+  color: white;
+}
+.section-theme-executive h2,
+.section-theme-executive .text-foreground {
+  color: white !important;
+}
+.section-theme-executive .text-muted-foreground {
+  color: rgba(148, 163, 184, 1) !important;
+}
+
+/* ========================================
+   DEPTH & SHADOW SYSTEM
+   ======================================== */
+
+/* Elevation levels */
+.elevation-1 {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.elevation-2 {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.04);
+}
+.elevation-3 {
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    0 4px 8px rgba(0, 0, 0, 0.06);
+}
+
+.dark .elevation-1 {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.15);
+}
+.dark .elevation-2 {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.dark .elevation-3 {
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* Widget card with hover effect */
+.widget-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  transition: all 0.2s ease;
+}
+.widget-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Collapsible animation */
+@keyframes collapsible-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-collapsible-down {
+  animation: collapsible-down 0.3s ease-out;
+}
+
+/* Radial gradient backgrounds */
+.bg-gradient-radial {
+  background: radial-gradient(
+    circle at center,
+    var(--tw-gradient-from) 0%,
+    var(--tw-gradient-to) 70%
+  );
+}
+
+/* Border width 3 */
+.border-3 {
+  border-width: 3px;
+}
+
+/* ========================================
+   WIDGET CARD ENHANCEMENTS
+   ======================================== */
+
+/* Base widget card - white/cream that pops from teal background - SOLID */
+.widget-enhanced {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(248, 250, 252, 1) 50%,
+    rgba(241, 245, 249, 1) 100%
+  );
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 4px 20px rgba(15, 61, 71, 0.15),
+    0 2px 8px rgba(15, 61, 71, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+.dark .widget-enhanced {
+  background: linear-gradient(
+    145deg,
+    rgba(30, 41, 59, 0.98) 0%,
+    rgba(15, 23, 42, 0.95) 50%,
+    rgba(15, 23, 42, 0.9) 100%
+  );
+  border: 2px solid rgba(71, 85, 105, 0.4);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Finance widget accent - SOLID gold/green tint */
+.widget-finance {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(254, 252, 232, 0.95) 50%,
+    rgba(240, 253, 244, 0.9) 100%
+  );
+  border-left: 4px solid #22c55e;
+}
+
+.dark .widget-finance {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 1) 0%, rgba(34, 197, 94, 0.1) 100%);
+}
+
+/* Inventory widget accent - SOLID blue tint */
+.widget-inventory {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(239, 246, 255, 0.95) 50%,
+    rgba(219, 234, 254, 0.9) 100%
+  );
+  border-left: 4px solid #3b82f6;
+}
+
+.dark .widget-inventory {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 1) 0%, rgba(59, 130, 246, 0.1) 100%);
+}
+
+/* Service widget accent - SOLID orange tint */
+.widget-service {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 247, 237, 0.95) 50%,
+    rgba(254, 243, 199, 0.9) 100%
+  );
+  border-left: 4px solid #e87722;
+}
+
+.dark .widget-service {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 1) 0%, rgba(232, 119, 34, 0.1) 100%);
+}
+
+/* Partner widget accent - SOLID purple tint */
+.widget-partner {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(250, 245, 255, 0.95) 50%,
+    rgba(243, 232, 255, 0.9) 100%
+  );
+  border-left: 4px solid #a855f7;
+}
+
+.dark .widget-partner {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 1) 0%, rgba(168, 85, 247, 0.1) 100%);
+}
+
+/* Widget hover glow effect */
+.widget-enhanced:hover,
+.widget-finance:hover,
+.widget-inventory:hover,
+.widget-service:hover,
+.widget-partner:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 30px rgba(15, 61, 71, 0.15),
+    0 4px 12px rgba(15, 61, 71, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.dark .widget-enhanced:hover,
+.dark .widget-finance:hover,
+.dark .widget-inventory:hover,
+.dark .widget-service:hover,
+.dark .widget-partner:hover {
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }

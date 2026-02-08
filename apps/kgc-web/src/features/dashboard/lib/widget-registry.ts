@@ -2,7 +2,14 @@ import { lazy, type ComponentType } from 'react';
 
 export type UserRole = 'OPERATOR' | 'STORE_MANAGER' | 'ADMIN';
 
-export type WidgetCategory = 'general' | 'finance' | 'inventory' | 'service' | 'partner' | 'alerts';
+export type WidgetCategory =
+  | 'general'
+  | 'finance'
+  | 'inventory'
+  | 'service'
+  | 'partner'
+  | 'alerts'
+  | 'analytics';
 
 export interface WidgetConfig {
   id: string;
@@ -199,4 +206,31 @@ export function getWidgetById(widgetId: string): WidgetConfig | undefined {
     id: widgetId,
     ...config,
   };
+}
+
+/**
+ * Pre-computed widgets grouped by category
+ *
+ * Performance: Computed once at module load to avoid repeated
+ * Object.entries() iterations in hooks and components.
+ */
+export const WIDGETS_BY_CATEGORY: Map<WidgetCategory, WidgetConfig[]> = (() => {
+  const map = new Map<WidgetCategory, WidgetConfig[]>();
+
+  Object.entries(WIDGET_REGISTRY).forEach(([id, config]) => {
+    const widgetConfig: WidgetConfig = { id, ...config };
+    const existing = map.get(config.category) ?? [];
+    map.set(config.category, [...existing, widgetConfig]);
+  });
+
+  return map;
+})();
+
+/**
+ * Get widgets by category (uses pre-computed map)
+ *
+ * Performance: O(1) lookup instead of O(n) iteration
+ */
+export function getWidgetsByCategory(category: WidgetCategory): WidgetConfig[] {
+  return WIDGETS_BY_CATEGORY.get(category) ?? [];
 }
