@@ -178,10 +178,11 @@ model Tenant {
   deletedAt DateTime? @map("deleted_at")
 
   // Relations
-  users         User[]
-  locations     Location[]
-  conversations Conversation[]
-  notifications UserNotification[]
+  users              User[]
+  locations          Location[]
+  conversations      Conversation[]
+  notifications      UserNotification[]
+  widgetPermissions  DashboardWidgetPermission[]
 
   @@index([status])
   @@index([parentTenantId])
@@ -262,7 +263,8 @@ model User {
   readReceipts             ReadReceipt[]
 
   // Dashboard relations
-  notifications UserNotification[]
+  notifications            UserNotification[]
+  widgetPermissionUpdates  DashboardWidgetPermission[] @relation("WidgetPermissionUpdater")
 
   @@index([email])
   @@index([tenantId])
@@ -1172,6 +1174,7 @@ model RentalEquipment {
   condition       String    @default("GOOD") @db.VarChar(20) // NEW, GOOD, FAIR, POOR
   purchaseDate    DateTime? @map("purchase_date") @db.Date
   purchasePrice   Decimal?  @map("purchase_price") @db.Decimal(12, 2)
+  purchasedFrom   String?   @map("purchased_from") @db.VarChar(255) // Epic 40: Beszállító neve
   currentValue    Decimal?  @map("current_value") @db.Decimal(12, 2)
   warrantyEndDate DateTime? @map("warranty_end_date") @db.Date
 
@@ -1206,11 +1209,12 @@ model RentalEquipment {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz
 
   // Relations
-  product       Product           @relation(fields: [productId], references: [id])
-  accessories   RentalAccessory[]
-  rentalItems   RentalItem[]
-  worksheets    Worksheet[]
-  RentalVehicle RentalVehicle[]
+  product         Product                    @relation(fields: [productId], references: [id])
+  accessories     RentalAccessory[]
+  rentalItems     RentalItem[]
+  worksheets      Worksheet[]
+  RentalVehicle   RentalVehicle[]
+  profitSnapshots EquipmentProfitSnapshot[] // Epic 40: ADR-051
 
   @@unique([tenantId, equipmentCode])
   @@unique([tenantId, serialNumber])
@@ -1243,6 +1247,43 @@ model RentalAccessory {
 
   @@index([equipmentId])
   @@map("rental_accessories")
+}
+
+/// EquipmentProfitSnapshot - Bérgép megtérülés pillanatkép (Epic 40: ADR-051)
+/// Időszakos snapshot a profit kalkulációhoz és historikus elemzéshez
+model EquipmentProfitSnapshot {
+  id          String @id @default(uuid()) @db.Uuid
+  tenantId    String @map("tenant_id") @db.Uuid
+  equipmentId String @map("equipment_id") @db.Uuid
+
+  // Időszak
+  periodStart DateTime @map("period_start") @db.Date
+  periodEnd   DateTime @map("period_end") @db.Date
+
+  // Kalkulált értékek (ADR-051 képlet alapján)
+  totalRevenue     Decimal @map("total_revenue") @db.Decimal(12, 2)     // Σ(Rental.totalAmount)
+  totalServiceCost Decimal @map("total_service_cost") @db.Decimal(12, 2) // Σ(Worksheet.totalCost WHERE !isWarranty)
+  purchasePrice    Decimal @map("purchase_price") @db.Decimal(12, 2)    // Vételár (snapshot időpontban)
+  profit           Decimal @map("profit") @db.Decimal(12, 2)            // totalRevenue - purchasePrice - totalServiceCost
+  roiPercent       Decimal @map("roi_percent") @db.Decimal(5, 2)        // (profit / purchasePrice) * 100
+
+  // Státusz
+  recommendation String @default("KEEP") @db.VarChar(20) // KEEP, SELLABLE, LOSS
+
+  // Audit
+  calculatedAt DateTime @default(now()) @map("calculated_at") @db.Timestamptz
+  calculatedBy String?  @map("calculated_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  equipment RentalEquipment @relation(fields: [equipmentId], references: [id])
+
+  @@unique([tenantId, equipmentId, periodEnd])
+  @@index([tenantId])
+  @@index([equipmentId])
+  @@index([periodEnd])
+  @@index([recommendation])
+  @@map("equipment_profit_snapshots")
 }
 
 // ============================================
@@ -3148,4 +3189,38 @@ model UserNotification {
   @@index([tenantId])
   @@index([createdAt]) // For 90-day retention cleanup CRON job
   @@map("user_notifications")
+}
+
+// ============================================
+// DASHBOARD WIDGET PERMISSIONS (Epic 45: Story 45-1)
+// ============================================
+
+/// WidgetRole - Simplified roles for dashboard widget permissions
+/// Maps to frontend UserRole type in widget-registry.ts
+enum WidgetRole {
+  OPERATOR      // Maps to: OPERATOR, TECHNIKUS
+  STORE_MANAGER // Maps to: BOLTVEZETO, ACCOUNTANT, PARTNER_OWNER
+  ADMIN         // Maps to: CENTRAL_ADMIN, DEVOPS_ADMIN, SUPER_ADMIN
+}
+
+/// DashboardWidgetPermission - Tenant-specific widget visibility settings
+/// Allows online configuration of which roles can see which dashboard widgets
+model DashboardWidgetPermission {
+  id        String     @id @default(uuid()) @db.Uuid
+  tenantId  String     @map("tenant_id") @db.Uuid
+  widgetId  String     @map("widget_id") @db.VarChar(50)
+  role      WidgetRole
+  enabled   Boolean    @default(true)
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+  updatedBy String?    @map("updated_by") @db.Uuid
+
+  // Relations
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  updater   User?      @relation("WidgetPermissionUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, widgetId, role])
+  @@index([tenantId])
+  @@index([widgetId])
+  @@map("dashboard_widget_permissions")
 }

@@ -50,6 +50,7 @@ import {
   UserDetailPage,
   UserFormPage,
   UserListPage,
+  WidgetPermissionsPage,
   WorksheetDetailPage,
   WorksheetEditPage,
   WorksheetListPage,
@@ -180,8 +181,9 @@ function App() {
             <Route path="/users/:id" element={<UserDetailPage />} />
             <Route path="/users/:id/edit" element={<UserFormPage />} />
 
-            {/* Settings route */}
+            {/* Settings routes */}
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/settings/dashboard/permissions" element={<WidgetPermissionsPage />} />
 
             {/* Reports route */}
             <Route path="/reports" element={<ReportsPage />} />

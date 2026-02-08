@@ -19,6 +19,7 @@ export { RentalDetailPage, RentalListPage, RentalReturnPage, RentalWizardPage } 
 export { ReportsPage } from './reports';
 export { SalesDetailPage, SalesListPage, SalesPOSPage } from './sales';
 export { SettingsPage } from './settings';
+export { WidgetPermissionsPage } from './settings/dashboard';
 export { TasksPage } from './tasks';
 export { TenantSettingsPage } from './tenant';
 export { RoleManagementPage, UserDetailPage, UserFormPage, UserListPage } from './users';

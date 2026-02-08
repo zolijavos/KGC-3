@@ -1,0 +1,1 @@
+export { WidgetPermissionsPage } from './WidgetPermissionsPage';

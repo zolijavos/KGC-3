@@ -10,6 +10,11 @@ import { KpiService } from './kpi/kpi.service';
 import { DashboardNotificationsController } from './notifications.controller';
 import { PartnerDashboardController } from './partner/partner.controller';
 import { PartnerDashboardService } from './partner/partner.service';
+import { AdminPermissionsController } from './permissions/admin-permissions.controller';
+import { AdminPermissionsService } from './permissions/admin-permissions.service';
+import { DashboardPermissionsController } from './permissions/dashboard-permissions.controller';
+import { DashboardPermissionsService } from './permissions/dashboard-permissions.service';
+import { RolePermissionsController } from './permissions/role-permissions.controller';
 import { ReceivablesDashboardController } from './receivables/receivables.controller';
 import { ReceivablesDashboardService } from './receivables/receivables.service';
 import { RevenueForecastController } from './revenue/revenue.controller';
@@ -29,6 +34,8 @@ import { DashboardGateway } from './websocket/dashboard.gateway';
  * - Service widgets (Story 35-5)
  * - Partner widgets (Story 35-6)
  * - WebSocket Real-Time Events (Story 35-7)
+ * - RBAC Permissions (Story 35-8)
+ * - Admin Widget Permissions (Story 45-1)
  * - Equipment Profit widgets (Story 40-4)
  * - Receivables Aging Report (Story 41-1)
  * - Revenue Forecast (Story 41-2)
@@ -44,6 +51,9 @@ export class DashboardModule {
         InventoryController,
         ServiceDashboardController,
         PartnerDashboardController,
+        DashboardPermissionsController,
+        AdminPermissionsController, // Story 45-1
+        RolePermissionsController, // Story 45-1 - AC5 endpoint
         EquipmentProfitDashboardController,
         ReceivablesDashboardController,
         RevenueForecastController,
@@ -58,6 +68,10 @@ export class DashboardModule {
         InventoryService,
         ServiceDashboardService,
         PartnerDashboardService,
+        // RBAC Permissions (Story 35-8)
+        DashboardPermissionsService,
+        // Admin Permissions (Story 45-1)
+        AdminPermissionsService,
         // Equipment Profit (Story 40-4)
         EquipmentProfitDashboardService,
         // Receivables Aging (Story 41-1)
@@ -74,6 +88,8 @@ export class DashboardModule {
         InventoryService,
         ServiceDashboardService,
         PartnerDashboardService,
+        DashboardPermissionsService,
+        AdminPermissionsService, // Story 45-1
         EquipmentProfitDashboardService,
         ReceivablesDashboardService,
         RevenueForecastDashboardService,
