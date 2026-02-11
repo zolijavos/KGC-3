@@ -1,13 +1,14 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { DashboardNotificationsService } from './dashboard-notifications.service';
+// TODO: Re-enable after PrismaService setup - Story 35-4/35-7 deferred
+// import { DashboardNotificationsService } from './dashboard-notifications.service';
 import { EquipmentProfitDashboardController } from './equipment-profit/equipment-profit.controller';
 import { EquipmentProfitDashboardService } from './equipment-profit/equipment-profit.service';
 import { InventoryController } from './inventory/inventory.controller';
 import { InventoryService } from './inventory/inventory.service';
 import { KpiController } from './kpi/kpi.controller';
 import { KpiService } from './kpi/kpi.service';
-import { DashboardNotificationsController } from './notifications.controller';
+// import { DashboardNotificationsController } from './notifications.controller';
 import { PartnerDashboardController } from './partner/partner.controller';
 import { PartnerDashboardService } from './partner/partner.service';
 import { AdminPermissionsController } from './permissions/admin-permissions.controller';
@@ -21,8 +22,9 @@ import { RevenueForecastController } from './revenue/revenue.controller';
 import { RevenueForecastDashboardService } from './revenue/revenue.service';
 import { ServiceDashboardController } from './service/service.controller';
 import { ServiceDashboardService } from './service/service.service';
-import { DashboardEventsService } from './websocket/dashboard-events.service';
-import { DashboardGateway } from './websocket/dashboard.gateway';
+// TODO: Re-enable WebSocket after socket.io dependency setup - Story 35-7 deferred
+// import { DashboardEventsService } from './websocket/dashboard-events.service';
+// import { DashboardGateway } from './websocket/dashboard.gateway';
 
 /**
  * Dashboard Module (Epic 35: Dashboard Foundation + Epic 41)
@@ -46,7 +48,7 @@ export class DashboardModule {
     return {
       module: DashboardModule,
       controllers: [
-        DashboardNotificationsController,
+        // DashboardNotificationsController, // TODO: Story 35-4 deferred
         KpiController,
         InventoryController,
         ServiceDashboardController,
@@ -63,7 +65,7 @@ export class DashboardModule {
           provide: 'PRISMA_CLIENT',
           useValue: prisma,
         },
-        DashboardNotificationsService,
+        // DashboardNotificationsService, // TODO: Story 35-4 deferred
         KpiService,
         InventoryService,
         ServiceDashboardService,
@@ -78,12 +80,12 @@ export class DashboardModule {
         ReceivablesDashboardService,
         // Revenue Forecast (Story 41-2)
         RevenueForecastDashboardService,
-        // WebSocket (Story 35-7)
-        DashboardEventsService,
-        DashboardGateway,
+        // WebSocket (Story 35-7) - TODO: Deferred until socket.io setup
+        // DashboardEventsService,
+        // DashboardGateway,
       ],
       exports: [
-        DashboardNotificationsService,
+        // DashboardNotificationsService, // TODO: Story 35-4 deferred
         KpiService,
         InventoryService,
         ServiceDashboardService,
@@ -93,9 +95,9 @@ export class DashboardModule {
         EquipmentProfitDashboardService,
         ReceivablesDashboardService,
         RevenueForecastDashboardService,
-        // WebSocket exports for other modules
-        DashboardEventsService,
-        DashboardGateway,
+        // WebSocket exports - TODO: Story 35-7 deferred
+        // DashboardEventsService,
+        // DashboardGateway,
       ],
     };
   }
