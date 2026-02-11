@@ -207,11 +207,16 @@ export class DepositReportService {
   private initializeStatusMap(): Record<DepositStatus, { count: number; amount: number }> {
     return {
       [DepositStatus.PENDING]: { count: 0, amount: 0 },
+      [DepositStatus.PENDING_PAYMENT]: { count: 0, amount: 0 },
       [DepositStatus.COLLECTED]: { count: 0, amount: 0 },
+      [DepositStatus.PAID]: { count: 0, amount: 0 },
       [DepositStatus.HELD]: { count: 0, amount: 0 },
+      [DepositStatus.PENDING_SERVICE]: { count: 0, amount: 0 },
       [DepositStatus.RELEASED]: { count: 0, amount: 0 },
+      [DepositStatus.REFUNDED]: { count: 0, amount: 0 },
       [DepositStatus.RETAINED]: { count: 0, amount: 0 },
       [DepositStatus.PARTIALLY_RETAINED]: { count: 0, amount: 0 },
+      [DepositStatus.PARTIALLY_REFUNDED]: { count: 0, amount: 0 },
     };
   }
 }
