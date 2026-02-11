@@ -18,12 +18,14 @@ import {
   ServiceHistoryResponseSwagger,
 } from './dto/recurring-issues.dto';
 import type {
+  ServiceProfitResponseDto,
   ServiceRevenueResponseDto,
   ServiceSummaryResponseDto,
   ServiceWorkloadResponseDto,
   WarrantyRatioResponseDto,
 } from './dto/service-response.dto';
 import {
+  ServiceProfitResponseSwagger,
   ServiceRevenueResponseSwagger,
   ServiceSummaryResponseSwagger,
   ServiceWorkloadResponseSwagger,
@@ -107,6 +109,18 @@ export class ServiceDashboardController {
     @Query('period') period?: 'day' | 'week' | 'month'
   ): Promise<{ data: WarrantyRatioResponseDto }> {
     const data = await this.serviceDashboardService.getWarrantyRatio(period ?? 'month');
+    return { data };
+  }
+
+  @Get('profit')
+  @ApiOperation({
+    summary: 'Get Service Profitability (Szerviz profitabilitas)',
+    description:
+      'Returns service profit breakdown by technician with revenue, costs, and margins (Story 49-1)',
+  })
+  @ApiResponse({ status: 200, type: ServiceProfitResponseSwagger })
+  async getProfit(): Promise<{ data: ServiceProfitResponseDto }> {
+    const data = await this.serviceDashboardService.getProfit();
     return { data };
   }
 

@@ -18,6 +18,9 @@ import { DashboardPermissionsService } from './permissions/dashboard-permissions
 import { RolePermissionsController } from './permissions/role-permissions.controller';
 import { ReceivablesDashboardController } from './receivables/receivables.controller';
 import { ReceivablesDashboardService } from './receivables/receivables.service';
+// Epic 48: Rental Dashboard (Story 48-1, 48-2, 48-3)
+import { RentalDashboardController } from './rental/rental-dashboard.controller';
+import { RentalDashboardService } from './rental/rental-dashboard.service';
 import { RevenueForecastController } from './revenue/revenue.controller';
 import { RevenueForecastDashboardService } from './revenue/revenue.service';
 import { RecurringIssuesService } from './service/recurring-issues.service';
@@ -42,6 +45,7 @@ import { ServiceDashboardService } from './service/service.service';
  * - Equipment Profit widgets (Story 40-4)
  * - Receivables Aging Report (Story 41-1)
  * - Revenue Forecast (Story 41-2)
+ * - Rental Dashboard (Epic 48: Story 48-1, 48-2, 48-3)
  */
 @Module({})
 export class DashboardModule {
@@ -60,6 +64,7 @@ export class DashboardModule {
         EquipmentProfitDashboardController,
         ReceivablesDashboardController,
         RevenueForecastController,
+        RentalDashboardController, // Epic 48: Story 48-1, 48-2, 48-3
       ],
       providers: [
         {
@@ -82,6 +87,8 @@ export class DashboardModule {
         ReceivablesDashboardService,
         // Revenue Forecast (Story 41-2)
         RevenueForecastDashboardService,
+        // Rental Dashboard (Epic 48)
+        RentalDashboardService,
         // WebSocket (Story 35-7) - TODO: Deferred until socket.io setup
         // DashboardEventsService,
         // DashboardGateway,
@@ -98,6 +105,7 @@ export class DashboardModule {
         EquipmentProfitDashboardService,
         ReceivablesDashboardService,
         RevenueForecastDashboardService,
+        RentalDashboardService, // Epic 48
         // WebSocket exports - TODO: Story 35-7 deferred
         // DashboardEventsService,
         // DashboardGateway,

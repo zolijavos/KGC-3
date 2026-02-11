@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type {
+  ServiceProfitResponseDto,
   ServiceRevenueResponseDto,
   ServiceSummaryResponseDto,
   ServiceWorkloadResponseDto,
@@ -300,6 +301,94 @@ export class ServiceDashboardService {
       trend: trendData,
       periodStart: periodStart.toISOString(),
       periodEnd: now.toISOString(),
+    };
+  }
+
+  /**
+   * Get Service Profitability (Szerviz profitabilitás) (Story 49-1)
+   * Aggregates profit data by technician with revenue and cost breakdown
+   */
+  async getProfit(): Promise<ServiceProfitResponseDto> {
+    // TODO: Replace with Prisma aggregation
+    // const profitData = await prisma.worksheet.groupBy({
+    //   by: ['technicianId'],
+    //   _sum: { totalRevenue: true, partsCost: true, laborRevenue: true },
+    //   _count: true,
+    //   where: { status: { in: ['COMPLETED', 'CLOSED'] } },
+    // });
+
+    // Mock data for MVP - technician profitability breakdown
+    const mockTechnicians = [
+      {
+        technicianId: 'tech-1',
+        technicianName: 'Kovács János',
+        worksheetCount: 12,
+        totalRevenue: 650000,
+        partsCost: 180000,
+        laborRevenue: 470000,
+      },
+      {
+        technicianId: 'tech-2',
+        technicianName: 'Nagy Péter',
+        worksheetCount: 9,
+        totalRevenue: 480000,
+        partsCost: 150000,
+        laborRevenue: 330000,
+      },
+      {
+        technicianId: 'tech-3',
+        technicianName: 'Szabó István',
+        worksheetCount: 15,
+        totalRevenue: 820000,
+        partsCost: 280000,
+        laborRevenue: 540000,
+      },
+      {
+        technicianId: 'tech-4',
+        technicianName: 'Tóth Gábor',
+        worksheetCount: 7,
+        totalRevenue: 350000,
+        partsCost: 120000,
+        laborRevenue: 230000,
+      },
+      {
+        technicianId: 'tech-5',
+        technicianName: 'Kiss László',
+        worksheetCount: 2,
+        totalRevenue: 200000,
+        partsCost: 70000,
+        laborRevenue: 130000,
+      },
+    ];
+
+    // Calculate profit and margin for each technician
+    const techniciansWithProfit = mockTechnicians.map(tech => {
+      const profit = tech.totalRevenue - tech.partsCost;
+      const profitMargin = tech.totalRevenue > 0 ? (profit / tech.totalRevenue) * 100 : 0;
+      return {
+        ...tech,
+        profit,
+        profitMargin: Math.round(profitMargin * 10) / 10,
+      };
+    });
+
+    // Calculate totals
+    const totalRevenue = techniciansWithProfit.reduce((sum, t) => sum + t.totalRevenue, 0);
+    const totalPartsCost = techniciansWithProfit.reduce((sum, t) => sum + t.partsCost, 0);
+    const totalLaborRevenue = techniciansWithProfit.reduce((sum, t) => sum + t.laborRevenue, 0);
+    const totalProfit = totalRevenue - totalPartsCost;
+    const worksheetCount = techniciansWithProfit.reduce((sum, t) => sum + t.worksheetCount, 0);
+    const averageProfitMargin =
+      totalRevenue > 0 ? Math.round((totalProfit / totalRevenue) * 1000) / 10 : 0;
+
+    return {
+      totalRevenue,
+      totalPartsCost,
+      totalLaborRevenue,
+      totalProfit,
+      averageProfitMargin,
+      worksheetCount,
+      technicians: techniciansWithProfit,
     };
   }
 }

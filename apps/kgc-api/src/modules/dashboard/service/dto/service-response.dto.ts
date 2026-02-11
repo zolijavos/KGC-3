@@ -190,3 +190,71 @@ export class WarrantyRatioResponseSwagger {
   @ApiProperty({ example: '2026-02-11T23:59:59Z' })
   periodEnd!: string;
 }
+
+/**
+ * Technician Profit Summary (Story 49-1)
+ */
+export interface TechnicianProfitSummaryDto {
+  technicianId: string;
+  technicianName: string;
+  worksheetCount: number;
+  totalRevenue: number;
+  partsCost: number;
+  laborRevenue: number;
+  profit: number;
+  profitMargin: number;
+}
+
+/**
+ * Service Profit Response DTO (Story 49-1)
+ * GET /dashboard/service/profit
+ */
+export interface ServiceProfitResponseDto {
+  totalRevenue: number;
+  totalPartsCost: number;
+  totalLaborRevenue: number;
+  totalProfit: number;
+  averageProfitMargin: number;
+  worksheetCount: number;
+  technicians: TechnicianProfitSummaryDto[];
+}
+
+/**
+ * Swagger DTO for Service Profit (Story 49-1)
+ */
+export class ServiceProfitResponseSwagger {
+  @ApiProperty({ example: 2500000, description: 'Összes bevétel' })
+  totalRevenue!: number;
+
+  @ApiProperty({ example: 800000, description: 'Összes alkatrész költség' })
+  totalPartsCost!: number;
+
+  @ApiProperty({ example: 1700000, description: 'Összes munkadíj bevétel' })
+  totalLaborRevenue!: number;
+
+  @ApiProperty({ example: 1700000, description: 'Összes profit (bevétel - alkatrész költség)' })
+  totalProfit!: number;
+
+  @ApiProperty({ example: 68.0, description: 'Átlagos profit margin %' })
+  averageProfitMargin!: number;
+
+  @ApiProperty({ example: 45, description: 'Munkalapok száma' })
+  worksheetCount!: number;
+
+  @ApiProperty({
+    example: [
+      {
+        technicianId: 'tech-1',
+        technicianName: 'Kovács János',
+        worksheetCount: 12,
+        totalRevenue: 650000,
+        partsCost: 180000,
+        laborRevenue: 470000,
+        profit: 470000,
+        profitMargin: 72.3,
+      },
+    ],
+    description: 'Szerelőnkénti profit összesítés',
+  })
+  technicians!: TechnicianProfitSummaryDto[];
+}
