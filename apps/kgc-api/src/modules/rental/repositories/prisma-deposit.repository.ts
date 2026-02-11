@@ -96,11 +96,16 @@ export class PrismaDepositRepository implements IDepositRepository {
   private mapStatusToPrisma(status: DepositStatus): PrismaDepositStatus {
     const statusMap: Record<DepositStatus, PrismaDepositStatus> = {
       [DepositStatus.PENDING]: 'PENDING',
+      [DepositStatus.PENDING_PAYMENT]: 'PENDING',
       [DepositStatus.COLLECTED]: 'RECEIVED',
+      [DepositStatus.PAID]: 'RECEIVED',
       [DepositStatus.HELD]: 'HELD',
+      [DepositStatus.PENDING_SERVICE]: 'HELD',
       [DepositStatus.RELEASED]: 'RELEASED',
+      [DepositStatus.REFUNDED]: 'RELEASED',
       [DepositStatus.RETAINED]: 'RETAINED',
       [DepositStatus.PARTIALLY_RETAINED]: 'PARTIAL',
+      [DepositStatus.PARTIALLY_REFUNDED]: 'PARTIAL',
     };
     const result = statusMap[status];
     if (!result) throw new Error(`Ismeretlen kaució státusz: ${status}`);
@@ -113,6 +118,7 @@ export class PrismaDepositRepository implements IDepositRepository {
       [DepositPaymentMethod.CARD]: 'CARD',
       [DepositPaymentMethod.BANK_TRANSFER]: 'BANK_TRANSFER',
       [DepositPaymentMethod.MYPOS_PREAUTH]: 'PRE_AUTH',
+      [DepositPaymentMethod.MYPOS_SALE]: 'CARD', // Story 36-3: SALE uses CARD type
     };
     const result = methodMap[method];
     if (!result) throw new Error(`Ismeretlen fizetési mód: ${method}`);
@@ -483,6 +489,7 @@ export class PrismaDepositRepository implements IDepositRepository {
       [DepositPaymentMethod.CASH]: { count: 0, amount: 0 },
       [DepositPaymentMethod.CARD]: { count: 0, amount: 0 },
       [DepositPaymentMethod.MYPOS_PREAUTH]: { count: 0, amount: 0 },
+      [DepositPaymentMethod.MYPOS_SALE]: { count: 0, amount: 0 },
       [DepositPaymentMethod.BANK_TRANSFER]: { count: 0, amount: 0 },
     };
 
@@ -541,11 +548,16 @@ export class PrismaDepositRepository implements IDepositRepository {
 
     return {
       [DepositStatus.PENDING]: pendingCount,
+      [DepositStatus.PENDING_PAYMENT]: pendingCount,
       [DepositStatus.COLLECTED]: collectedCount,
+      [DepositStatus.PAID]: collectedCount,
       [DepositStatus.HELD]: heldCount,
+      [DepositStatus.PENDING_SERVICE]: heldCount,
       [DepositStatus.RELEASED]: releasedCount,
+      [DepositStatus.REFUNDED]: releasedCount,
       [DepositStatus.RETAINED]: retainedCount,
       [DepositStatus.PARTIALLY_RETAINED]: partiallyRetainedCount,
+      [DepositStatus.PARTIALLY_REFUNDED]: partiallyRetainedCount,
     } as Record<DepositStatus, number>;
   }
 
