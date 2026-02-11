@@ -20,6 +20,7 @@ import { ReceivablesDashboardController } from './receivables/receivables.contro
 import { ReceivablesDashboardService } from './receivables/receivables.service';
 import { RevenueForecastController } from './revenue/revenue.controller';
 import { RevenueForecastDashboardService } from './revenue/revenue.service';
+import { RecurringIssuesService } from './service/recurring-issues.service';
 import { ServiceDashboardController } from './service/service.controller';
 import { ServiceDashboardService } from './service/service.service';
 // TODO: Re-enable WebSocket after socket.io dependency setup - Story 35-7 deferred
@@ -69,6 +70,7 @@ export class DashboardModule {
         KpiService,
         InventoryService,
         ServiceDashboardService,
+        RecurringIssuesService, // Story 49-2
         PartnerDashboardService,
         // RBAC Permissions (Story 35-8)
         DashboardPermissionsService,
@@ -89,6 +91,7 @@ export class DashboardModule {
         KpiService,
         InventoryService,
         ServiceDashboardService,
+        RecurringIssuesService, // Story 49-2
         PartnerDashboardService,
         DashboardPermissionsService,
         AdminPermissionsService, // Story 45-1
