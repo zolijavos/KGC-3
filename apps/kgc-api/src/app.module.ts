@@ -16,6 +16,7 @@ import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PrismaClient } from '@prisma/client';
 import { BergepModule } from './modules/bergep/bergep.module';
 import { BevetelezesModule } from './modules/bevetelezes/bevetelezes.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { HorillaHrModule } from './modules/horilla-hr/horilla-hr.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { InvoiceModule } from './modules/invoice/invoice.module';
@@ -195,6 +196,9 @@ class WebhookController {
 
     // ReportingModule - Reporting Engine (Epic 27)
     ReportingModule.forRoot({ prisma }),
+
+    // DashboardModule - Dashboard widgets (Epic 35, 40-41, 45, 48-49)
+    DashboardModule.forRoot(prisma),
 
     // ServiceModule - Munkalap kezelés (Epic 17)
     ServiceModule.forRoot({ prisma }),
