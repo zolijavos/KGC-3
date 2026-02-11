@@ -1,6 +1,6 @@
 import { lazy, type ComponentType } from 'react';
 
-export type UserRole = 'OPERATOR' | 'STORE_MANAGER' | 'ADMIN';
+export type UserRole = 'OPERATOR' | 'STORE_MANAGER' | 'ADMIN' | 'SUPER_ADMIN';
 
 export type WidgetCategory =
   | 'general'
@@ -36,25 +36,25 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
   // Financial KPI Widgets (Story 35-2) - with data fetching wrappers
   'revenue-kpi': {
     component: lazy(() => import('../widgets/RevenueKPIWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'finance',
     refreshInterval: 300, // 5 minutes
   },
   'net-revenue-kpi': {
     component: lazy(() => import('../widgets/NetRevenueKPIWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'finance',
     refreshInterval: 300, // 5 minutes
   },
   'receivables-kpi': {
     component: lazy(() => import('../widgets/ReceivablesKPIWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'finance',
     refreshInterval: 300, // 5 minutes
   },
   'payments-kpi': {
     component: lazy(() => import('../widgets/PaymentsKPIWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'finance',
     refreshInterval: 300, // 5 minutes
   },
@@ -62,31 +62,31 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
   // Inventory Stock Widgets (Story 35-3) - with data fetching wrappers
   'stock-summary': {
     component: lazy(() => import('../widgets/StockSummaryWidget')),
-    roles: ['OPERATOR', 'STORE_MANAGER', 'ADMIN'],
+    roles: ['OPERATOR', 'STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'inventory',
     refreshInterval: 300, // 5 minutes
   },
   'stock-utilization': {
     component: lazy(() => import('../widgets/StockUtilizationWidget')),
-    roles: ['OPERATOR', 'STORE_MANAGER', 'ADMIN'],
+    roles: ['OPERATOR', 'STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'inventory',
     refreshInterval: 300, // 5 minutes
   },
   'stock-alerts': {
     component: lazy(() => import('../widgets/StockAlertListWidget')),
-    roles: ['OPERATOR', 'STORE_MANAGER', 'ADMIN'],
+    roles: ['OPERATOR', 'STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'inventory',
     refreshInterval: 300, // 5 minutes
   },
   'stock-movement': {
     component: lazy(() => import('../widgets/StockMovementChartWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'inventory',
     refreshInterval: 300, // 5 minutes
   },
   'stock-heatmap': {
     component: lazy(() => import('../widgets/StockHeatmapWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'inventory',
     refreshInterval: 300, // 5 minutes
   },
@@ -102,25 +102,25 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
   // Service Dashboard Widgets (Story 35-5)
   'worksheet-summary': {
     component: lazy(() => import('../widgets/WorksheetSummaryWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'service',
     refreshInterval: 300, // 5 minutes
   },
   'technician-workload': {
     component: lazy(() => import('../widgets/TechnicianWorkloadWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'service',
     refreshInterval: 300, // 5 minutes
   },
   'service-revenue': {
     component: lazy(() => import('../widgets/ServiceRevenueWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'service',
     refreshInterval: 300, // 5 minutes
   },
   'warranty-ratio-placeholder': {
     component: lazy(() => import('../widgets/WarrantyRatioPlaceholder')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'service',
     refreshInterval: null, // Placeholder - no refresh
   },
@@ -128,25 +128,25 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
   // Partner Dashboard Widgets (Story 35-6)
   'partner-overview': {
     component: lazy(() => import('../widgets/PartnerOverviewWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'partner',
     refreshInterval: 300, // 5 minutes
   },
   'top-partners': {
     component: lazy(() => import('../widgets/TopPartnersWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'partner',
     refreshInterval: 300, // 5 minutes
   },
   'partner-activity': {
     component: lazy(() => import('../widgets/PartnerActivityWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'partner',
     refreshInterval: 300, // 5 minutes
   },
   'partner-credit-placeholder': {
     component: lazy(() => import('../widgets/PartnerCreditPlaceholder')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'partner',
     refreshInterval: null, // Placeholder - no refresh
   },
@@ -154,7 +154,7 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
   // Equipment Profit Widget (Story 40-4)
   'equipment-profit': {
     component: lazy(() => import('../widgets/EquipmentProfitWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'finance',
     refreshInterval: 300, // 5 minutes
   },
@@ -162,7 +162,7 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
   // Receivables Aging Widget (Story 41-1)
   'receivables-aging': {
     component: lazy(() => import('../widgets/ReceivablesAgingWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'finance',
     refreshInterval: 300, // 5 minutes
   },
@@ -170,7 +170,7 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
   // Revenue Forecast Widget (Story 41-2)
   'revenue-forecast': {
     component: lazy(() => import('../widgets/RevenueForecastWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'finance',
     refreshInterval: 300, // 5 minutes
   },
@@ -178,19 +178,19 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
   // Epic 48: Rental Dashboard Widgets
   'rental-stats': {
     component: lazy(() => import('../widgets/RentalStatsWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'analytics',
     refreshInterval: 300, // 5 minutes
   },
   'popular-equipment': {
     component: lazy(() => import('../widgets/PopularEquipmentWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'analytics',
     refreshInterval: 300, // 5 minutes
   },
   'seasonality-chart': {
     component: lazy(() => import('../widgets/SeasonalityChartWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'analytics',
     refreshInterval: 300, // 5 minutes
   },
@@ -198,19 +198,19 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
   // Epic 49: Service Dashboard Extensions
   'service-profit': {
     component: lazy(() => import('../widgets/ServiceProfitWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'service',
     refreshInterval: 300, // 5 minutes
   },
   'recurring-issues': {
     component: lazy(() => import('../widgets/RecurringIssuesWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'service',
     refreshInterval: 300, // 5 minutes
   },
   'warranty-ratio': {
     component: lazy(() => import('../widgets/WarrantyRatioWidget')),
-    roles: ['STORE_MANAGER', 'ADMIN'],
+    roles: ['STORE_MANAGER', 'ADMIN', 'SUPER_ADMIN'],
     category: 'service',
     refreshInterval: 300, // 5 minutes
   },
