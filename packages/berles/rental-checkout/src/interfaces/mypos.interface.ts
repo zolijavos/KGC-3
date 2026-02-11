@@ -194,3 +194,79 @@ export interface IMyPosService {
    */
   healthCheck(): Promise<boolean>;
 }
+
+// ============================================
+// Story 36-3: SALE+REFUND Flow (pre-auth nem támogatott)
+// ============================================
+
+/**
+ * MyPOS SALE request (Story 36-3)
+ * Azonnali terhelés pre-auth helyett
+ */
+export interface IMyPosSaleRequest {
+  /** Összeg (HUF, egész szám) */
+  amount: number;
+  /** Pénznem (default: HUF) */
+  currency?: string;
+  /** Leírás (megjelenik a kártyakivonaton) */
+  description: string;
+  /** Referencia ID (bérlés/kaució ID) */
+  referenceId: string;
+  /** Ügyfél email (opcionális) */
+  customerEmail?: string;
+}
+
+/**
+ * MyPOS SALE response (Story 36-3)
+ */
+export interface IMyPosSaleResponse {
+  /** Sikeres-e a művelet */
+  success: boolean;
+  /** MyPOS tranzakció ID */
+  transactionId?: string;
+  /** Státusz */
+  status: MyPosTransactionStatus;
+  /** Authorization code */
+  authCode?: string;
+  /** Hiba kód */
+  errorCode?: MyPosErrorCode;
+  /** Hiba üzenet */
+  errorMessage?: string;
+  /** Timestamp */
+  timestamp: Date;
+}
+
+/**
+ * MyPOS REFUND request (Story 36-3)
+ * Teljes vagy részleges visszautalás
+ */
+export interface IMyPosRefundRequest {
+  /** Eredeti SALE tranzakció ID */
+  originalTransactionId: string;
+  /** Visszautalandó összeg (lehet részleges) */
+  amount: number;
+  /** Leírás */
+  description?: string;
+  /** Referencia ID */
+  referenceId?: string;
+}
+
+/**
+ * MyPOS REFUND response (Story 36-3)
+ */
+export interface IMyPosRefundResponse {
+  /** Sikeres-e a művelet */
+  success: boolean;
+  /** Refund tranzakció ID */
+  refundTransactionId?: string;
+  /** Visszautalt összeg */
+  refundedAmount?: number;
+  /** Státusz */
+  status: MyPosTransactionStatus;
+  /** Hiba kód */
+  errorCode?: MyPosErrorCode;
+  /** Hiba üzenet */
+  errorMessage?: string;
+  /** Timestamp */
+  timestamp: Date;
+}

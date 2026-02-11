@@ -10,16 +10,26 @@
 export enum DepositStatus {
   /** Kaució létrehozva, fizetésre vár */
   PENDING = 'pending',
+  /** Kaució fizetésre vár (Story 36-3 alias) */
+  PENDING_PAYMENT = 'pending_payment',
   /** Kaució beérkezett (készpénz vagy kártya) */
   COLLECTED = 'collected',
+  /** Kaució kifizetve (Story 36-3 SALE flow) */
+  PAID = 'paid',
   /** Kaució visszatartva (MyPOS pre-auth) */
   HELD = 'held',
+  /** Szerviz állapotban - sérülés vizsgálat (Story 36-3) */
+  PENDING_SERVICE = 'pending_service',
   /** Kaució visszaadva (bérlés sikeres lezárás) */
   RELEASED = 'released',
+  /** Kaució visszautalva (Story 36-3 REFUND flow) */
+  REFUNDED = 'refunded',
   /** Kaució visszatartva (sérülés, késedelem) */
   RETAINED = 'retained',
   /** Részleges visszatartás (sérülés levonva) */
   PARTIALLY_RETAINED = 'partially_retained',
+  /** Részleges visszautalás (Story 36-3) */
+  PARTIALLY_REFUNDED = 'partially_refunded',
 }
 
 /**
@@ -32,6 +42,8 @@ export enum DepositPaymentMethod {
   CARD = 'card',
   /** MyPOS pre-authorization (zárolás) */
   MYPOS_PREAUTH = 'mypos_preauth',
+  /** MyPOS SALE tranzakció (Story 36-3 - nincs pre-auth támogatás) */
+  MYPOS_SALE = 'mypos_sale',
   /** Átutalás */
   BANK_TRANSFER = 'bank_transfer',
 }
@@ -158,4 +170,81 @@ export interface IDepositAuditRecord {
   timestamp: Date;
   /** Megjegyzés */
   notes?: string;
+}
+
+/**
+ * Sérülés felmérés (Story 36-3)
+ */
+export interface IDamageAssessment {
+  /** Sérülés leírása */
+  description: string;
+  /** Becsült javítási költség (HUF) */
+  estimatedCost: number;
+  /** Fotók URL-jei */
+  photoUrls?: string[];
+  /** Felmérés dátuma */
+  assessedAt: Date;
+  /** Felmérő user ID */
+  assessedBy: string;
+}
+
+/**
+ * Kaució felvétel eredmény (Story 36-3)
+ */
+export interface IDepositCollectResult {
+  /** Sikeres-e */
+  success: boolean;
+  /** Kaució rekord */
+  deposit?: IDeposit;
+  /** MyPOS tranzakció ID (ha van) */
+  transactionId?: string;
+  /** Hiba üzenet */
+  errorMessage?: string;
+}
+
+/**
+ * Kaució visszautalás eredmény (Story 36-3)
+ */
+export interface IDepositRefundResult {
+  /** Sikeres-e */
+  success: boolean;
+  /** Visszautalt összeg */
+  refundedAmount?: number;
+  /** Visszatartott összeg (sérülés esetén) */
+  retainedAmount?: number;
+  /** MyPOS refund tranzakció ID */
+  refundTransactionId?: string;
+  /** Hiba üzenet */
+  errorMessage?: string;
+}
+
+/**
+ * Deposit Workflow Service Interface (Story 36-3)
+ */
+export interface IDepositWorkflowService {
+  /** Kaució felvétele SALE tranzakcióval */
+  collectDeposit(
+    rentalId: string,
+    amount: number,
+    partnerId: string,
+    tenantId: string,
+    userId: string
+  ): Promise<IDepositCollectResult>;
+
+  /** Kaució visszautalása REFUND tranzakcióval */
+  refundDeposit(
+    depositId: string,
+    tenantId: string,
+    userId: string,
+    damageAssessment?: IDamageAssessment
+  ): Promise<IDepositRefundResult>;
+
+  /** Részleges visszautalás sérülés esetén */
+  partialRefund(
+    depositId: string,
+    retainAmount: number,
+    tenantId: string,
+    userId: string,
+    damageAssessment: IDamageAssessment
+  ): Promise<IDepositRefundResult>;
 }
