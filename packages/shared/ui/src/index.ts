@@ -379,3 +379,32 @@ export type { StockMovement, StockMovementChartProps } from './widgets/StockMove
 
 export { StockHeatmap } from './widgets/StockHeatmap';
 export type { StockHeatmapData, StockHeatmapProps } from './widgets/StockHeatmap';
+
+// =============================================================================
+// Dashboard Shared Components
+// =============================================================================
+export {
+  ComparisonText,
+  CriticalAlertToast,
+  DateRangePicker,
+  EmptyState,
+  NotificationBadge,
+  NotificationList,
+  NotificationPanel,
+  StockAlertBadge,
+  TrendIndicator,
+  UtilizationGauge,
+  WidgetError,
+  WidgetSkeleton,
+} from './components/dashboard';
+export type {
+  ComparisonTextProps,
+  DateRangePickerProps,
+  EmptyStateProps,
+  Period,
+  StockAlertBadgeProps,
+  TrendIndicatorProps,
+  UtilizationGaugeProps,
+  WidgetErrorProps,
+  WidgetSkeletonProps,
+} from './components/dashboard';

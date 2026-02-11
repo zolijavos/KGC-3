@@ -174,6 +174,46 @@ export const WIDGET_REGISTRY: Record<string, Omit<WidgetConfig, 'id'>> = {
     category: 'finance',
     refreshInterval: 300, // 5 minutes
   },
+
+  // Epic 48: Rental Dashboard Widgets
+  'rental-stats': {
+    component: lazy(() => import('../widgets/RentalStatsWidget')),
+    roles: ['STORE_MANAGER', 'ADMIN'],
+    category: 'analytics',
+    refreshInterval: 300, // 5 minutes
+  },
+  'popular-equipment': {
+    component: lazy(() => import('../widgets/PopularEquipmentWidget')),
+    roles: ['STORE_MANAGER', 'ADMIN'],
+    category: 'analytics',
+    refreshInterval: 300, // 5 minutes
+  },
+  'seasonality-chart': {
+    component: lazy(() => import('../widgets/SeasonalityChartWidget')),
+    roles: ['STORE_MANAGER', 'ADMIN'],
+    category: 'analytics',
+    refreshInterval: 300, // 5 minutes
+  },
+
+  // Epic 49: Service Dashboard Extensions
+  'service-profit': {
+    component: lazy(() => import('../widgets/ServiceProfitWidget')),
+    roles: ['STORE_MANAGER', 'ADMIN'],
+    category: 'service',
+    refreshInterval: 300, // 5 minutes
+  },
+  'recurring-issues': {
+    component: lazy(() => import('../widgets/RecurringIssuesWidget')),
+    roles: ['STORE_MANAGER', 'ADMIN'],
+    category: 'service',
+    refreshInterval: 300, // 5 minutes
+  },
+  'warranty-ratio': {
+    component: lazy(() => import('../widgets/WarrantyRatioWidget')),
+    roles: ['STORE_MANAGER', 'ADMIN'],
+    category: 'service',
+    refreshInterval: 300, // 5 minutes
+  },
 };
 
 /**
