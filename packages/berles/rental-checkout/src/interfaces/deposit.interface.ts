@@ -244,10 +244,10 @@ export interface IDepositWorkflowService {
     userId: string
   ): Promise<IDepositRefundResult>;
 
-  /** Szerviz utáni véglegesítés */
-  finalizeAfterService(
+  /** Kaució visszatartása szervizre */
+  holdForService(
     depositId: string,
-    deductionAmount: number,
+    worksheetId: string,
     tenantId: string,
     userId: string
   ): Promise<IDepositRefundResult>;

@@ -251,6 +251,8 @@ export interface IMyPosRefundRequest {
   referenceId?: string;
   /** Visszautalás oka */
   reason?: string;
+  /** Részleges visszautalás flag */
+  isPartial?: boolean;
 }
 
 /**
