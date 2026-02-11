@@ -176,16 +176,20 @@ export interface IDepositAuditRecord {
  * Sérülés felmérés (Story 36-3)
  */
 export interface IDamageAssessment {
+  /** Van-e sérülés */
+  hasDamage: boolean;
+  /** Azonnal felmérhető-e (vagy szervizre vár) */
+  canAssessImmediately: boolean;
   /** Sérülés leírása */
-  description: string;
+  description?: string;
   /** Becsült javítási költség (HUF) */
-  estimatedCost: number;
+  estimatedCost?: number;
   /** Fotók URL-jei */
   photoUrls?: string[];
   /** Felmérés dátuma */
-  assessedAt: Date;
+  assessedAt?: Date;
   /** Felmérő user ID */
-  assessedBy: string;
+  assessedBy?: string;
 }
 
 /**
@@ -206,12 +210,14 @@ export interface IDepositCollectResult {
  * Kaució visszautalás eredmény (Story 36-3)
  */
 export interface IDepositRefundResult {
-  /** Sikeres-e */
-  success: boolean;
   /** Visszautalt összeg */
   refundedAmount?: number;
-  /** Visszatartott összeg (sérülés esetén) */
+  /** Levont összeg (sérülés esetén) */
+  deductedAmount?: number;
+  /** Visszatartott összeg */
   retainedAmount?: number;
+  /** Státusz */
+  status?: string;
   /** MyPOS refund tranzakció ID */
   refundTransactionId?: string;
   /** Hiba üzenet */
@@ -222,11 +228,10 @@ export interface IDepositRefundResult {
  * Deposit Workflow Service Interface (Story 36-3)
  */
 export interface IDepositWorkflowService {
-  /** Kaució felvétele SALE tranzakcióval */
+  /** Kaució felvétele CASH vagy MyPOS SALE */
   collectDeposit(
-    rentalId: string,
-    amount: number,
-    partnerId: string,
+    depositId: string,
+    paymentMethod: 'CASH' | 'CARD',
     tenantId: string,
     userId: string
   ): Promise<IDepositCollectResult>;
@@ -234,17 +239,16 @@ export interface IDepositWorkflowService {
   /** Kaució visszautalása REFUND tranzakcióval */
   refundDeposit(
     depositId: string,
+    damageAssessment: IDamageAssessment | null,
     tenantId: string,
-    userId: string,
-    damageAssessment?: IDamageAssessment
+    userId: string
   ): Promise<IDepositRefundResult>;
 
-  /** Részleges visszautalás sérülés esetén */
-  partialRefund(
+  /** Szerviz utáni véglegesítés */
+  finalizeAfterService(
     depositId: string,
-    retainAmount: number,
+    deductionAmount: number,
     tenantId: string,
-    userId: string,
-    damageAssessment: IDamageAssessment
+    userId: string
   ): Promise<IDepositRefundResult>;
 }

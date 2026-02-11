@@ -249,6 +249,8 @@ export interface IMyPosRefundRequest {
   description?: string;
   /** Referencia ID */
   referenceId?: string;
+  /** Visszautalás oka */
+  reason?: string;
 }
 
 /**
