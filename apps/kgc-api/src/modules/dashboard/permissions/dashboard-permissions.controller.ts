@@ -1,5 +1,6 @@
-import { Controller, Get, Req } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '@kgc/auth';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DashboardPermissionsService } from './dashboard-permissions.service';
 import type { DashboardPermissionsResponseDto } from './dto/dashboard-permissions.dto';
 import { DashboardPermissionsResponseSwagger } from './dto/dashboard-permissions.dto';
@@ -20,10 +21,12 @@ interface RequestWithUser {
  *
  * Endpoint to get user's visible widgets and sections based on RBAC
  *
- * RBAC: All authenticated users can access their own permissions
- * TODO: Add JwtAuthGuard when auth module integrated
+ * RBAC: Requires authentication via JwtAuthGuard
+ * Access: All authenticated users can access their own permissions
  */
 @ApiTags('dashboard')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('dashboard/permissions')
 export class DashboardPermissionsController {
   constructor(private readonly permissionsService: DashboardPermissionsService) {}

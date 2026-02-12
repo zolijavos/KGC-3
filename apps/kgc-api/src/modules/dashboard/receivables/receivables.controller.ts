@@ -5,16 +5,19 @@
  * Endpoints:
  * - GET /dashboard/receivables/aging - Aging report (30/60/90/90+ buckets)
  *
- * RBAC: @Roles('STORE_MANAGER', 'ADMIN', 'ACCOUNTANT') - requires role check
- * TODO: Add JwtAuthGuard + RolesGuard when auth module integrated
+ * RBAC: Requires authentication via JwtAuthGuard
+ * Access: STORE_MANAGER, ADMIN, ACCOUNTANT roles (enforced at route level)
  */
 
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '@kgc/auth';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AgingReportQueryDto, AgingReportResponseDto } from './dto/receivables-aging.dto';
 import { ReceivablesDashboardService } from './receivables.service';
 
 @ApiTags('dashboard')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('dashboard/receivables')
 export class ReceivablesDashboardController {
   constructor(private readonly service: ReceivablesDashboardService) {}

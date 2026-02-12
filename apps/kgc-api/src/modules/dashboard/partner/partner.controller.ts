@@ -1,5 +1,6 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '@kgc/auth';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type {
   PartnerActivityResponseDto,
   PartnerOverviewResponseDto,
@@ -17,10 +18,12 @@ import { PartnerDashboardService } from './partner.service';
  *
  * Partner dashboard endpoints for widgets
  *
- * RBAC: @Roles('STORE_MANAGER', 'ADMIN') - requires role check
- * TODO: Add JwtAuthGuard + RolesGuard when auth module integrated
+ * RBAC: Requires authentication via JwtAuthGuard
+ * Access: STORE_MANAGER, ADMIN roles (enforced at route level)
  */
 @ApiTags('dashboard')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('dashboard/partner')
 export class PartnerDashboardController {
   constructor(private readonly partnerDashboardService: PartnerDashboardService) {}

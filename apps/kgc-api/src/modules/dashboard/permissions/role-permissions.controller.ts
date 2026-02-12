@@ -1,5 +1,6 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '@kgc/auth';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AdminPermissionsService } from './admin-permissions.service';
 import { WidgetRoleEnum } from './dto/admin-permissions.dto';
 
@@ -18,8 +19,13 @@ interface RolePermissionsResponseDto {
  *
  * Endpoint:
  * - GET /dashboard/permissions/role/:role - Get widgets for role
+ *
+ * RBAC: Requires authentication via JwtAuthGuard
+ * Access: All authenticated users (role is path parameter, not self-limiting)
  */
 @ApiTags('dashboard')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('dashboard/permissions/role')
 export class RolePermissionsController {
   constructor(private readonly adminPermissionsService: AdminPermissionsService) {}

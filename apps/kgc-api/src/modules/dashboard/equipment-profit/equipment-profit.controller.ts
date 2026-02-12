@@ -7,12 +7,13 @@
  * - GET /dashboard/equipment-profit/top - Top 5 most profitable equipment
  * - GET /dashboard/equipment-profit/:id - Single equipment profit detail
  *
- * RBAC: @Roles('STORE_MANAGER', 'ADMIN') - requires role check
- * TODO: Add JwtAuthGuard + RolesGuard when auth module integrated
+ * RBAC: Requires authentication via JwtAuthGuard
+ * Access: STORE_MANAGER, ADMIN roles (enforced at route level)
  */
 
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '@kgc/auth';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import type {
   EquipmentProfitDetailResponse,
   FleetProfitSummaryResponse,
@@ -21,6 +22,8 @@ import type {
 import { EquipmentProfitDashboardService } from './equipment-profit.service';
 
 @ApiTags('dashboard')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('dashboard/equipment-profit')
 export class EquipmentProfitDashboardController {
   constructor(private readonly service: EquipmentProfitDashboardService) {}

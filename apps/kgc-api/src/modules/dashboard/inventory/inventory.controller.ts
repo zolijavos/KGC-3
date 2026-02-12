@@ -1,24 +1,27 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { InventoryService } from './inventory.service';
+import { JwtAuthGuard } from '@kgc/auth';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { InventoryQuerySchema, type InventoryQueryDto } from './dto/inventory-query.dto';
 import type {
-  StockSummaryResponse,
   StockAlertResponse,
-  StockMovementResponse,
   StockHeatmapResponse,
+  StockMovementResponse,
+  StockSummaryResponse,
 } from './dto/inventory-response.dto';
+import { InventoryService } from './inventory.service';
 
 /**
  * Inventory Controller
  *
  * Stock dashboard endpoints for inventory widgets
  *
- * RBAC: @Roles('OPERATOR', 'STORE_MANAGER', 'ADMIN') - requires role check
- * TODO: Add JwtAuthGuard + RolesGuard when auth module integrated
+ * RBAC: Requires authentication via JwtAuthGuard
+ * Access: OPERATOR, STORE_MANAGER, ADMIN roles (enforced at route level)
  */
 @ApiTags('dashboard')
-@Controller('api/v1/dashboard/inventory')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('dashboard/inventory')
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 

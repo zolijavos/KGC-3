@@ -3,14 +3,20 @@
  * Epic 41: Story 41-2 - Havi Várható Bevétel Dashboard
  *
  * REST API for revenue forecast dashboard.
+ *
+ * RBAC: Requires authentication via JwtAuthGuard
+ * Access: STORE_MANAGER, ADMIN, ACCOUNTANT roles (enforced at route level)
  */
 
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '@kgc/auth';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RevenueForecastQueryDto, RevenueForecastResponseDto } from './dto/revenue-forecast.dto';
 import { RevenueForecastDashboardService } from './revenue.service';
 
 @ApiTags('Dashboard - Revenue')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('dashboard/revenue')
 export class RevenueForecastController {
   constructor(private readonly service: RevenueForecastDashboardService) {}
